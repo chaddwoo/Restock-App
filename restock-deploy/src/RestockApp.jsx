@@ -35,19 +35,41 @@ const sb = {
 };
 
 const DEFAULT_CATALOG = [
-  { model_name: "Geek Bar Pulse 15k", brand: "Geek Bar", puffs: "15,000", flavors: ["B-Burst","Banana Ice","Berry Bliss","Black Cherry","Black Mintz","Blue Mint","Blue Razz Ice","Blueberry Watermelon","California Cherry","Cherry Bomb","Cool Mint","Crazy Melon","Creamy Mintz","Dragon Melon","Drop Sour Savers","Fcuking Fab","Frozen Blackberry Fab","Frozen Cherry Apple","Frozen Pina Colada","Frozen Strawberry","Frozen Watermelon","Frozen White Grape","Grape B-Pop","Grape Lemon","Haunted Blueberry","Icey Mintz","Juicy Peach Ice","Meta Moon","Mexico Mango","Miami Mint","OMG B-Burst","Orange Creamsicle","Orange Mint Savers","Peach Lemonade","Pepper Mintz","Pineapple Savers","Pink Lemonade","Punch","Raspberry Watermelon","Sour Apple B-Burst","Sour Apple Ice","Sour Blue Dust","Sour Cranapple","Sour Gush","Sour Strawberry","Sour Watermelon Drop","Spooky Vanilla","Stone Mintz","Strawberry B-Pop","Strawberry Banana","Strawberry Kiwi","Strawberry Mango","Strawberry Savers","Tropical Rainbow Blast","Watermelon Ice","White Gummy Ice","Wild Berry Savers"] },
-  { model_name: "Geek Bar Pulse X 25k", brand: "Geek Bar", puffs: "25,000", flavors: ["ATL Mint","Banana Taffy Freeze","Blackberry B-Pop","Blackberry Blueberry","Blue Rancher","Blue Razz Ice","Blueberry Jam","Cola Slush","Cool Mint","Creamy Mintz","Dualicious","Grape Slush","Grapefruit Refresher","Lemon Heads","Lime Berry Orange","Miami Mint","Orange Dragon","Orange Fcuking Fab","Orange Jam Slush","Orange Mint","Orange Slush","Peach Jam","Peach Perfect Slush","Pear Of Thieves","Pepper Mintz","Pink And Blue","Pink Berry Lemonade","Raspberry Jam","Raspberry Peach Lime","Sour Apple Ice","Sour Fcuking Fab","Sour Mango Pineapple","Sour Straws","Strawberry B-Burst","Strawberry Colada","Strawberry Dragon","Strawberry Jam","Strawberry Kiwi Ice","Strawberry Watermelon","Watermelon Ice","White Peach Raspberry","Wild Cherry Slush"] },
-  { model_name: "Geek Max 30k", brand: "Geek Bar", puffs: "30,000", flavors: ["Blackberry B-Pop","Blue Rancher","Blueberry Jam","Blueberry Watermelon","Cola Slush","Cool Mint","Crazy Melon","Dubai Chocolate Mint","Frozen Strawberry","Grapefruit Refresher","Honeydew Slush","Juicy Peach Ice","Lemon Heads","Lime Berry Orange","Mexico Mango","Miami Mint","Orange Dragon","Orange Fcuking Fab","Orange Jam","Orange Slush","Pink And Blue","Pink Lemonade","Punch","Raspberry Jam","Raspberry Peach Lime","Sour Apple Ice","Sour Mango Pineapple","Spearmint","Strawberry B-Pop","Strawberry Colada","Strawberry Kiwi Refresher","Strawberry Mango","Strawberry Watermelon","Watermelon Ice","White Gummy Ice","Wild Cherry Slush"] },
-  { model_name: "Foger Switch Pro Kit 30k", brand: "Foger", puffs: "30,000", flavors: ["Blue Rancher B-Pop","Blue Razz Ice","Blueberry Watermelon","Cherry Bomb","Chocolate Cupcake","Clear","Coconut Cupcake","Coffee","Cola Slush","Cool Mint","Dragon Fruit Lemonade","Frozen Banana","Frozen Blueberry","Frozen Lemon","Frozen Watermelon","Grape Slush","Gum Mint","Gummy Bear","Hot Chocolate","Icy Mint","Juicy Peach Ice","Kiwi Dragon Berry","Meta Moon","Mexico Mango","Miami Mint","OMG B-Pop","Orange Slush","Peppermint","Pineapple Coconut","Pink And Blue","Pink Lemonade","Red Velvet Cupcake","Skittles Cupcake","Sour Apple Ice","Sour Blue Dust","Sour Cranapple","Sour Fcuking Fab","Sour Gush","Strawberry B-Pop","Strawberry Banana","Strawberry Cupcake","Strawberry Ice","Strawberry Kiwi","Strawberry Watermelon","Tobacco","Vanilla Cupcake","Watermelon Bubble Gum","Watermelon Ice","White Gummy"] },
-  { model_name: "Foger Switch Pro Pod 30k", brand: "Foger", puffs: "30,000", flavors: ["Blue Rancher","Blue Rancher B-Pop","Blue Razz Ice","Blueberry Watermelon","Cherry Bomb","Cherry Slush","Chocolate Cupcake","Clear","Coconut Cupcake","Coffee","Cola Slush","Cool Mint","Dragon Fruit Lemonade","Frozen Banana","Frozen Blueberry","Frozen Lemon","Frozen Watermelon","Grape Slush","Gum Mint","Gummy Bear","Hawaiian Punch","Icy Mint","Juicy Peach Ice","Kiwi Dragon Berry","Meta Moon","Mexico Mango","Miami Mint","OMG B-Pop","Orange Slush","Peach Slush","Pineapple Coconut","Pink And Blue","Pink Lemon","Pink Lemonade","Purple Passion Punch","Red Velvet Cupcake","Skittles Cupcake","Sour Apple Ice","Sour Blue Dust","Sour Cranapple","Sour Fcuking Fab","Sour Gush","Sour Raspberry Punch","Strawberry B-Pop","Strawberry Banana","Strawberry Cupcake","Strawberry Ice","Strawberry Kiwi","Strawberry Slush","Strawberry Watermelon","Tobacco","Triple Berry Punch","Vanilla Cupcake","Watermelon Bubble Gum","Watermelon Ice","White Gummy"] },
-  { model_name: "Foger Bit 35k", brand: "Foger", puffs: "35,000", flavors: ["Banana Taffy Freeze","Blue Razz Ice","Fcuking Fab","Georgia Peach","Miami Mint","Orange Cranberry Lime Ice","Passion Kiwi","Sour Blackberry Gush","Sour Blueberry Gush","Sour Cherry Gush","Sour Kiwi Gush","Sour Mango Pineapple","Strawberry Burst","Summer Mist","Wintergreen"] },
-  { model_name: "Lost Mary MT 35k", brand: "Lost Mary", puffs: "35,000", flavors: ["Baja Splash","Berry Burst","Black Mint","Black Razz Lemon","Blackberry Blueberry","Blue Razz Ice","Blue Razz Lemonade","Classic Tobacco","Clear","Golden Berry","Half And Half","Kiwi Passion Fruit","Miami Mint","Mint Lemonade","Mountain Berry","Orange Passion Mango","Orange Pixy","Pineapple Lime","Pink Lemonade","Purple Pixy","Red Pixy","Rocket Freeze","Scary Berry","Strawberry","Strawberry Dragon Lemonade","Strawberry Kiwi","Strawmelon Peach","Summer Grape","Sunny Orange","Tigers Blood","Toasted Banana","Tropical Lemonade","Watermelon","White Gami","White Pixy","Winter Mint","Yellow Pixy"] },
-  { model_name: "UT Bar 50k", brand: "UT Bar", puffs: "50,000", flavors: ["Aloe Grape Aloe Watermelon","Aloe Watermelon Sour Sweet","Banana Smoothie Strawberry","Blue Rancher Lemonade","Blue Razz Ice","Blue Razz Ice Triple Berry","Blue Razz Lemonade","Cherry Strawberry Gummy","Clear","Green Apple Fuji Apple","Miami Mint Mint Slushy","Naked Springwater","Passion Kiwi Pineapple","Passionfruit Mango","Pink Lemonade Mixberry","Raspberry Grape Guava","Root Soda Vanilla","Slushy Lemon","Sour Apple","Sour Fab Citrus Ice","Strawberry Swirl","Strawberry Watermelon","Strawberry Watermelon Icy","StrawNana Gelato","Thai Mango Juice Peach","Tropical Rainbow Blast","Watermelon B-Pop","Watermelon Ice","Watermelon Ice Slushy","Watermelon Sour Peach","White Gummy Cherry","White Peach Lemon Head","White Peach Raspberry","Wildberry Drop"] },
+  { model_name: "Geek Bar Pulse 15k", brand: "Geek Bar", puffs: "15,000", category: "Vapes", flavors: ["B-Burst","Banana Ice","Berry Bliss","Black Cherry","Black Mintz","Blue Mint","Blue Razz Ice","Blueberry Watermelon","California Cherry","Cherry Bomb","Cool Mint","Crazy Melon","Creamy Mintz","Dragon Melon","Drop Sour Savers","Fcuking Fab","Frozen Blackberry Fab","Frozen Cherry Apple","Frozen Pina Colada","Frozen Strawberry","Frozen Watermelon","Frozen White Grape","Grape B-Pop","Grape Lemon","Haunted Blueberry","Icey Mintz","Juicy Peach Ice","Meta Moon","Mexico Mango","Miami Mint","OMG B-Burst","Orange Creamsicle","Orange Mint Savers","Peach Lemonade","Pepper Mintz","Pineapple Savers","Pink Lemonade","Punch","Raspberry Watermelon","Sour Apple B-Burst","Sour Apple Ice","Sour Blue Dust","Sour Cranapple","Sour Gush","Sour Strawberry","Sour Watermelon Drop","Spooky Vanilla","Stone Mintz","Strawberry B-Pop","Strawberry Banana","Strawberry Kiwi","Strawberry Mango","Strawberry Savers","Tropical Rainbow Blast","Watermelon Ice","White Gummy Ice","Wild Berry Savers"] },
+  { model_name: "Geek Bar Pulse X 25k", brand: "Geek Bar", puffs: "25,000", category: "Vapes", flavors: ["ATL Mint","Banana Taffy Freeze","Blackberry B-Pop","Blackberry Blueberry","Blue Rancher","Blue Razz Ice","Blueberry Jam","Cola Slush","Cool Mint","Creamy Mintz","Dualicious","Grape Slush","Grapefruit Refresher","Lemon Heads","Lime Berry Orange","Miami Mint","Orange Dragon","Orange Fcuking Fab","Orange Jam Slush","Orange Mint","Orange Slush","Peach Jam","Peach Perfect Slush","Pear Of Thieves","Pepper Mintz","Pink And Blue","Pink Berry Lemonade","Raspberry Jam","Raspberry Peach Lime","Sour Apple Ice","Sour Fcuking Fab","Sour Mango Pineapple","Sour Straws","Strawberry B-Burst","Strawberry Colada","Strawberry Dragon","Strawberry Jam","Strawberry Kiwi Ice","Strawberry Watermelon","Watermelon Ice","White Peach Raspberry","Wild Cherry Slush"] },
+  { model_name: "Geek Max 30k", brand: "Geek Bar", puffs: "30,000", category: "Vapes", flavors: ["Blackberry B-Pop","Blue Rancher","Blueberry Jam","Blueberry Watermelon","Cola Slush","Cool Mint","Crazy Melon","Dubai Chocolate Mint","Frozen Strawberry","Grapefruit Refresher","Honeydew Slush","Juicy Peach Ice","Lemon Heads","Lime Berry Orange","Mexico Mango","Miami Mint","Orange Dragon","Orange Fcuking Fab","Orange Jam","Orange Slush","Pink And Blue","Pink Lemonade","Punch","Raspberry Jam","Raspberry Peach Lime","Sour Apple Ice","Sour Mango Pineapple","Spearmint","Strawberry B-Pop","Strawberry Colada","Strawberry Kiwi Refresher","Strawberry Mango","Strawberry Watermelon","Watermelon Ice","White Gummy Ice","Wild Cherry Slush"] },
+  { model_name: "Foger Switch Pro Kit 30k", brand: "Foger", puffs: "30,000", category: "Vapes", flavors: ["Blue Rancher B-Pop","Blue Razz Ice","Blueberry Watermelon","Cherry Bomb","Chocolate Cupcake","Clear","Coconut Cupcake","Coffee","Cola Slush","Cool Mint","Dragon Fruit Lemonade","Frozen Banana","Frozen Blueberry","Frozen Lemon","Frozen Watermelon","Grape Slush","Gum Mint","Gummy Bear","Hot Chocolate","Icy Mint","Juicy Peach Ice","Kiwi Dragon Berry","Meta Moon","Mexico Mango","Miami Mint","OMG B-Pop","Orange Slush","Peppermint","Pineapple Coconut","Pink And Blue","Pink Lemonade","Red Velvet Cupcake","Skittles Cupcake","Sour Apple Ice","Sour Blue Dust","Sour Cranapple","Sour Fcuking Fab","Sour Gush","Strawberry B-Pop","Strawberry Banana","Strawberry Cupcake","Strawberry Ice","Strawberry Kiwi","Strawberry Watermelon","Tobacco","Vanilla Cupcake","Watermelon Bubble Gum","Watermelon Ice","White Gummy"] },
+  { model_name: "Foger Switch Pro Pod 30k", brand: "Foger", puffs: "30,000", category: "Vapes", flavors: ["Blue Rancher","Blue Rancher B-Pop","Blue Razz Ice","Blueberry Watermelon","Cherry Bomb","Cherry Slush","Chocolate Cupcake","Clear","Coconut Cupcake","Coffee","Cola Slush","Cool Mint","Dragon Fruit Lemonade","Frozen Banana","Frozen Blueberry","Frozen Lemon","Frozen Watermelon","Grape Slush","Gum Mint","Gummy Bear","Hawaiian Punch","Icy Mint","Juicy Peach Ice","Kiwi Dragon Berry","Meta Moon","Mexico Mango","Miami Mint","OMG B-Pop","Orange Slush","Peach Slush","Pineapple Coconut","Pink And Blue","Pink Lemon","Pink Lemonade","Purple Passion Punch","Red Velvet Cupcake","Skittles Cupcake","Sour Apple Ice","Sour Blue Dust","Sour Cranapple","Sour Fcuking Fab","Sour Gush","Sour Raspberry Punch","Strawberry B-Pop","Strawberry Banana","Strawberry Cupcake","Strawberry Ice","Strawberry Kiwi","Strawberry Slush","Strawberry Watermelon","Tobacco","Triple Berry Punch","Vanilla Cupcake","Watermelon Bubble Gum","Watermelon Ice","White Gummy"] },
+  { model_name: "Foger Bit 35k", brand: "Foger", puffs: "35,000", category: "Vapes", flavors: ["Banana Taffy Freeze","Blue Razz Ice","Fcuking Fab","Georgia Peach","Miami Mint","Orange Cranberry Lime Ice","Passion Kiwi","Sour Blackberry Gush","Sour Blueberry Gush","Sour Cherry Gush","Sour Kiwi Gush","Sour Mango Pineapple","Strawberry Burst","Summer Mist","Wintergreen"] },
+  { model_name: "Lost Mary MT 35k", brand: "Lost Mary", puffs: "35,000", category: "Vapes", flavors: ["Baja Splash","Berry Burst","Black Mint","Black Razz Lemon","Blackberry Blueberry","Blue Razz Ice","Blue Razz Lemonade","Classic Tobacco","Clear","Golden Berry","Half And Half","Kiwi Passion Fruit","Miami Mint","Mint Lemonade","Mountain Berry","Orange Passion Mango","Orange Pixy","Pineapple Lime","Pink Lemonade","Purple Pixy","Red Pixy","Rocket Freeze","Scary Berry","Strawberry","Strawberry Dragon Lemonade","Strawberry Kiwi","Strawmelon Peach","Summer Grape","Sunny Orange","Tigers Blood","Toasted Banana","Tropical Lemonade","Watermelon","White Gami","White Pixy","Winter Mint","Yellow Pixy"] },
+  { model_name: "UT Bar 50k", brand: "UT Bar", puffs: "50,000", category: "Vapes", flavors: ["Aloe Grape Aloe Watermelon","Aloe Watermelon Sour Sweet","Banana Smoothie Strawberry","Blue Rancher Lemonade","Blue Razz Ice","Blue Razz Ice Triple Berry","Blue Razz Lemonade","Cherry Strawberry Gummy","Clear","Green Apple Fuji Apple","Miami Mint Mint Slushy","Naked Springwater","Passion Kiwi Pineapple","Passionfruit Mango","Pink Lemonade Mixberry","Raspberry Grape Guava","Root Soda Vanilla","Slushy Lemon","Sour Apple","Sour Fab Citrus Ice","Strawberry Swirl","Strawberry Watermelon","Strawberry Watermelon Icy","StrawNana Gelato","Thai Mango Juice Peach","Tropical Rainbow Blast","Watermelon B-Pop","Watermelon Ice","Watermelon Ice Slushy","Watermelon Sour Peach","White Gummy Cherry","White Peach Lemon Head","White Peach Raspberry","Wildberry Drop"] },
 ];
 
 const QTY_OPTIONS = ["skip", "1", "2", "3", "4", "5+"];
-const BRAND_COLORS = { "Geek Bar": "#6C5CE7", "Foger": "#FF6B35", "Lost Mary": "#E63946", "UT Bar": "#00B4D8" };
-const getQtyColor = (v) => { if (v === "skip") return "#ffffff20"; if (v === "1") return "#F4A261"; if (v === "2") return "#FF6B35"; return "#E63946"; };
+
+// Improved quantity colors — calm to urgent gradient
+const getQtyColor = (v) => {
+  if (v === "skip") return "#ffffff20";
+  if (v === "1") return "#4ECDC4"; // teal
+  if (v === "2") return "#1DB954"; // green
+  if (v === "3") return "#F4D35E"; // yellow
+  if (v === "4") return "#FF6B35"; // orange
+  return "#E63946"; // red for 5+
+};
+
+// Known brand colors + auto-assign palette for new brands
+const FIXED_BRAND_COLORS = { "Geek Bar": "#6C5CE7", "Foger": "#FF6B35", "Lost Mary": "#E63946", "UT Bar": "#00B4D8" };
+const AUTO_PALETTE = ["#A855F7","#EC4899","#14B8A6","#F59E0B","#8B5CF6","#06B6D4","#EF4444","#10B981","#F97316","#6366F1","#84CC16","#E879F9","#22D3EE","#FB923C","#A3E635"];
+let autoIdx = 0;
+const brandColorCache = {};
+const getBrandColor = (brand) => {
+  if (FIXED_BRAND_COLORS[brand]) return FIXED_BRAND_COLORS[brand];
+  if (brandColorCache[brand]) return brandColorCache[brand];
+  brandColorCache[brand] = AUTO_PALETTE[autoIdx % AUTO_PALETTE.length];
+  autoIdx++;
+  return brandColorCache[brand];
+};
+
 const timeAgo = (d) => { const m = Math.floor((new Date() - new Date(d)) / 60000); if (m < 1) return "just now"; if (m < 60) return `${m}m ago`; const h = Math.floor(m / 60); if (h < 24) return `${h}h ${m % 60}m ago`; return `${Math.floor(h / 24)}d ago`; };
 const fmtTime = (d) => new Date(d).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
 
@@ -80,16 +102,21 @@ export default function RestockApp() {
   const [newModelName, setNewModelName] = useState("");
   const [newModelBrand, setNewModelBrand] = useState("");
   const [newModelPuffs, setNewModelPuffs] = useState("");
+  const [newModelCategory, setNewModelCategory] = useState("Vapes");
   const [showAddModel, setShowAddModel] = useState(false);
   const [editingModelInfo, setEditingModelInfo] = useState(false);
   const [editModelName, setEditModelName] = useState("");
   const [editModelBrand, setEditModelBrand] = useState("");
   const [editModelPuffs, setEditModelPuffs] = useState("");
+  const [editModelCategory, setEditModelCategory] = useState("");
 
   const PIN = "2588";
 
   const catalogObj = {};
-  catalog.forEach(c => { catalogObj[c.model_name] = { brand: c.brand, puffs: c.puffs, flavors: c.flavors || [], id: c.id }; });
+  catalog.forEach(c => { catalogObj[c.model_name] = { brand: c.brand, puffs: c.puffs, flavors: c.flavors || [], id: c.id, category: c.category || "Vapes" }; });
+
+  // Get unique categories
+  const categories = [...new Set(catalog.map(c => c.category || "Vapes"))].sort();
 
   const loadCatalog = useCallback(async () => {
     try {
@@ -138,10 +165,7 @@ export default function RestockApp() {
     setSubmitting(false);
   };
 
-  const deleteSubmission = async (id) => {
-    try { await sb.del("submissions", `id=eq.${id}`); setReports(p => p.filter(r => r.id !== id)); if (selReport && selReport.id === id) setSelReport(null); } catch (e) { console.error(e); }
-  };
-
+  const deleteSubmission = async (id) => { try { await sb.del("submissions", `id=eq.${id}`); setReports(p => p.filter(r => r.id !== id)); if (selReport && selReport.id === id) setSelReport(null); } catch (e) { console.error(e); } };
   const saveBanner = async () => { try { await sb.patch("banner", { message: bannerInput, active: true, updated_at: new Date().toISOString() }, "id=eq.1"); setBannerText(bannerInput); setBannerOn(true); setEditBanner(false); } catch (e) { console.error(e); } };
   const toggleBanner = async () => { try { await sb.patch("banner", { active: !bannerOn, updated_at: new Date().toISOString() }, "id=eq.1"); setBannerOn(!bannerOn); } catch (e) { console.error(e); } };
   const dismissSug = async (id) => { try { await sb.patch("suggestions", { status: "dismissed" }, `id=eq.${id}`); setAllSugs(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
@@ -150,33 +174,29 @@ export default function RestockApp() {
   const removeStore = async (id) => { try { await sb.del("stores", `id=eq.${id}`); setStores(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
 
   const addFlavorToModel = async (modelId, flavor) => {
-    const model = catalog.find(c => c.id === modelId);
-    if (!model || !flavor.trim()) return;
+    const model = catalog.find(c => c.id === modelId); if (!model || !flavor.trim()) return;
     const updated = [...(model.flavors || []), flavor.trim()].sort();
     try { await sb.patch("catalog", { flavors: updated }, `id=eq.${modelId}`); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated } : c)); } catch (e) { console.error(e); }
   };
   const removeFlavorFromModel = async (modelId, flavor) => {
-    const model = catalog.find(c => c.id === modelId);
-    if (!model) return;
+    const model = catalog.find(c => c.id === modelId); if (!model) return;
     const updated = (model.flavors || []).filter(f => f !== flavor);
     try { await sb.patch("catalog", { flavors: updated }, `id=eq.${modelId}`); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated } : c)); } catch (e) { console.error(e); }
   };
   const addModel = async () => {
-    if (!newModelName.trim() || !newModelBrand.trim() || !newModelPuffs.trim()) return;
+    if (!newModelName.trim() || !newModelBrand.trim()) return;
     try {
-      const res = await sb.post("catalog", { model_name: newModelName.trim(), brand: newModelBrand.trim(), puffs: newModelPuffs.trim(), flavors: [] });
-      if (res && res[0]) setCatalog(p => [...p, res[0]].sort((a, b) => a.brand.localeCompare(b.brand) || a.model_name.localeCompare(b.model_name)));
-      setNewModelName(""); setNewModelBrand(""); setNewModelPuffs(""); setShowAddModel(false);
+      const res = await sb.post("catalog", { model_name: newModelName.trim(), brand: newModelBrand.trim(), puffs: newModelPuffs.trim() || "N/A", category: newModelCategory.trim() || "Vapes", flavors: [] });
+      if (res && res[0]) setCatalog(p => [...p, res[0]].sort((a, b) => (a.category || "").localeCompare(b.category || "") || a.brand.localeCompare(b.brand) || a.model_name.localeCompare(b.model_name)));
+      setNewModelName(""); setNewModelBrand(""); setNewModelPuffs(""); setNewModelCategory("Vapes"); setShowAddModel(false);
     } catch (e) { console.error(e); }
   };
-  const deleteModel = async (id) => {
-    try { await sb.del("catalog", `id=eq.${id}`); setCatalog(p => p.filter(c => c.id !== id)); setEditModel(null); setMgrView("catalog"); } catch (e) { console.error(e); }
-  };
+  const deleteModel = async (id) => { try { await sb.del("catalog", `id=eq.${id}`); setCatalog(p => p.filter(c => c.id !== id)); setEditModel(null); setMgrView("catalog"); } catch (e) { console.error(e); } };
   const updateModelInfo = async (id) => {
-    if (!editModelName.trim() || !editModelBrand.trim() || !editModelPuffs.trim()) return;
+    if (!editModelName.trim() || !editModelBrand.trim()) return;
     try {
-      await sb.patch("catalog", { model_name: editModelName.trim(), brand: editModelBrand.trim(), puffs: editModelPuffs.trim() }, `id=eq.${id}`);
-      setCatalog(p => p.map(c => c.id === id ? { ...c, model_name: editModelName.trim(), brand: editModelBrand.trim(), puffs: editModelPuffs.trim() } : c));
+      await sb.patch("catalog", { model_name: editModelName.trim(), brand: editModelBrand.trim(), puffs: editModelPuffs.trim() || "N/A", category: editModelCategory.trim() || "Vapes" }, `id=eq.${id}`);
+      setCatalog(p => p.map(c => c.id === id ? { ...c, model_name: editModelName.trim(), brand: editModelBrand.trim(), puffs: editModelPuffs.trim() || "N/A", category: editModelCategory.trim() || "Vapes" } : c));
       setEditingModelInfo(false);
     } catch (e) { console.error(e); }
   };
@@ -229,7 +249,7 @@ export default function RestockApp() {
         <button onClick={() => setView("employee-login")} style={st.btn}>🏪 Submit Restock Request</button>
         <button onClick={() => { setAuthed(false); setPin(""); setMgrView("dashboard"); setView("manager-login"); }} style={{ ...st.btn, background: "rgba(255,255,255,0.05)", border: "1px solid #ffffff15", boxShadow: "none" }}>📊 Manager Dashboard</button>
       </div>
-      <p style={{ color: "#ffffff18", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v2.0</p>
+      <p style={{ color: "#ffffff18", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v2.1</p>
     </div>
   );
 
@@ -237,8 +257,7 @@ export default function RestockApp() {
   if (view === "manager-login") return (
     <div style={st.page}>
       <button onClick={() => setView("splash")} style={st.back}>← Back</button>
-      <h1 style={st.h1}>📊 Manager Access</h1>
-      <p style={st.sub}>Enter your PIN to continue</p>
+      <h1 style={st.h1}>📊 Manager Access</h1><p style={st.sub}>Enter your PIN to continue</p>
       <div style={{ marginBottom: "24px" }}><label style={st.label}>Manager PIN</label>
         <input type="password" placeholder="Enter PIN" value={pin} onChange={e => setPin(e.target.value)} style={st.input} onKeyDown={e => { if (e.key === "Enter" && pin === PIN) { setAuthed(true); setView("manager"); } }} />
       </div>
@@ -252,10 +271,8 @@ export default function RestockApp() {
     const ok = empName.trim().length > 0 && storeLoc.trim().length > 0;
     return (
       <div style={st.page}>
-        <button onClick={() => setView("splash")} style={st.back}>← Back</button>
-        <Banner />
-        <h1 style={st.h1}>Restock Request</h1>
-        <p style={st.sub}>Enter your info to start your order</p>
+        <button onClick={() => setView("splash")} style={st.back}>← Back</button><Banner />
+        <h1 style={st.h1}>Restock Request</h1><p style={st.sub}>Enter your info to start your order</p>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div><label style={st.label}>Your Name</label><input type="text" placeholder="e.g. Marcus" value={empName} onChange={e => setEmpName(e.target.value)} style={st.input} /></div>
           <div><label style={st.label}>Store Location</label><input type="text" placeholder="e.g. Downtown, Eastside Mall" value={storeLoc} onChange={e => setStoreLoc(e.target.value)} style={st.input} /></div>
@@ -265,41 +282,58 @@ export default function RestockApp() {
     );
   }
 
-  // EMPLOYEE PRODUCTS
+  // EMPLOYEE PRODUCTS — grouped by category then brand
   if (view === "employee-products") {
-    const brands = {};
-    Object.entries(catalogObj).forEach(([name, data]) => { if (!brands[data.brand]) brands[data.brand] = []; brands[data.brand].push(name); });
     const tu = getTotalUnits(); const ic = getFilledCount();
+    // Group: category → brand → models
+    const catBrands = {};
+    Object.entries(catalogObj).forEach(([name, data]) => {
+      const cat = data.category || "Vapes";
+      if (!catBrands[cat]) catBrands[cat] = {};
+      if (!catBrands[cat][data.brand]) catBrands[cat][data.brand] = [];
+      catBrands[cat][data.brand].push(name);
+    });
     return (
       <div style={st.page}>
-        <button onClick={() => setView("employee-login")} style={st.back}>← Back</button>
-        <Banner />
+        <button onClick={() => setView("employee-login")} style={st.back}>← Back</button><Banner />
         <h2 style={st.h2}>What Do You Need?</h2>
         <p style={{ color: "#ffffff50", fontSize: "13px", margin: "0 0 16px 0" }}>{empName} • {storeLoc}</p>
         {ic > 0 && (
           <div style={{ padding: "14px 16px", borderRadius: "12px", marginBottom: "20px", background: "linear-gradient(135deg, rgba(255,107,53,0.1), rgba(230,57,70,0.1))", border: "1px solid #FF6B3525", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div><div style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Current Request</div><div style={{ color: "#fff", fontSize: "14px", fontWeight: 600, marginTop: "2px" }}>{ic} flavor{ic > 1 ? "s" : ""} • ~{tu} units</div></div>
+            <div><div style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Current Request</div><div style={{ color: "#fff", fontSize: "14px", fontWeight: 600, marginTop: "2px" }}>{ic} item{ic > 1 ? "s" : ""} • ~{tu} units</div></div>
             <div style={{ color: "#FF6B35", fontSize: "24px", fontWeight: 900 }}>📋</div>
           </div>
         )}
-        {Object.entries(brands).map(([brand, models]) => (
-          <div key={brand} style={{ marginBottom: "20px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-              <div style={{ width: "3px", height: "16px", borderRadius: "2px", background: BRAND_COLORS[brand] || "#fff" }}></div>
-              <span style={{ color: BRAND_COLORS[brand] || "#fff", fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>{brand}</span>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {models.map(model => {
-                const p = catalogObj[model]; const o = getProductOrderCount(model);
-                return (
-                  <button key={model} onClick={() => { setSelProduct(model); setView("employee-flavors"); }}
-                    style={{ padding: "16px", borderRadius: "12px", border: `1px solid ${o > 0 ? "#FF6B3525" : "#ffffff0a"}`, background: o > 0 ? "rgba(255,107,53,0.05)" : "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div><div style={{ marginBottom: "3px" }}>{model}</div><div style={{ fontSize: "11px", color: "#ffffff30", fontWeight: 500 }}>{p.puffs} puffs • {p.flavors.length} flavors</div></div>
-                    <span style={{ fontSize: "12px", fontWeight: 700, color: o > 0 ? "#FF6B35" : "#ffffff25", whiteSpace: "nowrap" }}>{o > 0 ? `${o} requested` : "No requests"}</span>
-                  </button>
-                );
-              })}
-            </div>
+        {Object.entries(catBrands).map(([cat, brands]) => (
+          <div key={cat}>
+            {Object.keys(catBrands).length > 1 && (
+              <div style={{ padding: "8px 0", marginBottom: "8px", marginTop: "8px" }}>
+                <span style={{ color: "#ffffff70", fontSize: "15px", fontWeight: 800, letterSpacing: "-0.3px" }}>{cat}</span>
+              </div>
+            )}
+            {Object.entries(brands).map(([brand, models]) => {
+              const bc = getBrandColor(brand);
+              return (
+                <div key={brand} style={{ marginBottom: "20px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+                    <div style={{ width: "3px", height: "16px", borderRadius: "2px", background: bc }}></div>
+                    <span style={{ color: bc, fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>{brand}</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {models.map(model => {
+                      const p = catalogObj[model]; const o = getProductOrderCount(model);
+                      return (
+                        <button key={model} onClick={() => { setSelProduct(model); setView("employee-flavors"); }}
+                          style={{ padding: "16px", borderRadius: "12px", border: `1px solid ${o > 0 ? bc + "25" : "#ffffff0a"}`, background: o > 0 ? bc + "08" : "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div><div style={{ marginBottom: "3px" }}>{model}</div><div style={{ fontSize: "11px", color: "#ffffff30", fontWeight: 500 }}>{p.puffs !== "N/A" ? p.puffs + " puffs • " : ""}{p.flavors.length} items</div></div>
+                          <span style={{ fontSize: "12px", fontWeight: 700, color: o > 0 ? bc : "#ffffff25", whiteSpace: "nowrap" }}>{o > 0 ? `${o} requested` : "No requests"}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ))}
         <div style={{ marginTop: "12px", padding: "16px", borderRadius: "12px", border: "1px dashed #ffffff15", background: "rgba(255,255,255,0.015)" }}>
@@ -311,18 +345,18 @@ export default function RestockApp() {
           </div>
           {suggestions.map((sg, i) => (<div key={i} style={{ padding: "8px 12px", borderRadius: "8px", background: "#1DB95410", border: "1px solid #1DB95420", color: "#1DB954", fontSize: "12px", fontWeight: 600, marginTop: "6px" }}>✓ Suggested: {sg.text}</div>))}
         </div>
-        {ic > 0 && <button onClick={submitOrder} disabled={submitting} style={{ ...(submitting ? st.btnOff : st.btn), marginTop: "24px" }}>{submitting ? "Submitting..." : `Submit Request (${ic} flavor${ic > 1 ? "s" : ""} • ~${tu} units) →`}</button>}
+        {ic > 0 && <button onClick={submitOrder} disabled={submitting} style={{ ...(submitting ? st.btnOff : st.btn), marginTop: "24px" }}>{submitting ? "Submitting..." : `Submit Request (${ic} item${ic > 1 ? "s" : ""} • ~${tu} units) →`}</button>}
       </div>
     );
   }
 
   // EMPLOYEE FLAVORS
   if (view === "employee-flavors") {
-    const p = catalogObj[selProduct];
+    const p = catalogObj[selProduct]; const bc = getBrandColor(p.brand);
     return (
       <div style={st.page}>
         <button onClick={() => setView("employee-products")} style={st.back}>← Back to Products</button>
-        <span style={{ color: BRAND_COLORS[p.brand] || "#fff", fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" }}>{p.brand} • {p.puffs} puffs</span>
+        <span style={{ color: bc, fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" }}>{p.brand}{p.puffs !== "N/A" ? ` • ${p.puffs} puffs` : ""}</span>
         <h2 style={{ ...st.h2, marginTop: "4px", marginBottom: "4px" }}>{selProduct}</h2>
         <p style={st.sub}>How many of each do you need?</p>
         <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
@@ -363,7 +397,7 @@ export default function RestockApp() {
         <h2 style={{ ...st.h1, fontSize: "26px" }}>Request Submitted!</h2>
         <p style={{ color: "#ffffff50", fontSize: "14px", margin: "8px 0" }}><strong>{empName}</strong> • {storeLoc}</p>
         <div style={{ marginTop: "16px", padding: "16px", borderRadius: "12px", background: "rgba(255,255,255,0.03)", border: "1px solid #ffffff10", textAlign: "left", width: "100%", maxWidth: "360px" }}>
-          <div style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: "12px" }}>Order Summary — {items.length} flavors • ~{tu} units</div>
+          <div style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: "12px" }}>Order Summary — {items.length} items • ~{tu} units</div>
           {Object.entries(grouped).map(([pr, flavors]) => (
             <div key={pr} style={{ marginBottom: "12px" }}>
               <div style={{ color: "#ffffff45", fontSize: "11px", fontWeight: 700, marginBottom: "6px" }}>{pr}</div>
@@ -379,41 +413,51 @@ export default function RestockApp() {
 
   // MANAGER CATALOG
   if (view === "manager" && authed && mgrView === "catalog") {
-    const brands = {};
-    catalog.forEach(c => { if (!brands[c.brand]) brands[c.brand] = []; brands[c.brand].push(c); });
+    const catBrands = {};
+    catalog.forEach(c => { const cat = c.category || "Vapes"; if (!catBrands[cat]) catBrands[cat] = {}; if (!catBrands[cat][c.brand]) catBrands[cat][c.brand] = []; catBrands[cat][c.brand].push(c); });
     return (
       <div style={st.page}>
         <button onClick={() => setMgrView("dashboard")} style={st.back}>← Back to Dashboard</button>
-        <h1 style={st.h1}>🗂️ Manage Catalog</h1>
-        <p style={st.sub}>Add or remove models and flavors</p>
+        <h1 style={st.h1}>🗂️ Manage Catalog</h1><p style={st.sub}>Add or remove models and items</p>
         {!showAddModel ? (
-          <button onClick={() => setShowAddModel(true)} style={{ padding: "10px 18px", borderRadius: "8px", background: "#1DB95420", color: "#1DB954", border: "1px solid #1DB95430", fontSize: "13px", fontWeight: 700, cursor: "pointer", marginBottom: "20px" }}>+ Add New Model</button>
+          <button onClick={() => setShowAddModel(true)} style={{ padding: "10px 18px", borderRadius: "8px", background: "#1DB95420", color: "#1DB954", border: "1px solid #1DB95430", fontSize: "13px", fontWeight: 700, cursor: "pointer", marginBottom: "20px" }}>+ Add New Model / Product</button>
         ) : (
           <div style={{ padding: "16px", borderRadius: "12px", border: "1px solid #1DB95430", background: "#1DB95408", marginBottom: "20px" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              <input type="text" placeholder="Model name (e.g. Geek Bar Skyview 20k)" value={newModelName} onChange={e => setNewModelName(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
-              <input type="text" placeholder="Brand (e.g. Geek Bar)" value={newModelBrand} onChange={e => setNewModelBrand(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
-              <input type="text" placeholder="Puff count (e.g. 20,000)" value={newModelPuffs} onChange={e => setNewModelPuffs(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
+              <input type="text" placeholder="Product name (e.g. Geek Bar Skyview 20k)" value={newModelName} onChange={e => setNewModelName(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
+              <input type="text" placeholder="Brand (e.g. Geek Bar, RAW, etc)" value={newModelBrand} onChange={e => setNewModelBrand(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
+              <input type="text" placeholder="Category (e.g. Vapes, Accessories, CBD)" value={newModelCategory} onChange={e => setNewModelCategory(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
+              <input type="text" placeholder="Puff count (leave blank if not a vape)" value={newModelPuffs} onChange={e => setNewModelPuffs(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
               <div style={{ display: "flex", gap: "8px" }}>
-                <button onClick={addModel} style={{ padding: "10px 18px", borderRadius: "8px", background: "#1DB954", color: "#fff", border: "none", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Save Model</button>
-                <button onClick={() => { setShowAddModel(false); setNewModelName(""); setNewModelBrand(""); setNewModelPuffs(""); }} style={{ padding: "10px 18px", borderRadius: "8px", background: "transparent", color: "#ffffff40", border: "1px solid #ffffff15", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
+                <button onClick={addModel} style={{ padding: "10px 18px", borderRadius: "8px", background: "#1DB954", color: "#fff", border: "none", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Save</button>
+                <button onClick={() => { setShowAddModel(false); setNewModelName(""); setNewModelBrand(""); setNewModelPuffs(""); setNewModelCategory("Vapes"); }} style={{ padding: "10px 18px", borderRadius: "8px", background: "transparent", color: "#ffffff40", border: "1px solid #ffffff15", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
               </div>
             </div>
           </div>
         )}
-        {Object.entries(brands).map(([brand, models]) => (
-          <div key={brand} style={{ marginBottom: "20px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-              <div style={{ width: "3px", height: "16px", borderRadius: "2px", background: BRAND_COLORS[brand] || "#fff" }}></div>
-              <span style={{ color: BRAND_COLORS[brand] || "#fff", fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>{brand}</span>
+        {Object.entries(catBrands).map(([cat, brands]) => (
+          <div key={cat}>
+            <div style={{ padding: "8px 0", marginBottom: "8px", marginTop: "12px", borderBottom: "1px solid #ffffff10", paddingBottom: "10px" }}>
+              <span style={{ color: "#ffffff70", fontSize: "15px", fontWeight: 800 }}>{cat}</span>
             </div>
-            {models.map(m => (
-              <button key={m.id} onClick={() => { setEditModel(m); setMgrView("editModel"); setNewFlavor(""); }}
-                style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: "1px solid #ffffff0a", background: "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                <div><div>{m.model_name}</div><div style={{ fontSize: "11px", color: "#ffffff30", marginTop: "2px" }}>{m.puffs} puffs</div></div>
-                <span style={{ fontSize: "12px", color: "#ffffff40" }}>{(m.flavors || []).length} flavors ›</span>
-              </button>
-            ))}
+            {Object.entries(brands).map(([brand, models]) => {
+              const bc = getBrandColor(brand);
+              return (
+                <div key={brand} style={{ marginBottom: "16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                    <div style={{ width: "3px", height: "16px", borderRadius: "2px", background: bc }}></div>
+                    <span style={{ color: bc, fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>{brand}</span>
+                  </div>
+                  {models.map(m => (
+                    <button key={m.id} onClick={() => { setEditModel(m); setMgrView("editModel"); setNewFlavor(""); setEditingModelInfo(false); }}
+                      style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: "1px solid #ffffff0a", background: "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                      <div><div>{m.model_name}</div><div style={{ fontSize: "11px", color: "#ffffff30", marginTop: "2px" }}>{m.puffs !== "N/A" ? m.puffs + " puffs" : cat}</div></div>
+                      <span style={{ fontSize: "12px", color: "#ffffff40" }}>{(m.flavors || []).length} items ›</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
@@ -423,6 +467,7 @@ export default function RestockApp() {
   // MANAGER EDIT MODEL
   if (view === "manager" && authed && mgrView === "editModel" && editModel) {
     const m = catalog.find(c => c.id === editModel.id) || editModel;
+    const bc = getBrandColor(m.brand);
     return (
       <div style={st.page}>
         <button onClick={() => { setMgrView("catalog"); setEditModel(null); setEditingModelInfo(false); }} style={st.back}>← Back to Catalog</button>
@@ -430,20 +475,21 @@ export default function RestockApp() {
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
-                <span style={{ color: BRAND_COLORS[m.brand] || "#fff", fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" }}>{m.brand} • {m.puffs} puffs</span>
+                <span style={{ color: bc, fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" }}>{m.brand} {m.puffs !== "N/A" ? `• ${m.puffs} puffs` : ""} • {m.category || "Vapes"}</span>
                 <h2 style={{ ...st.h2, marginTop: "4px" }}>{m.model_name}</h2>
               </div>
-              <button onClick={() => { setEditingModelInfo(true); setEditModelName(m.model_name); setEditModelBrand(m.brand); setEditModelPuffs(m.puffs); }}
+              <button onClick={() => { setEditingModelInfo(true); setEditModelName(m.model_name); setEditModelBrand(m.brand); setEditModelPuffs(m.puffs || ""); setEditModelCategory(m.category || "Vapes"); }}
                 style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid #ffffff20", background: "transparent", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer", marginTop: "4px" }}>✏️ Edit</button>
             </div>
-            <p style={st.sub}>{(m.flavors || []).length} flavors</p>
+            <p style={st.sub}>{(m.flavors || []).length} items</p>
           </div>
         ) : (
           <div style={{ padding: "16px", borderRadius: "12px", border: "1px solid #00B4D830", background: "#00B4D808", marginBottom: "20px" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               <div><label style={st.label}>Model Name</label><input type="text" value={editModelName} onChange={e => setEditModelName(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} /></div>
               <div><label style={st.label}>Brand</label><input type="text" value={editModelBrand} onChange={e => setEditModelBrand(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} /></div>
-              <div><label style={st.label}>Puff Count</label><input type="text" value={editModelPuffs} onChange={e => setEditModelPuffs(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} /></div>
+              <div><label style={st.label}>Category</label><input type="text" value={editModelCategory} onChange={e => setEditModelCategory(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} /></div>
+              <div><label style={st.label}>Puff Count</label><input type="text" value={editModelPuffs} onChange={e => setEditModelPuffs(e.target.value)} placeholder="Leave blank if not a vape" style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} /></div>
               <div style={{ display: "flex", gap: "8px" }}>
                 <button onClick={() => updateModelInfo(m.id)} style={{ padding: "10px 18px", borderRadius: "8px", background: "#00B4D8", color: "#fff", border: "none", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Save Changes</button>
                 <button onClick={() => setEditingModelInfo(false)} style={{ padding: "10px 18px", borderRadius: "8px", background: "transparent", color: "#ffffff40", border: "1px solid #ffffff15", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
@@ -452,7 +498,7 @@ export default function RestockApp() {
           </div>
         )}
         <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
-          <input type="text" placeholder="Add new flavor..." value={newFlavor} onChange={e => setNewFlavor(e.target.value)}
+          <input type="text" placeholder="Add new item..." value={newFlavor} onChange={e => setNewFlavor(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && newFlavor.trim()) { addFlavorToModel(m.id, newFlavor); setNewFlavor(""); } }}
             style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
           <button onClick={() => { if (newFlavor.trim()) { addFlavorToModel(m.id, newFlavor); setNewFlavor(""); } }}
@@ -468,7 +514,7 @@ export default function RestockApp() {
         </div>
         <div style={{ marginTop: "40px", padding: "16px", borderRadius: "12px", border: "1px solid #E6394630", background: "rgba(230,57,70,0.05)" }}>
           <p style={{ color: "#E63946", fontSize: "12px", fontWeight: 700, margin: "0 0 10px 0" }}>DANGER ZONE</p>
-          <button onClick={() => { if (window.confirm(`Delete ${m.model_name} and all its flavors?`)) deleteModel(m.id); }}
+          <button onClick={() => { if (window.confirm(`Delete ${m.model_name} and all its items?`)) deleteModel(m.id); }}
             style={{ padding: "10px 18px", borderRadius: "8px", background: "#E63946", color: "#fff", border: "none", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Delete Entire Model</button>
         </div>
       </div>
@@ -481,8 +527,7 @@ export default function RestockApp() {
     return (
       <div style={st.page}>
         <button onClick={() => { setView("splash"); setAuthed(false); }} style={st.back}>← Back</button>
-        <h1 style={st.h1}>📊 Dashboard</h1>
-        <p style={st.sub}>{loading ? "Loading..." : `${reports.length} submission${reports.length !== 1 ? "s" : ""} today`}</p>
+        <h1 style={st.h1}>📊 Dashboard</h1><p style={st.sub}>{loading ? "Loading..." : `${reports.length} submission${reports.length !== 1 ? "s" : ""} today`}</p>
         <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
           <button onClick={loadMgr} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff50", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🔄 Refresh</button>
           <button onClick={() => setMgrView("catalog")} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #6C5CE730", background: "#6C5CE710", color: "#6C5CE7", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🗂️ Manage Catalog</button>
@@ -522,11 +567,7 @@ export default function RestockApp() {
         </div>
         <div style={{ marginBottom: "8px" }}><span style={{ color: "#E63946", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>⏳ Still Waiting ({pending.length})</span></div>
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "12px" }}>
-          {pending.map(s => (
-            <span key={s.id} style={{ padding: "7px 12px", borderRadius: "8px", background: "rgba(230,57,70,0.07)", border: "1px solid #E6394620", fontSize: "12px", fontWeight: 600, color: "#E63946", display: "flex", alignItems: "center", gap: "6px" }}>
-              {s.name}<button onClick={() => removeStore(s.id)} style={{ background: "none", border: "none", color: "#E6394680", cursor: "pointer", fontSize: "10px", padding: "0 2px" }}>✕</button>
-            </span>
-          ))}
+          {pending.map(s => (<span key={s.id} style={{ padding: "7px 12px", borderRadius: "8px", background: "rgba(230,57,70,0.07)", border: "1px solid #E6394620", fontSize: "12px", fontWeight: 600, color: "#E63946", display: "flex", alignItems: "center", gap: "6px" }}>{s.name}<button onClick={() => removeStore(s.id)} style={{ background: "none", border: "none", color: "#E6394680", cursor: "pointer", fontSize: "10px", padding: "0 2px" }}>✕</button></span>))}
           {pending.length === 0 && stores.length > 0 && <span style={{ color: "#1DB954", fontSize: "12px", fontWeight: 600 }}>✓ All stores submitted!</span>}
         </div>
         <div style={{ display: "flex", gap: "8px", marginBottom: "24px" }}>
@@ -561,16 +602,16 @@ export default function RestockApp() {
         <h2 style={st.h2}>{r.employee_name}'s Request</h2>
         <p style={{ color: "#ffffff45", fontSize: "13px", margin: "4px 0 20px 0" }}>{r.store_location} • {fmtTime(r.created_at)}</p>
         <div style={{ padding: "20px", borderRadius: "14px", marginBottom: "20px", background: "linear-gradient(135deg, rgba(255,107,53,0.08), rgba(230,57,70,0.08))", border: "1px solid #FF6B3520", display: "flex", justifyContent: "space-around", textAlign: "center" }}>
-          <div><div style={{ fontSize: "28px", fontWeight: 900, color: "#FF6B35", lineHeight: 1 }}>{r.total_flavors}</div><div style={{ fontSize: "11px", fontWeight: 700, color: "#FF6B35", marginTop: "4px", opacity: 0.7 }}>FLAVORS</div></div>
+          <div><div style={{ fontSize: "28px", fontWeight: 900, color: "#FF6B35", lineHeight: 1 }}>{r.total_flavors}</div><div style={{ fontSize: "11px", fontWeight: 700, color: "#FF6B35", marginTop: "4px", opacity: 0.7 }}>ITEMS</div></div>
           <div style={{ width: "1px", background: "#ffffff10" }}></div>
           <div><div style={{ fontSize: "28px", fontWeight: 900, color: "#E63946", lineHeight: 1 }}>~{r.total_units}</div><div style={{ fontSize: "11px", fontWeight: 700, color: "#E63946", marginTop: "4px", opacity: 0.7 }}>TOTAL UNITS</div></div>
         </div>
         {Object.entries(grp).map(([product, items]) => {
-          const bn = catalogObj[product]?.brand;
+          const bn = catalogObj[product]?.brand; const bc = getBrandColor(bn);
           return (
             <div key={product} style={{ marginBottom: "16px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                <div style={{ width: "3px", height: "14px", borderRadius: "2px", background: BRAND_COLORS[bn] || "#fff" }}></div>
+                <div style={{ width: "3px", height: "14px", borderRadius: "2px", background: bc }}></div>
                 <span style={{ color: "#ffffff60", fontSize: "12px", fontWeight: 700 }}>{product}</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
