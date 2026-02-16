@@ -81,6 +81,10 @@ export default function RestockApp() {
   const [newModelBrand, setNewModelBrand] = useState("");
   const [newModelPuffs, setNewModelPuffs] = useState("");
   const [showAddModel, setShowAddModel] = useState(false);
+  const [editingModelInfo, setEditingModelInfo] = useState(false);
+  const [editModelName, setEditModelName] = useState("");
+  const [editModelBrand, setEditModelBrand] = useState("");
+  const [editModelPuffs, setEditModelPuffs] = useState("");
 
   const PIN = "2588";
 
@@ -167,6 +171,14 @@ export default function RestockApp() {
   };
   const deleteModel = async (id) => {
     try { await sb.del("catalog", `id=eq.${id}`); setCatalog(p => p.filter(c => c.id !== id)); setEditModel(null); setMgrView("catalog"); } catch (e) { console.error(e); }
+  };
+  const updateModelInfo = async (id) => {
+    if (!editModelName.trim() || !editModelBrand.trim() || !editModelPuffs.trim()) return;
+    try {
+      await sb.patch("catalog", { model_name: editModelName.trim(), brand: editModelBrand.trim(), puffs: editModelPuffs.trim() }, `id=eq.${id}`);
+      setCatalog(p => p.map(c => c.id === id ? { ...c, model_name: editModelName.trim(), brand: editModelBrand.trim(), puffs: editModelPuffs.trim() } : c));
+      setEditingModelInfo(false);
+    } catch (e) { console.error(e); }
   };
 
   const setOrder = (product, flavor, value) => {
@@ -413,10 +425,32 @@ export default function RestockApp() {
     const m = catalog.find(c => c.id === editModel.id) || editModel;
     return (
       <div style={st.page}>
-        <button onClick={() => { setMgrView("catalog"); setEditModel(null); }} style={st.back}>← Back to Catalog</button>
-        <span style={{ color: BRAND_COLORS[m.brand] || "#fff", fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" }}>{m.brand} • {m.puffs} puffs</span>
-        <h2 style={{ ...st.h2, marginTop: "4px" }}>{m.model_name}</h2>
-        <p style={st.sub}>{(m.flavors || []).length} flavors</p>
+        <button onClick={() => { setMgrView("catalog"); setEditModel(null); setEditingModelInfo(false); }} style={st.back}>← Back to Catalog</button>
+        {!editingModelInfo ? (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div>
+                <span style={{ color: BRAND_COLORS[m.brand] || "#fff", fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" }}>{m.brand} • {m.puffs} puffs</span>
+                <h2 style={{ ...st.h2, marginTop: "4px" }}>{m.model_name}</h2>
+              </div>
+              <button onClick={() => { setEditingModelInfo(true); setEditModelName(m.model_name); setEditModelBrand(m.brand); setEditModelPuffs(m.puffs); }}
+                style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid #ffffff20", background: "transparent", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer", marginTop: "4px" }}>✏️ Edit</button>
+            </div>
+            <p style={st.sub}>{(m.flavors || []).length} flavors</p>
+          </div>
+        ) : (
+          <div style={{ padding: "16px", borderRadius: "12px", border: "1px solid #00B4D830", background: "#00B4D808", marginBottom: "20px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div><label style={st.label}>Model Name</label><input type="text" value={editModelName} onChange={e => setEditModelName(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} /></div>
+              <div><label style={st.label}>Brand</label><input type="text" value={editModelBrand} onChange={e => setEditModelBrand(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} /></div>
+              <div><label style={st.label}>Puff Count</label><input type="text" value={editModelPuffs} onChange={e => setEditModelPuffs(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} /></div>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button onClick={() => updateModelInfo(m.id)} style={{ padding: "10px 18px", borderRadius: "8px", background: "#00B4D8", color: "#fff", border: "none", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Save Changes</button>
+                <button onClick={() => setEditingModelInfo(false)} style={{ padding: "10px 18px", borderRadius: "8px", background: "transparent", color: "#ffffff40", border: "1px solid #ffffff15", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
         <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
           <input type="text" placeholder="Add new flavor..." value={newFlavor} onChange={e => setNewFlavor(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && newFlavor.trim()) { addFlavorToModel(m.id, newFlavor); setNewFlavor(""); } }}
