@@ -609,15 +609,15 @@ export default function RestockApp() {
         {Object.entries(grp).map(([product, items]) => {
           const bn = catalogObj[product]?.brand; const bc = getBrandColor(bn);
           return (
-            <div key={product} style={{ marginBottom: "16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                <div style={{ width: "3px", height: "14px", borderRadius: "2px", background: bc }}></div>
-                <span style={{ color: "#ffffff60", fontSize: "12px", fontWeight: 700 }}>{product}</span>
+            <div key={product} style={{ marginBottom: "20px", borderLeft: `4px solid ${bc}`, borderRadius: "12px", background: `${bc}08`, padding: "16px", paddingLeft: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                <span style={{ color: bc, fontSize: "14px", fontWeight: 800, letterSpacing: "0.3px" }}>{product}</span>
+                <span style={{ color: bc, fontSize: "11px", fontWeight: 700, opacity: 0.6 }}>{items.length} item{items.length > 1 ? "s" : ""}</span>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 {items.sort((a, b) => (b.qty === "5+" ? 6 : parseInt(b.qty)) - (a.qty === "5+" ? 6 : parseInt(a.qty))).map(({ flavor, qty }) => {
                   const col = getQtyColor(qty);
-                  return (<div key={flavor} style={{ padding: "12px 14px", borderRadius: "8px", background: col + "08", border: `1px solid ${col}15`, display: "flex", justifyContent: "space-between", alignItems: "center" }}><span style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>{flavor}</span><span style={{ fontSize: "18px", fontWeight: 800, color: col, minWidth: "36px", textAlign: "right" }}>×{qty}</span></div>);
+                  return (<div key={flavor} style={{ padding: "10px 12px", borderRadius: "8px", background: "rgba(0,0,0,0.25)", display: "flex", justifyContent: "space-between", alignItems: "center" }}><span style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>{flavor}</span><span style={{ fontSize: "18px", fontWeight: 800, color: col, minWidth: "36px", textAlign: "right" }}>×{qty}</span></div>);
                 })}
               </div>
             </div>
