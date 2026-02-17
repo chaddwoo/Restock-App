@@ -278,20 +278,37 @@ export default function RestockApp() {
     } catch (e) { console.error(e); }
   };
 
-  const setOrder = (product, flavor, value) => {
-    const key = `${product}|||${flavor}`;
-    const prev = orderData[key];
-    const isRemoving = value === "skip" || prev === value;
-    const qtyNum = (v) => v === "5+" ? 6 : parseInt(v) || 0;
-    const isIncreasing = !isRemoving && (!prev || qtyNum(value) > qtyNum(prev));
+  // Soft click for employee quantity buttons
+  const playClick = () => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const t = ctx.currentTime;
+      // White noise burst shaped into a soft click
+      const bufferSize = ctx.sampleRate * 0.04;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) { data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 8); }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      // Bandpass filter to make it sound like a soft tap
+      const filter = ctx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.value = 3500;
+      filter.Q.value = 0.7;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.25, t);
+      gain.gain.linearRampToValueAtTime(0, t + 0.04);
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      noise.start(t);
+      noise.stop(t + 0.05);
+      setTimeout(() => ctx.close(), 150);
+    } catch (e) {}
+  };
 
-    if (isRemoving) {
-      playTone(520, "down");
-    } else if (isIncreasing) {
-      playTone(440 + qtyNum(value) * 40, "up");
-    } else {
-      playTone(480, "down");
-    }
+  const setOrder = (product, flavor, value) => {
+    playClick();
 
     setOrderData(prev => {
       const key = `${product}|||${flavor}`;
