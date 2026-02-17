@@ -160,115 +160,47 @@ export default function RestockApp() {
       let tu = 0; items.forEach(([, v]) => { tu += v === "5+" ? 5 : parseInt(v) || 0; });
       await sb.post("submissions", { employee_name: empName.trim(), store_location: storeLoc.trim(), items: orderData, total_flavors: items.length, total_units: tu });
       for (const sg of suggestions) { await sb.post("suggestions", { suggestion_text: sg.text, employee_name: sg.from, store_location: sg.store }); }
-      setView("employee-done");
+      sndSubmit(); setView("employee-done");
     } catch (e) { console.error(e); alert("Error submitting — check connection."); }
     setSubmitting(false);
   };
 
-  // Sound effects
-  const playTone = (freq, direction) => {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = "sine";
-      const t = ctx.currentTime;
-      if (direction === "up") {
-        osc.frequency.setValueAtTime(freq, t);
-        osc.frequency.linearRampToValueAtTime(freq * 1.25, t + 0.15);
-        gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(0.18, t + 0.03);
-        gain.gain.linearRampToValueAtTime(0.14, t + 0.15);
-        gain.gain.linearRampToValueAtTime(0, t + 0.35);
-      } else {
-        osc.frequency.setValueAtTime(freq, t);
-        osc.frequency.linearRampToValueAtTime(freq * 0.65, t + 0.2);
-        gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(0.14, t + 0.03);
-        gain.gain.linearRampToValueAtTime(0.1, t + 0.15);
-        gain.gain.linearRampToValueAtTime(0, t + 0.35);
-      }
-      osc.start(t);
-      osc.stop(t + 0.4);
-      setTimeout(() => ctx.close(), 500);
-    } catch (e) {}
-  };
+  // Sound effects — custom audio files
+  const playSound = (src) => { try { const a = new Audio(process.env.PUBLIC_URL + src); a.volume = 0.5; a.play(); } catch (e) {} };
+  const sndClick = () => playSound("/snd-click.wav");
+  const sndBack = () => playSound("/snd-back.wav");
+  const sndSubmit = () => playSound("/snd-submit.wav");
+  const sndLogin = () => playSound("/snd-login.wav");
+  const sndAdd = () => playSound("/snd-add.wav");
+  const sndRemove = () => playSound("/snd-remove.wav");
 
-  const playChime = (type) => {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const t = ctx.currentTime;
-      if (type === "welcome") {
-        // Three-note rising chime: C5 → E5 → G5
-        const notes = [523, 659, 784];
-        notes.forEach((freq, i) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.type = "sine";
-          const start = t + i * 0.12;
-          osc.frequency.setValueAtTime(freq, start);
-          gain.gain.setValueAtTime(0, start);
-          gain.gain.linearRampToValueAtTime(0.15, start + 0.03);
-          gain.gain.linearRampToValueAtTime(0.12, start + 0.2);
-          gain.gain.linearRampToValueAtTime(0, start + 0.4);
-          osc.start(start);
-          osc.stop(start + 0.45);
-        });
-        setTimeout(() => ctx.close(), 900);
-      } else if (type === "success") {
-        // Two-note confirmation: G5 → C6
-        const notes = [784, 1047];
-        notes.forEach((freq, i) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.type = "sine";
-          const start = t + i * 0.15;
-          osc.frequency.setValueAtTime(freq, start);
-          gain.gain.setValueAtTime(0, start);
-          gain.gain.linearRampToValueAtTime(0.18, start + 0.03);
-          gain.gain.linearRampToValueAtTime(0.14, start + 0.25);
-          gain.gain.linearRampToValueAtTime(0, start + 0.5);
-          osc.start(start);
-          osc.stop(start + 0.55);
-        });
-        setTimeout(() => ctx.close(), 1000);
-      }
-    } catch (e) {}
-  };
-
-  const deleteSubmission = async (id) => { try { await sb.del("submissions", `id=eq.${id}`); playTone(520, "down"); setReports(p => p.filter(r => r.id !== id)); if (selReport && selReport.id === id) setSelReport(null); } catch (e) { console.error(e); } };
+  const deleteSubmission = async (id) => { try { await sb.del("submissions", `id=eq.${id}`); sndRemove(); setReports(p => p.filter(r => r.id !== id)); if (selReport && selReport.id === id) setSelReport(null); } catch (e) { console.error(e); } };
   const saveBanner = async () => { try { await sb.patch("banner", { message: bannerInput, active: true, updated_at: new Date().toISOString() }, "id=eq.1"); setBannerText(bannerInput); setBannerOn(true); setEditBanner(false); } catch (e) { console.error(e); } };
   const toggleBanner = async () => { try { await sb.patch("banner", { active: !bannerOn, updated_at: new Date().toISOString() }, "id=eq.1"); setBannerOn(!bannerOn); } catch (e) { console.error(e); } };
-  const dismissSug = async (id) => { try { await sb.patch("suggestions", { status: "dismissed" }, `id=eq.${id}`); playTone(520, "down"); setAllSugs(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
-  const approveSug = async (id) => { try { await sb.patch("suggestions", { status: "approved" }, `id=eq.${id}`); playTone(480, "up"); setAllSugs(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
-  const addStore = async () => { if (!newStore.trim()) return; try { await sb.post("stores", { name: newStore.trim() }); playTone(480, "up"); setNewStore(""); loadMgr(); } catch (e) { console.error(e); } };
-  const removeStore = async (id) => { try { await sb.del("stores", `id=eq.${id}`); playTone(520, "down"); setStores(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
+  const dismissSug = async (id) => { try { await sb.patch("suggestions", { status: "dismissed" }, `id=eq.${id}`); sndRemove(); setAllSugs(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
+  const approveSug = async (id) => { try { await sb.patch("suggestions", { status: "approved" }, `id=eq.${id}`); sndAdd(); setAllSugs(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
+  const addStore = async () => { if (!newStore.trim()) return; try { await sb.post("stores", { name: newStore.trim() }); sndAdd(); setNewStore(""); loadMgr(); } catch (e) { console.error(e); } };
+  const removeStore = async (id) => { try { await sb.del("stores", `id=eq.${id}`); sndRemove(); setStores(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
 
   const addFlavorToModel = async (modelId, flavor) => {
     const model = catalog.find(c => c.id === modelId); if (!model || !flavor.trim()) return;
     const updated = [...(model.flavors || []), flavor.trim()].sort();
-    try { await sb.patch("catalog", { flavors: updated }, `id=eq.${modelId}`); playTone(480, "up"); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated } : c)); } catch (e) { console.error(e); }
+    try { await sb.patch("catalog", { flavors: updated }, `id=eq.${modelId}`); sndAdd(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated } : c)); } catch (e) { console.error(e); }
   };
   const removeFlavorFromModel = async (modelId, flavor) => {
     const model = catalog.find(c => c.id === modelId); if (!model) return;
     const updated = (model.flavors || []).filter(f => f !== flavor);
-    try { await sb.patch("catalog", { flavors: updated }, `id=eq.${modelId}`); playTone(520, "down"); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated } : c)); } catch (e) { console.error(e); }
+    try { await sb.patch("catalog", { flavors: updated }, `id=eq.${modelId}`); sndRemove(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated } : c)); } catch (e) { console.error(e); }
   };
   const addModel = async () => {
     if (!newModelName.trim() || !newModelBrand.trim()) return;
     try {
       const res = await sb.post("catalog", { model_name: newModelName.trim(), brand: newModelBrand.trim(), puffs: newModelPuffs.trim() || "N/A", category: newModelCategory.trim() || "Vapes", flavors: [] });
-      if (res && res[0]) { playTone(480, "up"); setCatalog(p => [...p, res[0]].sort((a, b) => (a.category || "").localeCompare(b.category || "") || a.brand.localeCompare(b.brand) || a.model_name.localeCompare(b.model_name))); }
+      if (res && res[0]) { sndAdd(); setCatalog(p => [...p, res[0]].sort((a, b) => (a.category || "").localeCompare(b.category || "") || a.brand.localeCompare(b.brand) || a.model_name.localeCompare(b.model_name))); }
       setNewModelName(""); setNewModelBrand(""); setNewModelPuffs(""); setNewModelCategory("Vapes"); setShowAddModel(false);
     } catch (e) { console.error(e); }
   };
-  const deleteModel = async (id) => { try { await sb.del("catalog", `id=eq.${id}`); playTone(520, "down"); setCatalog(p => p.filter(c => c.id !== id)); setEditModel(null); setMgrView("catalog"); } catch (e) { console.error(e); } };
+  const deleteModel = async (id) => { try { await sb.del("catalog", `id=eq.${id}`); sndRemove(); setCatalog(p => p.filter(c => c.id !== id)); setEditModel(null); setMgrView("catalog"); } catch (e) { console.error(e); } };
   const updateModelInfo = async (id) => {
     if (!editModelName.trim() || !editModelBrand.trim()) return;
     try {
@@ -278,37 +210,8 @@ export default function RestockApp() {
     } catch (e) { console.error(e); }
   };
 
-  // Soft click for employee quantity buttons
-  const playClick = () => {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const t = ctx.currentTime;
-      // White noise burst shaped into a soft click
-      const bufferSize = ctx.sampleRate * 0.04;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) { data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 8); }
-      const noise = ctx.createBufferSource();
-      noise.buffer = buffer;
-      // Bandpass filter to make it sound like a soft tap
-      const filter = ctx.createBiquadFilter();
-      filter.type = "bandpass";
-      filter.frequency.value = 3500;
-      filter.Q.value = 0.7;
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.25, t);
-      gain.gain.linearRampToValueAtTime(0, t + 0.04);
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-      noise.start(t);
-      noise.stop(t + 0.05);
-      setTimeout(() => ctx.close(), 150);
-    } catch (e) {}
-  };
-
   const setOrder = (product, flavor, value) => {
-    playClick();
+    sndClick();
 
     setOrderData(prev => {
       const key = `${product}|||${flavor}`;
@@ -364,13 +267,13 @@ export default function RestockApp() {
   // MANAGER LOGIN
   if (view === "manager-login") return (
     <div style={st.page}>
-      <button onClick={() => setView("splash")} style={st.back}>← Back</button>
+      <button onClick={() => { sndBack(); setView("splash"); }} style={st.back}>← Back</button>
       <h1 style={st.h1}>📊 Manager Access</h1><p style={st.sub}>Enter your PIN to continue</p>
       <div style={{ marginBottom: "24px" }}><label style={st.label}>Manager PIN</label>
-        <input type="password" placeholder="Enter PIN" value={pin} onChange={e => setPin(e.target.value)} style={st.input} onKeyDown={e => { if (e.key === "Enter" && pin === PIN) { playChime("success"); setAuthed(true); setView("manager"); } }} />
+        <input type="password" placeholder="Enter PIN" value={pin} onChange={e => setPin(e.target.value)} style={st.input} onKeyDown={e => { if (e.key === "Enter" && pin === PIN) { sndLogin(); setAuthed(true); setView("manager"); } }} />
       </div>
       {pin.length >= 4 && pin !== PIN && <p style={{ color: "#E63946", fontSize: "13px", marginBottom: "12px" }}>Incorrect PIN</p>}
-      <button onClick={() => { if (pin === PIN) { playChime("success"); setAuthed(true); setView("manager"); } }} style={pin === PIN ? st.btn : st.btnOff} disabled={pin !== PIN}>Enter Dashboard →</button>
+      <button onClick={() => { if (pin === PIN) { sndLogin(); setAuthed(true); setView("manager"); } }} style={pin === PIN ? st.btn : st.btnOff} disabled={pin !== PIN}>Enter Dashboard →</button>
     </div>
   );
 
@@ -379,13 +282,13 @@ export default function RestockApp() {
     const ok = empName.trim().length > 0 && storeLoc.trim().length > 0;
     return (
       <div style={st.page}>
-        <button onClick={() => setView("splash")} style={st.back}>← Back</button><Banner />
+        <button onClick={() => { sndBack(); setView("splash"); }} style={st.back}>← Back</button><Banner />
         <h1 style={st.h1}>Restock Request</h1><p style={st.sub}>Enter your info to start your order</p>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div><label style={st.label}>Your Name</label><input type="text" placeholder="e.g. Marcus" value={empName} onChange={e => setEmpName(e.target.value)} style={st.input} /></div>
           <div><label style={st.label}>Store Location</label><input type="text" placeholder="e.g. Downtown, Eastside Mall" value={storeLoc} onChange={e => setStoreLoc(e.target.value)} style={st.input} /></div>
         </div>
-        <button onClick={() => { if (ok) { playChime("welcome"); setView("employee-products"); } }} style={{ ...(ok ? st.btn : st.btnOff), marginTop: "32px" }} disabled={!ok}>Continue →</button>
+        <button onClick={() => { if (ok) { sndLogin(); setView("employee-products"); } }} style={{ ...(ok ? st.btn : st.btnOff), marginTop: "32px" }} disabled={!ok}>Continue →</button>
       </div>
     );
   }
@@ -403,7 +306,7 @@ export default function RestockApp() {
     });
     return (
       <div style={st.page}>
-        <button onClick={() => setView("employee-login")} style={st.back}>← Back</button><Banner />
+        <button onClick={() => { sndBack(); setView("employee-login"); }} style={st.back}>← Back</button><Banner />
         <h2 style={st.h2}>What Do You Need?</h2>
         <p style={{ color: "#ffffff50", fontSize: "13px", margin: "0 0 16px 0" }}>{empName} • {storeLoc}</p>
         {ic > 0 && (
@@ -463,7 +366,7 @@ export default function RestockApp() {
     const p = catalogObj[selProduct]; const bc = getBrandColor(p.brand);
     return (
       <div style={st.page}>
-        <button onClick={() => setView("employee-products")} style={st.back}>← Back to Products</button>
+        <button onClick={() => { sndBack(); setView("employee-products"); }} style={st.back}>← Back to Products</button>
         <span style={{ color: bc, fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" }}>{p.brand}{p.puffs !== "N/A" ? ` • ${p.puffs} puffs` : ""}</span>
         <h2 style={{ ...st.h2, marginTop: "4px", marginBottom: "4px" }}>{selProduct}</h2>
         <p style={st.sub}>How many of each do you need?</p>
@@ -525,7 +428,7 @@ export default function RestockApp() {
     catalog.forEach(c => { const cat = c.category || "Vapes"; if (!catBrands[cat]) catBrands[cat] = {}; if (!catBrands[cat][c.brand]) catBrands[cat][c.brand] = []; catBrands[cat][c.brand].push(c); });
     return (
       <div style={st.page}>
-        <button onClick={() => setMgrView("dashboard")} style={st.back}>← Back to Dashboard</button>
+        <button onClick={() => { sndBack(); setMgrView("dashboard"); }} style={st.back}>← Back to Dashboard</button>
         <h1 style={st.h1}>🗂️ Manage Catalog</h1><p style={st.sub}>Add or remove models and items</p>
         {!showAddModel ? (
           <button onClick={() => setShowAddModel(true)} style={{ padding: "10px 18px", borderRadius: "8px", background: "#1DB95420", color: "#1DB954", border: "1px solid #1DB95430", fontSize: "13px", fontWeight: 700, cursor: "pointer", marginBottom: "20px" }}>+ Add New Model / Product</button>
@@ -578,7 +481,7 @@ export default function RestockApp() {
     const bc = getBrandColor(m.brand);
     return (
       <div style={st.page}>
-        <button onClick={() => { setMgrView("catalog"); setEditModel(null); setEditingModelInfo(false); }} style={st.back}>← Back to Catalog</button>
+        <button onClick={() => { sndBack(); setMgrView("catalog"); setEditModel(null); setEditingModelInfo(false); }} style={st.back}>← Back to Catalog</button>
         {!editingModelInfo ? (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -634,7 +537,7 @@ export default function RestockApp() {
     const pending = getPending();
     return (
       <div style={st.page}>
-        <button onClick={() => { setView("splash"); setAuthed(false); }} style={st.back}>← Back</button>
+        <button onClick={() => { sndBack(); setView("splash"); setAuthed(false); }} style={st.back}>← Back</button>
         <h1 style={st.h1}>📊 Dashboard</h1><p style={st.sub}>{loading ? "Loading..." : `${reports.length} submission${reports.length !== 1 ? "s" : ""} today`}</p>
         <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
           <button onClick={loadMgr} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff50", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🔄 Refresh</button>
@@ -706,7 +609,7 @@ export default function RestockApp() {
     const grp = {}; entries.forEach(([k, q]) => { const [pr, fl] = k.split("|||"); if (!grp[pr]) grp[pr] = []; grp[pr].push({ flavor: fl, qty: q }); });
     return (
       <div style={st.page}>
-        <button onClick={() => setSelReport(null)} style={st.back}>← Back to Dashboard</button>
+        <button onClick={() => { sndBack(); setSelReport(null); }} style={st.back}>← Back to Dashboard</button>
         <h2 style={st.h2}>{r.employee_name}'s Request</h2>
         <p style={{ color: "#ffffff45", fontSize: "13px", margin: "4px 0 20px 0" }}>{r.store_location} • {fmtTime(r.created_at)}</p>
         <div style={{ padding: "20px", borderRadius: "14px", marginBottom: "20px", background: "linear-gradient(135deg, rgba(255,107,53,0.08), rgba(230,57,70,0.08))", border: "1px solid #FF6B3520", display: "flex", justifyContent: "space-around", textAlign: "center" }}>
