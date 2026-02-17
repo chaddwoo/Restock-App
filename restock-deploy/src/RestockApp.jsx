@@ -165,33 +165,59 @@ export default function RestockApp() {
     setSubmitting(false);
   };
 
-  const deleteSubmission = async (id) => { try { await sb.del("submissions", `id=eq.${id}`); setReports(p => p.filter(r => r.id !== id)); if (selReport && selReport.id === id) setSelReport(null); } catch (e) { console.error(e); } };
+  // Sound effects
+  const playTone = (freq, direction) => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sine";
+      if (direction === "up") {
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(freq * 1.3, ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.12);
+      } else {
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(freq * 0.7, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15);
+      }
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.2);
+      setTimeout(() => ctx.close(), 300);
+    } catch (e) {}
+  };
+
+  const deleteSubmission = async (id) => { try { await sb.del("submissions", `id=eq.${id}`); playTone(520, "down"); setReports(p => p.filter(r => r.id !== id)); if (selReport && selReport.id === id) setSelReport(null); } catch (e) { console.error(e); } };
   const saveBanner = async () => { try { await sb.patch("banner", { message: bannerInput, active: true, updated_at: new Date().toISOString() }, "id=eq.1"); setBannerText(bannerInput); setBannerOn(true); setEditBanner(false); } catch (e) { console.error(e); } };
   const toggleBanner = async () => { try { await sb.patch("banner", { active: !bannerOn, updated_at: new Date().toISOString() }, "id=eq.1"); setBannerOn(!bannerOn); } catch (e) { console.error(e); } };
-  const dismissSug = async (id) => { try { await sb.patch("suggestions", { status: "dismissed" }, `id=eq.${id}`); setAllSugs(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
-  const approveSug = async (id) => { try { await sb.patch("suggestions", { status: "approved" }, `id=eq.${id}`); setAllSugs(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
-  const addStore = async () => { if (!newStore.trim()) return; try { await sb.post("stores", { name: newStore.trim() }); setNewStore(""); loadMgr(); } catch (e) { console.error(e); } };
-  const removeStore = async (id) => { try { await sb.del("stores", `id=eq.${id}`); setStores(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
+  const dismissSug = async (id) => { try { await sb.patch("suggestions", { status: "dismissed" }, `id=eq.${id}`); playTone(520, "down"); setAllSugs(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
+  const approveSug = async (id) => { try { await sb.patch("suggestions", { status: "approved" }, `id=eq.${id}`); playTone(480, "up"); setAllSugs(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
+  const addStore = async () => { if (!newStore.trim()) return; try { await sb.post("stores", { name: newStore.trim() }); playTone(480, "up"); setNewStore(""); loadMgr(); } catch (e) { console.error(e); } };
+  const removeStore = async (id) => { try { await sb.del("stores", `id=eq.${id}`); playTone(520, "down"); setStores(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
 
   const addFlavorToModel = async (modelId, flavor) => {
     const model = catalog.find(c => c.id === modelId); if (!model || !flavor.trim()) return;
     const updated = [...(model.flavors || []), flavor.trim()].sort();
-    try { await sb.patch("catalog", { flavors: updated }, `id=eq.${modelId}`); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated } : c)); } catch (e) { console.error(e); }
+    try { await sb.patch("catalog", { flavors: updated }, `id=eq.${modelId}`); playTone(480, "up"); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated } : c)); } catch (e) { console.error(e); }
   };
   const removeFlavorFromModel = async (modelId, flavor) => {
     const model = catalog.find(c => c.id === modelId); if (!model) return;
     const updated = (model.flavors || []).filter(f => f !== flavor);
-    try { await sb.patch("catalog", { flavors: updated }, `id=eq.${modelId}`); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated } : c)); } catch (e) { console.error(e); }
+    try { await sb.patch("catalog", { flavors: updated }, `id=eq.${modelId}`); playTone(520, "down"); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated } : c)); } catch (e) { console.error(e); }
   };
   const addModel = async () => {
     if (!newModelName.trim() || !newModelBrand.trim()) return;
     try {
       const res = await sb.post("catalog", { model_name: newModelName.trim(), brand: newModelBrand.trim(), puffs: newModelPuffs.trim() || "N/A", category: newModelCategory.trim() || "Vapes", flavors: [] });
-      if (res && res[0]) setCatalog(p => [...p, res[0]].sort((a, b) => (a.category || "").localeCompare(b.category || "") || a.brand.localeCompare(b.brand) || a.model_name.localeCompare(b.model_name)));
+      if (res && res[0]) { playTone(480, "up"); setCatalog(p => [...p, res[0]].sort((a, b) => (a.category || "").localeCompare(b.category || "") || a.brand.localeCompare(b.brand) || a.model_name.localeCompare(b.model_name))); }
       setNewModelName(""); setNewModelBrand(""); setNewModelPuffs(""); setNewModelCategory("Vapes"); setShowAddModel(false);
     } catch (e) { console.error(e); }
   };
-  const deleteModel = async (id) => { try { await sb.del("catalog", `id=eq.${id}`); setCatalog(p => p.filter(c => c.id !== id)); setEditModel(null); setMgrView("catalog"); } catch (e) { console.error(e); } };
+  const deleteModel = async (id) => { try { await sb.del("catalog", `id=eq.${id}`); playTone(520, "down"); setCatalog(p => p.filter(c => c.id !== id)); setEditModel(null); setMgrView("catalog"); } catch (e) { console.error(e); } };
   const updateModelInfo = async (id) => {
     if (!editModelName.trim() || !editModelBrand.trim()) return;
     try {
@@ -202,6 +228,20 @@ export default function RestockApp() {
   };
 
   const setOrder = (product, flavor, value) => {
+    const key = `${product}|||${flavor}`;
+    const prev = orderData[key];
+    const isRemoving = value === "skip" || prev === value;
+    const qtyNum = (v) => v === "5+" ? 6 : parseInt(v) || 0;
+    const isIncreasing = !isRemoving && (!prev || qtyNum(value) > qtyNum(prev));
+
+    if (isRemoving) {
+      playTone(520, "down");
+    } else if (isIncreasing) {
+      playTone(440 + qtyNum(value) * 40, "up");
+    } else {
+      playTone(480, "down");
+    }
+
     setOrderData(prev => {
       const key = `${product}|||${flavor}`;
       if (value === "skip" || prev[key] === value) { const next = { ...prev }; delete next[key]; return next; }
