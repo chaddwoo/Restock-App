@@ -174,20 +174,71 @@ export default function RestockApp() {
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.type = "sine";
+      const t = ctx.currentTime;
       if (direction === "up") {
-        osc.frequency.setValueAtTime(freq, ctx.currentTime);
-        osc.frequency.linearRampToValueAtTime(freq * 1.3, ctx.currentTime + 0.08);
-        gain.gain.setValueAtTime(0.15, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.12);
+        osc.frequency.setValueAtTime(freq, t);
+        osc.frequency.linearRampToValueAtTime(freq * 1.25, t + 0.15);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.18, t + 0.03);
+        gain.gain.linearRampToValueAtTime(0.14, t + 0.15);
+        gain.gain.linearRampToValueAtTime(0, t + 0.35);
       } else {
-        osc.frequency.setValueAtTime(freq, ctx.currentTime);
-        osc.frequency.linearRampToValueAtTime(freq * 0.7, ctx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0.12, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15);
+        osc.frequency.setValueAtTime(freq, t);
+        osc.frequency.linearRampToValueAtTime(freq * 0.65, t + 0.2);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.14, t + 0.03);
+        gain.gain.linearRampToValueAtTime(0.1, t + 0.15);
+        gain.gain.linearRampToValueAtTime(0, t + 0.35);
       }
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.2);
-      setTimeout(() => ctx.close(), 300);
+      osc.start(t);
+      osc.stop(t + 0.4);
+      setTimeout(() => ctx.close(), 500);
+    } catch (e) {}
+  };
+
+  const playChime = (type) => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const t = ctx.currentTime;
+      if (type === "welcome") {
+        // Three-note rising chime: C5 → E5 → G5
+        const notes = [523, 659, 784];
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = "sine";
+          const start = t + i * 0.12;
+          osc.frequency.setValueAtTime(freq, start);
+          gain.gain.setValueAtTime(0, start);
+          gain.gain.linearRampToValueAtTime(0.15, start + 0.03);
+          gain.gain.linearRampToValueAtTime(0.12, start + 0.2);
+          gain.gain.linearRampToValueAtTime(0, start + 0.4);
+          osc.start(start);
+          osc.stop(start + 0.45);
+        });
+        setTimeout(() => ctx.close(), 900);
+      } else if (type === "success") {
+        // Two-note confirmation: G5 → C6
+        const notes = [784, 1047];
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = "sine";
+          const start = t + i * 0.15;
+          osc.frequency.setValueAtTime(freq, start);
+          gain.gain.setValueAtTime(0, start);
+          gain.gain.linearRampToValueAtTime(0.18, start + 0.03);
+          gain.gain.linearRampToValueAtTime(0.14, start + 0.25);
+          gain.gain.linearRampToValueAtTime(0, start + 0.5);
+          osc.start(start);
+          osc.stop(start + 0.55);
+        });
+        setTimeout(() => ctx.close(), 1000);
+      }
     } catch (e) {}
   };
 
@@ -299,10 +350,10 @@ export default function RestockApp() {
       <button onClick={() => setView("splash")} style={st.back}>← Back</button>
       <h1 style={st.h1}>📊 Manager Access</h1><p style={st.sub}>Enter your PIN to continue</p>
       <div style={{ marginBottom: "24px" }}><label style={st.label}>Manager PIN</label>
-        <input type="password" placeholder="Enter PIN" value={pin} onChange={e => setPin(e.target.value)} style={st.input} onKeyDown={e => { if (e.key === "Enter" && pin === PIN) { setAuthed(true); setView("manager"); } }} />
+        <input type="password" placeholder="Enter PIN" value={pin} onChange={e => setPin(e.target.value)} style={st.input} onKeyDown={e => { if (e.key === "Enter" && pin === PIN) { playChime("success"); setAuthed(true); setView("manager"); } }} />
       </div>
       {pin.length >= 4 && pin !== PIN && <p style={{ color: "#E63946", fontSize: "13px", marginBottom: "12px" }}>Incorrect PIN</p>}
-      <button onClick={() => { if (pin === PIN) { setAuthed(true); setView("manager"); } }} style={pin === PIN ? st.btn : st.btnOff} disabled={pin !== PIN}>Enter Dashboard →</button>
+      <button onClick={() => { if (pin === PIN) { playChime("success"); setAuthed(true); setView("manager"); } }} style={pin === PIN ? st.btn : st.btnOff} disabled={pin !== PIN}>Enter Dashboard →</button>
     </div>
   );
 
@@ -317,7 +368,7 @@ export default function RestockApp() {
           <div><label style={st.label}>Your Name</label><input type="text" placeholder="e.g. Marcus" value={empName} onChange={e => setEmpName(e.target.value)} style={st.input} /></div>
           <div><label style={st.label}>Store Location</label><input type="text" placeholder="e.g. Downtown, Eastside Mall" value={storeLoc} onChange={e => setStoreLoc(e.target.value)} style={st.input} /></div>
         </div>
-        <button onClick={() => ok && setView("employee-products")} style={{ ...(ok ? st.btn : st.btnOff), marginTop: "32px" }} disabled={!ok}>Continue →</button>
+        <button onClick={() => { if (ok) { playChime("welcome"); setView("employee-products"); } }} style={{ ...(ok ? st.btn : st.btnOff), marginTop: "32px" }} disabled={!ok}>Continue →</button>
       </div>
     );
   }
