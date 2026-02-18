@@ -278,7 +278,7 @@ export default function RestockApp() {
           <div style={{ position: "fixed", bottom: "85px", left: "20px", right: "20px", maxHeight: "60vh", overflowY: "auto", borderRadius: "16px", background: "rgba(20,20,28,0.97)", backdropFilter: "blur(10px)", border: "1px solid #ffffff15", zIndex: 89, boxShadow: "0 -4px 30px rgba(0,0,0,0.6)", padding: "16px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
               <span style={{ color: "#FF6B35", fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Your Order</span>
-              <button onClick={submitOrder} disabled={submitting} style={{ padding: "8px 16px", borderRadius: "8px", border: "none", background: "#FF6B35", color: "#fff", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>{submitting ? "..." : "Submit →"}</button>
+              <button onClick={() => setShowOrderEdit(false)} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #ffffff20", background: "transparent", color: "#ffffff60", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>Done ✓</button>
             </div>
             {Object.entries(grouped).map(([pr, flavors]) => (
               <div key={pr} style={{ marginBottom: "10px" }}>
@@ -420,6 +420,11 @@ export default function RestockApp() {
             </div>
             {suggestions.map((sg, i) => (<div key={i} style={{ padding: "8px 12px", borderRadius: "8px", background: "#1DB95410", border: "1px solid #1DB95420", color: "#1DB954", fontSize: "12px", fontWeight: 600, marginTop: "6px" }}>✓ Suggested: {sg.text}</div>))}
           </div>
+          {ic > 0 && (
+            <button onClick={submitOrder} disabled={submitting} style={{ ...( submitting ? st.btnOff : st.btn), marginTop: "20px", background: submitting ? "#ffffff10" : "linear-gradient(135deg, #1DB954, #10B981)", boxShadow: submitting ? "none" : "0 4px 20px rgba(29,185,84,0.3)" }}>
+              {submitting ? "Submitting..." : `✅ Submit Full Order (${ic} item${ic > 1 ? "s" : ""} • ~${tu} units)`}
+            </button>
+          )}
           <FloatingBack onClick={() => setView("employee-login")} />
           <OrderDrawer />
         </div>
