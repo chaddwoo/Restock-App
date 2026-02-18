@@ -111,6 +111,7 @@ export default function RestockApp() {
   const [editModelCategory, setEditModelCategory] = useState("");
   const [selCategory, setSelCategory] = useState(null);
   const [showOrderEdit, setShowOrderEdit] = useState(false);
+  const [pickedItems, setPickedItems] = useState({});
 
   const PIN = "2588";
 
@@ -499,8 +500,50 @@ export default function RestockApp() {
             );
           })}
         </div>
-        <FloatingBack onClick={() => setView("employee-products")} />
-        <OrderDrawer />
+        {/* Bottom action bar */}
+        <div style={{ position: "fixed", bottom: "24px", left: "20px", right: "20px", display: "flex", gap: "10px", alignItems: "center", zIndex: 90 }}>
+          <button onClick={() => { sndBack(); setView("employee-products"); }}
+            style={{ width: "56px", height: "56px", borderRadius: "50%", border: "none", background: "linear-gradient(135deg, #FF6B35, #FF8C42)", color: "#000", fontSize: "22px", fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 4px 20px rgba(255,107,53,0.4)" }}>←</button>
+          {ic > 0 && (
+            <div onClick={() => setShowOrderEdit(!showOrderEdit)} style={{ flex: 1, padding: "16px", borderRadius: "14px", background: "rgba(30,30,40,0.95)", border: "1px solid #ffffff15", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", backdropFilter: "blur(10px)" }}>
+              <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>📋 {ic} item{ic > 1 ? "s" : ""}</span>
+              <span style={{ color: "#ffffff50", fontSize: "11px", fontWeight: 600 }}>{showOrderEdit ? "Close ▼" : "Edit ▲"}</span>
+            </div>
+          )}
+          <button onClick={() => { sndLogin(); setView("employee-products"); }}
+            style={{ height: "56px", paddingLeft: "20px", paddingRight: "20px", borderRadius: "28px", border: "none", background: "linear-gradient(135deg, #1DB954, #10B981)", color: "#fff", fontSize: "14px", fontWeight: 800, cursor: "pointer", flexShrink: 0, boxShadow: "0 4px 20px rgba(29,185,84,0.4)", whiteSpace: "nowrap" }}>Done ✓</button>
+        </div>
+        {/* Order edit drawer */}
+        {showOrderEdit && ic > 0 && (() => {
+          const items = Object.entries(orderData);
+          const grouped = {}; items.forEach(([k, q]) => { const [pr, fl] = k.split("|||"); if (!grouped[pr]) grouped[pr] = []; grouped[pr].push({ flavor: fl, qty: q, key: k }); });
+          return (
+            <div style={{ position: "fixed", bottom: "95px", left: "20px", right: "20px", maxHeight: "55vh", overflowY: "auto", borderRadius: "16px", background: "rgba(20,20,28,0.97)", backdropFilter: "blur(10px)", border: "1px solid #ffffff15", zIndex: 89, boxShadow: "0 -4px 30px rgba(0,0,0,0.6)", padding: "16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <span style={{ color: "#FF6B35", fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Your Order</span>
+                <button onClick={() => setShowOrderEdit(false)} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #ffffff20", background: "transparent", color: "#ffffff60", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>Done ✓</button>
+              </div>
+              {Object.entries(grouped).map(([pr, flavors]) => (
+                <div key={pr} style={{ marginBottom: "10px" }}>
+                  <div style={{ color: "#ffffff40", fontSize: "11px", fontWeight: 700, marginBottom: "4px" }}>{pr}</div>
+                  {flavors.map(({ flavor, qty, key }) => {
+                    const col = getQtyColor(qty);
+                    return (
+                      <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #ffffff08" }}>
+                        <span style={{ color: "#fff", fontSize: "13px" }}>{flavor}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <span style={{ color: col, fontSize: "14px", fontWeight: 800 }}>×{qty}</span>
+                          <button onClick={() => { sndRemove(); setOrderData(prev => { const next = { ...prev }; delete next[key]; return next; }); }}
+                            style={{ background: "none", border: "1px solid #E6394630", borderRadius: "6px", color: "#E63946", fontSize: "10px", fontWeight: 700, cursor: "pointer", padding: "3px 8px" }}>✕</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </div>
     );
   }
@@ -718,28 +761,56 @@ export default function RestockApp() {
   if (view === "manager" && authed && selReport) {
     const r = selReport; const entries = Object.entries(r.items || {});
     const grp = {}; entries.forEach(([k, q]) => { const [pr, fl] = k.split("|||"); if (!grp[pr]) grp[pr] = []; grp[pr].push({ flavor: fl, qty: q }); });
+    const totalItems = entries.length;
+    const totalPicked = Object.keys(pickedItems).filter(k => pickedItems[k]).length;
+    const allDone = totalPicked === totalItems && totalItems > 0;
+    const togglePick = (key) => { sndClick(); setPickedItems(p => ({ ...p, [key]: !p[key] })); };
     return (
       <div style={st.page}>
-        <button onClick={() => { sndBack(); setSelReport(null); }} style={st.back}>← Back to Dashboard</button>
+        <button onClick={() => { sndBack(); setSelReport(null); setPickedItems({}); }} style={st.back}>← Back to Dashboard</button>
         <h2 style={st.h2}>{r.employee_name}'s Request</h2>
         <p style={{ color: "#ffffff45", fontSize: "13px", margin: "4px 0 20px 0" }}>{r.store_location} • {fmtTime(r.created_at)}</p>
-        <div style={{ padding: "20px", borderRadius: "14px", marginBottom: "20px", background: "linear-gradient(135deg, rgba(255,107,53,0.08), rgba(230,57,70,0.08))", border: "1px solid #FF6B3520", display: "flex", justifyContent: "space-around", textAlign: "center" }}>
+        <div style={{ padding: "20px", borderRadius: "14px", marginBottom: "12px", background: "linear-gradient(135deg, rgba(255,107,53,0.08), rgba(230,57,70,0.08))", border: "1px solid #FF6B3520", display: "flex", justifyContent: "space-around", textAlign: "center" }}>
           <div><div style={{ fontSize: "28px", fontWeight: 900, color: "#FF6B35", lineHeight: 1 }}>{r.total_flavors}</div><div style={{ fontSize: "11px", fontWeight: 700, color: "#FF6B35", marginTop: "4px", opacity: 0.7 }}>ITEMS</div></div>
           <div style={{ width: "1px", background: "#ffffff10" }}></div>
           <div><div style={{ fontSize: "28px", fontWeight: 900, color: "#E63946", lineHeight: 1 }}>~{r.total_units}</div><div style={{ fontSize: "11px", fontWeight: 700, color: "#E63946", marginTop: "4px", opacity: 0.7 }}>TOTAL UNITS</div></div>
         </div>
+        {/* Progress bar */}
+        <div style={{ marginBottom: "20px", padding: "12px 16px", borderRadius: "10px", background: allDone ? "rgba(29,185,84,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${allDone ? "#1DB95430" : "#ffffff08"}` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+            <span style={{ color: allDone ? "#1DB954" : "#ffffff50", fontSize: "12px", fontWeight: 700 }}>{allDone ? "✅ ALL PICKED!" : `Picked ${totalPicked} of ${totalItems}`}</span>
+            <span style={{ color: allDone ? "#1DB954" : "#ffffff30", fontSize: "12px", fontWeight: 700 }}>{totalItems > 0 ? Math.round((totalPicked / totalItems) * 100) : 0}%</span>
+          </div>
+          <div style={{ height: "6px", borderRadius: "3px", background: "#ffffff10", overflow: "hidden" }}>
+            <div style={{ height: "100%", borderRadius: "3px", background: allDone ? "#1DB954" : "linear-gradient(90deg, #FF6B35, #FF8C42)", width: `${totalItems > 0 ? (totalPicked / totalItems) * 100 : 0}%`, transition: "width 0.3s ease" }} />
+          </div>
+        </div>
+        <p style={{ color: "#ffffff25", fontSize: "11px", margin: "0 0 16px 0", textAlign: "center" }}>Tap items to mark as picked</p>
         {Object.entries(grp).map(([product, items]) => {
           const bn = catalogObj[product]?.brand; const bc = getBrandColor(bn);
+          const sectionPicked = items.filter(({ flavor }) => pickedItems[`${r.id}|||${product}|||${flavor}`]).length;
+          const sectionDone = sectionPicked === items.length;
           return (
-            <div key={product} style={{ marginBottom: "20px", borderLeft: `4px solid ${bc}`, borderRadius: "12px", background: `${bc}08`, padding: "16px", paddingLeft: "16px" }}>
+            <div key={product} style={{ marginBottom: "20px", borderLeft: `4px solid ${sectionDone ? "#1DB954" : bc}`, borderRadius: "12px", background: sectionDone ? "rgba(29,185,84,0.05)" : `${bc}08`, padding: "16px", paddingLeft: "16px", transition: "all 0.3s ease" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-                <span style={{ color: bc, fontSize: "14px", fontWeight: 800, letterSpacing: "0.3px" }}>{product}</span>
-                <span style={{ color: bc, fontSize: "11px", fontWeight: 700, opacity: 0.6 }}>{items.length} item{items.length > 1 ? "s" : ""}</span>
+                <span style={{ color: sectionDone ? "#1DB954" : bc, fontSize: "14px", fontWeight: 800, letterSpacing: "0.3px" }}>{sectionDone ? "✓ " : ""}{product}</span>
+                <span style={{ color: sectionDone ? "#1DB954" : bc, fontSize: "11px", fontWeight: 700, opacity: 0.6 }}>{sectionPicked}/{items.length} picked</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 {items.sort((a, b) => (b.qty === "5+" ? 6 : parseInt(b.qty)) - (a.qty === "5+" ? 6 : parseInt(a.qty))).map(({ flavor, qty }) => {
-                  const col = getQtyColor(qty);
-                  return (<div key={flavor} style={{ padding: "10px 12px", borderRadius: "8px", background: "rgba(0,0,0,0.25)", display: "flex", justifyContent: "space-between", alignItems: "center" }}><span style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>{flavor}</span><span style={{ fontSize: "18px", fontWeight: 800, color: col, minWidth: "36px", textAlign: "right" }}>×{qty}</span></div>);
+                  const key = `${r.id}|||${product}|||${flavor}`;
+                  const picked = pickedItems[key];
+                  const col = picked ? "#1DB954" : getQtyColor(qty);
+                  return (
+                    <div key={flavor} onClick={() => togglePick(key)}
+                      style={{ padding: "10px 12px", borderRadius: "8px", background: picked ? "rgba(29,185,84,0.12)" : "rgba(0,0,0,0.25)", border: picked ? "1px solid #1DB95425" : "1px solid transparent", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", transition: "all 0.2s ease" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <span style={{ width: "22px", height: "22px", borderRadius: "6px", border: picked ? "2px solid #1DB954" : "2px solid #ffffff20", background: picked ? "#1DB954" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", color: "#fff", flexShrink: 0, transition: "all 0.2s ease" }}>{picked ? "✓" : ""}</span>
+                        <span style={{ color: picked ? "#ffffff40" : "#fff", fontSize: "13px", fontWeight: 600, textDecoration: picked ? "line-through" : "none", transition: "all 0.2s ease" }}>{flavor}</span>
+                      </div>
+                      <span style={{ fontSize: "18px", fontWeight: 800, color: col, minWidth: "36px", textAlign: "right", opacity: picked ? 0.4 : 1, transition: "opacity 0.2s ease" }}>×{qty}</span>
+                    </div>
+                  );
                 })}
               </div>
             </div>
@@ -748,7 +819,7 @@ export default function RestockApp() {
         <button onClick={() => { if (window.confirm(`Remove ${r.employee_name}'s submission?`)) { deleteSubmission(r.id); } }}
           style={{ marginTop: "20px", width: "100%", padding: "14px", borderRadius: "12px", border: "1px solid #E6394630", background: "rgba(230,57,70,0.05)", color: "#E63946", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>🗑️ Delete This Submission</button>
         <div style={{ height: "70px" }} />
-        <FloatingBack onClick={() => setSelReport(null)} />
+        <FloatingBack onClick={() => { setSelReport(null); setPickedItems({}); }} />
       </div>
     );
   }
