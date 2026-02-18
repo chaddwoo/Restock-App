@@ -173,9 +173,10 @@ export default function RestockApp() {
   const sndClick = () => playSound("/snd-click.wav");
   const sndBack = () => playSound("/snd-back.wav");
   const sndSubmit = () => playSound("/snd-submit.wav");
-  const sndLogin = () => playSound("/snd-login.wav");
+  const sndLogin = () => playSound("/snd-login.mp3");
   const sndAdd = () => playSound("/snd-add.wav");
   const sndRemove = () => playSound("/snd-remove.wav");
+  const sndDone = () => playSound("/snd-done.mp3");
 
   const deleteSubmission = async (id) => { try { await sb.del("submissions", `id=eq.${id}`); sndRemove(); setReports(p => p.filter(r => r.id !== id)); if (selReport && selReport.id === id) setSelReport(null); } catch (e) { console.error(e); } };
   const saveBanner = async () => { try { await sb.patch("banner", { message: bannerInput, active: true, updated_at: new Date().toISOString() }, "id=eq.1"); setBannerText(bannerInput); setBannerOn(true); setEditBanner(false); } catch (e) { console.error(e); } };
@@ -510,7 +511,7 @@ export default function RestockApp() {
               <span style={{ color: "#ffffff50", fontSize: "11px", fontWeight: 600 }}>{showOrderEdit ? "Close ▼" : "Edit ▲"}</span>
             </div>
           )}
-          <button onClick={() => { sndLogin(); setView("employee-products"); }}
+          <button onClick={() => { sndDone(); setView("employee-products"); }}
             style={{ height: "56px", paddingLeft: "20px", paddingRight: "20px", borderRadius: "28px", border: "none", background: "linear-gradient(135deg, #1DB954, #10B981)", color: "#fff", fontSize: "14px", fontWeight: 800, cursor: "pointer", flexShrink: 0, boxShadow: "0 4px 20px rgba(29,185,84,0.4)", whiteSpace: "nowrap" }}>Done ✓</button>
         </div>
         {/* Order edit drawer */}
