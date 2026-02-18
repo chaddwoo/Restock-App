@@ -254,7 +254,7 @@ export default function RestockApp() {
 
   // Floating back button — fixed bottom-left
   const FloatingBack = ({ onClick }) => (
-    <button onClick={() => { sndBack(); onClick(); }} style={{ position: "fixed", bottom: "24px", left: "20px", width: "48px", height: "48px", borderRadius: "50%", border: "1px solid #ffffff20", background: "rgba(11,11,15,0.9)", backdropFilter: "blur(10px)", color: "#ffffff60", fontSize: "18px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 90, boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>←</button>
+    <button onClick={() => { sndBack(); onClick(); }} style={{ position: "fixed", bottom: "24px", left: "20px", width: "56px", height: "56px", borderRadius: "50%", border: "none", background: "linear-gradient(135deg, #FF6B35, #FF8C42)", color: "#000", fontSize: "22px", fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 90, boxShadow: "0 4px 20px rgba(255,107,53,0.4)" }}>←</button>
   );
 
   // Order edit drawer
@@ -367,6 +367,20 @@ export default function RestockApp() {
     // If only one category, skip the category screen
     const activeCat = onlyOneCat ? catKeys[0] : selCategory;
 
+    // Category emoji & color mapping
+    const CAT_STYLE = {
+      "Vapes": { emoji: "💨", gradient: "linear-gradient(135deg, #6C5CE7, #a855f7)", border: "#6C5CE740" },
+      "Cigarettes": { emoji: "🚬", gradient: "linear-gradient(135deg, #E63946, #FF6B35)", border: "#E6394640" },
+      "Pouches": { emoji: "👅", gradient: "linear-gradient(135deg, #00B4D8, #14B8A6)", border: "#00B4D840" },
+      "E-Juice / Salt Nic": { emoji: "💧", gradient: "linear-gradient(135deg, #1DB954, #4ECDC4)", border: "#1DB95440" },
+      "Mushroom Chocolate": { emoji: "🍄", gradient: "linear-gradient(135deg, #A855F7, #EC4899)", border: "#A855F740" },
+      "Accessories": { emoji: "🔧", gradient: "linear-gradient(135deg, #F59E0B, #FF6B35)", border: "#F59E0B40" },
+      "CBD": { emoji: "🌿", gradient: "linear-gradient(135deg, #10B981, #84CC16)", border: "#10B98140" },
+      "Kratom": { emoji: "🍃", gradient: "linear-gradient(135deg, #14B8A6, #06B6D4)", border: "#14B8A640" },
+      "Rolling Papers": { emoji: "📜", gradient: "linear-gradient(135deg, #F97316, #F59E0B)", border: "#F9731640" },
+    };
+    const defaultCatStyle = { emoji: "📦", gradient: "linear-gradient(135deg, #6366F1, #8B5CF6)", border: "#6366F140" };
+
     // CATEGORY LIST VIEW
     if (!activeCat) {
       return (
@@ -374,20 +388,24 @@ export default function RestockApp() {
           <Banner />
           <h2 style={st.h2}>What Do You Need?</h2>
           <p style={{ color: "#ffffff50", fontSize: "13px", margin: "0 0 20px 0" }}>{empName} • {storeLoc}</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {catKeys.map(cat => {
               const g = catGroups[cat];
               const hasOrders = g.ordered > 0;
+              const cs = CAT_STYLE[cat] || defaultCatStyle;
               return (
                 <button key={cat} onClick={() => setSelCategory(cat)}
-                  style={{ padding: "20px", borderRadius: "14px", border: `1px solid ${hasOrders ? "#FF6B3525" : "#ffffff0a"}`, background: hasOrders ? "rgba(255,107,53,0.05)" : "rgba(255,255,255,0.03)", color: "#fff", fontSize: "16px", fontWeight: 700, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <div style={{ marginBottom: "4px" }}>{cat}</div>
-                    <div style={{ fontSize: "12px", color: "#ffffff30", fontWeight: 500 }}>{g.totalModels} model{g.totalModels > 1 ? "s" : ""} • {g.totalItems} items</div>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    {hasOrders && <span style={{ padding: "4px 10px", borderRadius: "6px", background: "#FF6B3518", color: "#FF6B35", fontSize: "11px", fontWeight: 700 }}>{g.ordered} requested</span>}
-                    <span style={{ color: "#ffffff25", fontSize: "18px" }}>›</span>
+                  style={{ padding: "0", borderRadius: "16px", border: `1px solid ${cs.border}`, background: "rgba(255,255,255,0.02)", color: "#fff", cursor: "pointer", textAlign: "left", overflow: "hidden", display: "flex", alignItems: "stretch" }}>
+                  <div style={{ width: "72px", minHeight: "80px", background: cs.gradient, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", flexShrink: 0 }}>{cs.emoji}</div>
+                  <div style={{ flex: 1, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "4px" }}>{cat}</div>
+                      <div style={{ fontSize: "12px", color: "#ffffff35", fontWeight: 500 }}>{g.totalModels} model{g.totalModels > 1 ? "s" : ""} • {g.totalItems} items</div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      {hasOrders && <span style={{ padding: "4px 10px", borderRadius: "8px", background: "#FF6B3520", color: "#FF6B35", fontSize: "11px", fontWeight: 800 }}>{g.ordered}</span>}
+                      <span style={{ color: "#ffffff30", fontSize: "20px", fontWeight: 300 }}>›</span>
+                    </div>
                   </div>
                 </button>
               );
