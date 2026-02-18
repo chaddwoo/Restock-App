@@ -169,14 +169,14 @@ export default function RestockApp() {
   };
 
   // Sound effects — custom audio files
-  const playSound = (src) => { try { const a = new Audio(process.env.PUBLIC_URL + src); a.volume = 0.5; a.play(); } catch (e) {} };
+  const playSound = (src) => { try { const a = new Audio(process.env.PUBLIC_URL + src); a.volume = 0.5; const p = a.play(); if (p) p.catch(() => {}); } catch (e) {} };
   const sndClick = () => playSound("/snd-click.wav");
   const sndBack = () => playSound("/snd-back.wav");
   const sndSubmit = () => playSound("/snd-submit.wav");
-  const sndLogin = () => playSound("/snd-login.mp3");
+  const sndLogin = () => playSound("/snd-login.wav");
   const sndAdd = () => playSound("/snd-add.wav");
   const sndRemove = () => playSound("/snd-remove.wav");
-  const sndDone = () => playSound("/snd-done.mp3");
+  const sndDone = () => playSound("/snd-done.wav");
 
   const deleteSubmission = async (id) => { try { await sb.del("submissions", `id=eq.${id}`); sndRemove(); setReports(p => p.filter(r => r.id !== id)); if (selReport && selReport.id === id) setSelReport(null); } catch (e) { console.error(e); } };
   const saveBanner = async () => { try { await sb.patch("banner", { message: bannerInput, active: true, updated_at: new Date().toISOString() }, "id=eq.1"); setBannerText(bannerInput); setBannerOn(true); setEditBanner(false); } catch (e) { console.error(e); } };
