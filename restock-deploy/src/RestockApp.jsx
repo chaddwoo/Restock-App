@@ -109,7 +109,7 @@ export default function RestockApp() {
   const [editModelBrand, setEditModelBrand] = useState("");
   const [editModelPuffs, setEditModelPuffs] = useState("");
   const [editModelCategory, setEditModelCategory] = useState("");
-  const [selCategory, setSelCategory] = useState("all");
+  const [selCategory, setSelCategory] = useState(null);
   const [showOrderEdit, setShowOrderEdit] = useState(false);
 
   const PIN = "2588";
@@ -347,31 +347,74 @@ export default function RestockApp() {
     );
   }
 
-  // EMPLOYEE PRODUCTS — category dropdown + floating UI
+  // EMPLOYEE PRODUCTS — category drill-down
   if (view === "employee-products") {
     const tu = getTotalUnits(); const ic = getFilledCount();
-    // Filter by selected category
-    const filteredCatalog = selCategory === "all" ? Object.entries(catalogObj) : Object.entries(catalogObj).filter(([, d]) => (d.category || "Vapes") === selCategory);
-    const brands = {};
-    filteredCatalog.forEach(([name, data]) => {
-      if (!brands[data.brand]) brands[data.brand] = [];
-      brands[data.brand].push(name);
+    // Group by category
+    const catGroups = {};
+    Object.entries(catalogObj).forEach(([name, data]) => {
+      const cat = data.category || "Vapes";
+      if (!catGroups[cat]) catGroups[cat] = { brands: {}, totalModels: 0, totalItems: 0, ordered: 0 };
+      if (!catGroups[cat].brands[data.brand]) catGroups[cat].brands[data.brand] = [];
+      catGroups[cat].brands[data.brand].push(name);
+      catGroups[cat].totalModels++;
+      catGroups[cat].totalItems += data.flavors.length;
+      catGroups[cat].ordered += getProductOrderCount(name);
     });
-    return (
-      <div style={{ ...st.page, paddingBottom: ic > 0 ? "100px" : "24px" }}>
-        <Banner />
-        <h2 style={st.h2}>What Do You Need?</h2>
-        <p style={{ color: "#ffffff50", fontSize: "13px", margin: "0 0 16px 0" }}>{empName} • {storeLoc}</p>
-        {/* Category dropdown */}
-        {categories.length > 1 && (
-          <div style={{ marginBottom: "16px" }}>
-            <select value={selCategory} onChange={e => setSelCategory(e.target.value)}
-              style={{ width: "100%", padding: "14px 18px", borderRadius: "12px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.06)", color: "#fff", fontSize: "15px", fontWeight: 600, outline: "none", appearance: "none", WebkitAppearance: "none", cursor: "pointer", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff60' d='M6 8L1 3h10z'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 16px center" }}>
-              <option value="all" style={{ background: "#1a1a24", color: "#fff" }}>All Categories</option>
-              {categories.map(c => <option key={c} value={c} style={{ background: "#1a1a24", color: "#fff" }}>{c}</option>)}
-            </select>
+    const catKeys = Object.keys(catGroups).sort();
+    const onlyOneCat = catKeys.length === 1;
+
+    // If only one category, skip the category screen
+    const activeCat = onlyOneCat ? catKeys[0] : selCategory;
+
+    // CATEGORY LIST VIEW
+    if (!activeCat) {
+      return (
+        <div style={{ ...st.page, paddingBottom: ic > 0 ? "100px" : "24px" }}>
+          <Banner />
+          <h2 style={st.h2}>What Do You Need?</h2>
+          <p style={{ color: "#ffffff50", fontSize: "13px", margin: "0 0 20px 0" }}>{empName} • {storeLoc}</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {catKeys.map(cat => {
+              const g = catGroups[cat];
+              const hasOrders = g.ordered > 0;
+              return (
+                <button key={cat} onClick={() => setSelCategory(cat)}
+                  style={{ padding: "20px", borderRadius: "14px", border: `1px solid ${hasOrders ? "#FF6B3525" : "#ffffff0a"}`, background: hasOrders ? "rgba(255,107,53,0.05)" : "rgba(255,255,255,0.03)", color: "#fff", fontSize: "16px", fontWeight: 700, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ marginBottom: "4px" }}>{cat}</div>
+                    <div style={{ fontSize: "12px", color: "#ffffff30", fontWeight: 500 }}>{g.totalModels} model{g.totalModels > 1 ? "s" : ""} • {g.totalItems} items</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    {hasOrders && <span style={{ padding: "4px 10px", borderRadius: "6px", background: "#FF6B3518", color: "#FF6B35", fontSize: "11px", fontWeight: 700 }}>{g.ordered} requested</span>}
+                    <span style={{ color: "#ffffff25", fontSize: "18px" }}>›</span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
-        )}
+          <div style={{ marginTop: "20px", padding: "16px", borderRadius: "12px", border: "1px dashed #ffffff15", background: "rgba(255,255,255,0.015)" }}>
+            <label style={{ ...st.label, marginBottom: "10px" }}>💡 Suggest a Product</label>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <input type="text" placeholder="e.g. Funky Republic Ti7000" value={suggestion} onChange={e => setSuggestion(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
+              <button onClick={() => { if (suggestion.trim()) { setSuggestions(p => [...p, { text: suggestion.trim(), from: empName, store: storeLoc }]); setSuggestion(""); } }}
+                style={{ padding: "12px 18px", borderRadius: "10px", border: "none", background: suggestion.trim() ? "#FF6B35" : "#ffffff10", color: suggestion.trim() ? "#fff" : "#ffffff25", fontSize: "13px", fontWeight: 700, cursor: suggestion.trim() ? "pointer" : "not-allowed", whiteSpace: "nowrap" }}>Send</button>
+            </div>
+            {suggestions.map((sg, i) => (<div key={i} style={{ padding: "8px 12px", borderRadius: "8px", background: "#1DB95410", border: "1px solid #1DB95420", color: "#1DB954", fontSize: "12px", fontWeight: 600, marginTop: "6px" }}>✓ Suggested: {sg.text}</div>))}
+          </div>
+          <FloatingBack onClick={() => setView("employee-login")} />
+          <OrderDrawer />
+        </div>
+      );
+    }
+
+    // BRAND/MODEL LIST VIEW (inside a category)
+    const brands = catGroups[activeCat]?.brands || {};
+    return (
+      <div style={{ ...st.page, paddingBottom: ic > 0 ? "100px" : "80px" }}>
+        <Banner />
+        <h2 style={st.h2}>{activeCat}</h2>
+        <p style={{ color: "#ffffff50", fontSize: "13px", margin: "0 0 16px 0" }}>{empName} • {storeLoc}</p>
         {Object.entries(brands).map(([brand, models]) => {
           const bc = getBrandColor(brand);
           return (
@@ -395,17 +438,7 @@ export default function RestockApp() {
             </div>
           );
         })}
-        <div style={{ marginTop: "12px", padding: "16px", borderRadius: "12px", border: "1px dashed #ffffff15", background: "rgba(255,255,255,0.015)" }}>
-          <label style={{ ...st.label, marginBottom: "10px" }}>💡 Suggest a Product</label>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <input type="text" placeholder="e.g. Funky Republic Ti7000" value={suggestion} onChange={e => setSuggestion(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
-            <button onClick={() => { if (suggestion.trim()) { setSuggestions(p => [...p, { text: suggestion.trim(), from: empName, store: storeLoc }]); setSuggestion(""); } }}
-              style={{ padding: "12px 18px", borderRadius: "10px", border: "none", background: suggestion.trim() ? "#FF6B35" : "#ffffff10", color: suggestion.trim() ? "#fff" : "#ffffff25", fontSize: "13px", fontWeight: 700, cursor: suggestion.trim() ? "pointer" : "not-allowed", whiteSpace: "nowrap" }}>Send</button>
-          </div>
-          {suggestions.map((sg, i) => (<div key={i} style={{ padding: "8px 12px", borderRadius: "8px", background: "#1DB95410", border: "1px solid #1DB95420", color: "#1DB954", fontSize: "12px", fontWeight: 600, marginTop: "6px" }}>✓ Suggested: {sg.text}</div>))}
-        </div>
-        {ic === 0 && <div style={{ height: "40px" }} />}
-        <FloatingBack onClick={() => setView("employee-login")} />
+        <FloatingBack onClick={() => onlyOneCat ? setView("employee-login") : setSelCategory(null)} />
         <OrderDrawer />
       </div>
     );
