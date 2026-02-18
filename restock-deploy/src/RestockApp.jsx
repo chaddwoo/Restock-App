@@ -109,6 +109,8 @@ export default function RestockApp() {
   const [editModelBrand, setEditModelBrand] = useState("");
   const [editModelPuffs, setEditModelPuffs] = useState("");
   const [editModelCategory, setEditModelCategory] = useState("");
+  const [selCategory, setSelCategory] = useState("all");
+  const [showOrderEdit, setShowOrderEdit] = useState(false);
 
   const PIN = "2588";
 
@@ -250,6 +252,58 @@ export default function RestockApp() {
 
   if (!catLoaded) return (<div style={{ ...st.page, display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ color: "#ffffff40", fontSize: "14px" }}>Loading catalog...</p></div>);
 
+  // Floating back button — fixed bottom-left
+  const FloatingBack = ({ onClick }) => (
+    <button onClick={() => { sndBack(); onClick(); }} style={{ position: "fixed", bottom: "24px", left: "20px", width: "48px", height: "48px", borderRadius: "50%", border: "1px solid #ffffff20", background: "rgba(11,11,15,0.9)", backdropFilter: "blur(10px)", color: "#ffffff60", fontSize: "18px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 90, boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>←</button>
+  );
+
+  // Order edit drawer
+  const OrderDrawer = () => {
+    const ic = getFilledCount(); const tu = getTotalUnits();
+    if (ic === 0) return null;
+    const items = Object.entries(orderData);
+    const grouped = {}; items.forEach(([k, q]) => { const [pr, fl] = k.split("|||"); if (!grouped[pr]) grouped[pr] = []; grouped[pr].push({ flavor: fl, qty: q, key: k }); });
+    return (
+      <>
+        {/* Floating order bar */}
+        <div onClick={() => setShowOrderEdit(!showOrderEdit)} style={{ position: "fixed", bottom: "24px", left: "78px", right: "20px", padding: "14px 18px", borderRadius: "14px", background: "linear-gradient(135deg, #FF6B35, #FF8C42)", color: "#fff", cursor: "pointer", zIndex: 90, boxShadow: "0 4px 24px rgba(255,107,53,0.4)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "16px" }}>📋</span>
+            <div><div style={{ fontSize: "14px", fontWeight: 700 }}>{ic} item{ic > 1 ? "s" : ""} • ~{tu} units</div></div>
+          </div>
+          <span style={{ fontSize: "12px", fontWeight: 700, opacity: 0.8 }}>{showOrderEdit ? "Close ▼" : "Edit ▲"}</span>
+        </div>
+        {/* Expanded edit drawer */}
+        {showOrderEdit && (
+          <div style={{ position: "fixed", bottom: "85px", left: "20px", right: "20px", maxHeight: "60vh", overflowY: "auto", borderRadius: "16px", background: "rgba(20,20,28,0.97)", backdropFilter: "blur(10px)", border: "1px solid #ffffff15", zIndex: 89, boxShadow: "0 -4px 30px rgba(0,0,0,0.6)", padding: "16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+              <span style={{ color: "#FF6B35", fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Your Order</span>
+              <button onClick={submitOrder} disabled={submitting} style={{ padding: "8px 16px", borderRadius: "8px", border: "none", background: "#FF6B35", color: "#fff", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>{submitting ? "..." : "Submit →"}</button>
+            </div>
+            {Object.entries(grouped).map(([pr, flavors]) => (
+              <div key={pr} style={{ marginBottom: "10px" }}>
+                <div style={{ color: "#ffffff40", fontSize: "11px", fontWeight: 700, marginBottom: "4px" }}>{pr}</div>
+                {flavors.map(({ flavor, qty, key }) => {
+                  const col = getQtyColor(qty);
+                  return (
+                    <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #ffffff08" }}>
+                      <span style={{ color: "#fff", fontSize: "13px" }}>{flavor}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <span style={{ color: col, fontSize: "14px", fontWeight: 800 }}>×{qty}</span>
+                        <button onClick={() => { sndRemove(); setOrderData(prev => { const next = { ...prev }; delete next[key]; return next; }); }}
+                          style={{ background: "none", border: "1px solid #E6394630", borderRadius: "6px", color: "#E63946", fontSize: "10px", fontWeight: 700, cursor: "pointer", padding: "3px 8px" }}>✕</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        )}
+      </>
+    );
+  };
+
   // SPLASH
   if (view === "splash") return (
     <div style={{ ...st.page, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: "12px" }}>
@@ -293,60 +347,54 @@ export default function RestockApp() {
     );
   }
 
-  // EMPLOYEE PRODUCTS — grouped by category then brand
+  // EMPLOYEE PRODUCTS — category dropdown + floating UI
   if (view === "employee-products") {
     const tu = getTotalUnits(); const ic = getFilledCount();
-    // Group: category → brand → models
-    const catBrands = {};
-    Object.entries(catalogObj).forEach(([name, data]) => {
-      const cat = data.category || "Vapes";
-      if (!catBrands[cat]) catBrands[cat] = {};
-      if (!catBrands[cat][data.brand]) catBrands[cat][data.brand] = [];
-      catBrands[cat][data.brand].push(name);
+    // Filter by selected category
+    const filteredCatalog = selCategory === "all" ? Object.entries(catalogObj) : Object.entries(catalogObj).filter(([, d]) => (d.category || "Vapes") === selCategory);
+    const brands = {};
+    filteredCatalog.forEach(([name, data]) => {
+      if (!brands[data.brand]) brands[data.brand] = [];
+      brands[data.brand].push(name);
     });
     return (
-      <div style={st.page}>
-        <button onClick={() => { sndBack(); setView("employee-login"); }} style={st.back}>← Back</button><Banner />
+      <div style={{ ...st.page, paddingBottom: ic > 0 ? "100px" : "24px" }}>
+        <Banner />
         <h2 style={st.h2}>What Do You Need?</h2>
         <p style={{ color: "#ffffff50", fontSize: "13px", margin: "0 0 16px 0" }}>{empName} • {storeLoc}</p>
-        {ic > 0 && (
-          <div style={{ padding: "14px 16px", borderRadius: "12px", marginBottom: "20px", background: "linear-gradient(135deg, rgba(255,107,53,0.1), rgba(230,57,70,0.1))", border: "1px solid #FF6B3525", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div><div style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Current Request</div><div style={{ color: "#fff", fontSize: "14px", fontWeight: 600, marginTop: "2px" }}>{ic} item{ic > 1 ? "s" : ""} • ~{tu} units</div></div>
-            <div style={{ color: "#FF6B35", fontSize: "24px", fontWeight: 900 }}>📋</div>
+        {/* Category dropdown */}
+        {categories.length > 1 && (
+          <div style={{ marginBottom: "16px" }}>
+            <select value={selCategory} onChange={e => setSelCategory(e.target.value)}
+              style={{ width: "100%", padding: "14px 18px", borderRadius: "12px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.06)", color: "#fff", fontSize: "15px", fontWeight: 600, outline: "none", appearance: "none", WebkitAppearance: "none", cursor: "pointer", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff60' d='M6 8L1 3h10z'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 16px center" }}>
+              <option value="all" style={{ background: "#1a1a24", color: "#fff" }}>All Categories</option>
+              {categories.map(c => <option key={c} value={c} style={{ background: "#1a1a24", color: "#fff" }}>{c}</option>)}
+            </select>
           </div>
         )}
-        {Object.entries(catBrands).map(([cat, brands]) => (
-          <div key={cat}>
-            {Object.keys(catBrands).length > 1 && (
-              <div style={{ padding: "8px 0", marginBottom: "8px", marginTop: "8px" }}>
-                <span style={{ color: "#ffffff70", fontSize: "15px", fontWeight: 800, letterSpacing: "-0.3px" }}>{cat}</span>
+        {Object.entries(brands).map(([brand, models]) => {
+          const bc = getBrandColor(brand);
+          return (
+            <div key={brand} style={{ marginBottom: "20px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+                <div style={{ width: "3px", height: "16px", borderRadius: "2px", background: bc }}></div>
+                <span style={{ color: bc, fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>{brand}</span>
               </div>
-            )}
-            {Object.entries(brands).map(([brand, models]) => {
-              const bc = getBrandColor(brand);
-              return (
-                <div key={brand} style={{ marginBottom: "20px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-                    <div style={{ width: "3px", height: "16px", borderRadius: "2px", background: bc }}></div>
-                    <span style={{ color: bc, fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>{brand}</span>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    {models.map(model => {
-                      const p = catalogObj[model]; const o = getProductOrderCount(model);
-                      return (
-                        <button key={model} onClick={() => { setSelProduct(model); setView("employee-flavors"); }}
-                          style={{ padding: "16px", borderRadius: "12px", border: `1px solid ${o > 0 ? bc + "25" : "#ffffff0a"}`, background: o > 0 ? bc + "08" : "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div><div style={{ marginBottom: "3px" }}>{model}</div><div style={{ fontSize: "11px", color: "#ffffff30", fontWeight: 500 }}>{p.puffs !== "N/A" ? p.puffs + " puffs • " : ""}{p.flavors.length} items</div></div>
-                          <span style={{ fontSize: "12px", fontWeight: 700, color: o > 0 ? bc : "#ffffff25", whiteSpace: "nowrap" }}>{o > 0 ? `${o} requested` : "No requests"}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ))}
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {models.map(model => {
+                  const p = catalogObj[model]; const o = getProductOrderCount(model);
+                  return (
+                    <button key={model} onClick={() => { setSelProduct(model); setView("employee-flavors"); }}
+                      style={{ padding: "16px", borderRadius: "12px", border: `1px solid ${o > 0 ? bc + "25" : "#ffffff0a"}`, background: o > 0 ? bc + "08" : "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div><div style={{ marginBottom: "3px" }}>{model}</div><div style={{ fontSize: "11px", color: "#ffffff30", fontWeight: 500 }}>{p.puffs !== "N/A" ? p.puffs + " puffs • " : ""}{p.flavors.length} items</div></div>
+                      <span style={{ fontSize: "12px", fontWeight: 700, color: o > 0 ? bc : "#ffffff25", whiteSpace: "nowrap" }}>{o > 0 ? `${o} requested` : ""}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
         <div style={{ marginTop: "12px", padding: "16px", borderRadius: "12px", border: "1px dashed #ffffff15", background: "rgba(255,255,255,0.015)" }}>
           <label style={{ ...st.label, marginBottom: "10px" }}>💡 Suggest a Product</label>
           <div style={{ display: "flex", gap: "8px" }}>
@@ -356,7 +404,9 @@ export default function RestockApp() {
           </div>
           {suggestions.map((sg, i) => (<div key={i} style={{ padding: "8px 12px", borderRadius: "8px", background: "#1DB95410", border: "1px solid #1DB95420", color: "#1DB954", fontSize: "12px", fontWeight: 600, marginTop: "6px" }}>✓ Suggested: {sg.text}</div>))}
         </div>
-        {ic > 0 && <button onClick={submitOrder} disabled={submitting} style={{ ...(submitting ? st.btnOff : st.btn), marginTop: "24px" }}>{submitting ? "Submitting..." : `Submit Request (${ic} item${ic > 1 ? "s" : ""} • ~${tu} units) →`}</button>}
+        {ic === 0 && <div style={{ height: "40px" }} />}
+        <FloatingBack onClick={() => setView("employee-login")} />
+        <OrderDrawer />
       </div>
     );
   }
@@ -364,9 +414,9 @@ export default function RestockApp() {
   // EMPLOYEE FLAVORS
   if (view === "employee-flavors") {
     const p = catalogObj[selProduct]; const bc = getBrandColor(p.brand);
+    const ic = getFilledCount();
     return (
-      <div style={st.page}>
-        <button onClick={() => { sndBack(); setView("employee-products"); }} style={st.back}>← Back to Products</button>
+      <div style={{ ...st.page, paddingBottom: ic > 0 ? "100px" : "80px" }}>
         <span style={{ color: bc, fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" }}>{p.brand}{p.puffs !== "N/A" ? ` • ${p.puffs} puffs` : ""}</span>
         <h2 style={{ ...st.h2, marginTop: "4px", marginBottom: "4px" }}>{selProduct}</h2>
         <p style={st.sub}>How many of each do you need?</p>
@@ -393,7 +443,8 @@ export default function RestockApp() {
             );
           })}
         </div>
-        <button onClick={() => setView("employee-products")} style={{ ...st.btn, marginTop: "20px" }}>← Save & Back</button>
+        <FloatingBack onClick={() => setView("employee-products")} />
+        <OrderDrawer />
       </div>
     );
   }
@@ -471,6 +522,8 @@ export default function RestockApp() {
             })}
           </div>
         ))}
+        <div style={{ height: "70px" }} />
+        <FloatingBack onClick={() => setMgrView("dashboard")} />
       </div>
     );
   }
@@ -528,6 +581,8 @@ export default function RestockApp() {
           <button onClick={() => { if (window.confirm(`Delete ${m.model_name} and all its items?`)) deleteModel(m.id); }}
             style={{ padding: "10px 18px", borderRadius: "8px", background: "#E63946", color: "#fff", border: "none", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Delete Entire Model</button>
         </div>
+        <div style={{ height: "70px" }} />
+        <FloatingBack onClick={() => { setMgrView("catalog"); setEditModel(null); setEditingModelInfo(false); }} />
       </div>
     );
   }
@@ -636,6 +691,8 @@ export default function RestockApp() {
         })}
         <button onClick={() => { if (window.confirm(`Remove ${r.employee_name}'s submission?`)) { deleteSubmission(r.id); } }}
           style={{ marginTop: "20px", width: "100%", padding: "14px", borderRadius: "12px", border: "1px solid #E6394630", background: "rgba(230,57,70,0.05)", color: "#E63946", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>🗑️ Delete This Submission</button>
+        <div style={{ height: "70px" }} />
+        <FloatingBack onClick={() => setSelReport(null)} />
       </div>
     );
   }
