@@ -47,6 +47,10 @@ const DEFAULT_CATALOG = [
 
 const QTY_OPTIONS = ["skip", "1", "2", "3", "4", "5+"];
 
+// Warehouses
+const WAREHOUSES = [{ code: "1515", name: "M&W", id: 1 },{ code: "3300", name: "W", id: 2 },{ code: "9630", name: "M", id: 3 }];
+const getWarehouseByCode = (code) => WAREHOUSES.find(w => w.code === code);
+
 // Improved quantity colors — calm to urgent gradient
 const getQtyColor = (v) => {
   if (v === "skip") return "#ffffff20";
@@ -77,14 +81,16 @@ export default function RestockApp() {
   const [view, setView] = useState("splash");
   const [empName, setEmpName] = useState("");
   const [storeLoc, setStoreLoc] = useState("");
+  const [empWarehouse, setEmpWarehouse] = useState(null);
+  const [empCode, setEmpCode] = useState("");
+  const [empCodeError, setEmpCodeError] = useState(false);
   const [selProduct, setSelProduct] = useState(null);
   const [orderData, setOrderData] = useState({});
   const [suggestion, setSuggestion] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [selReport, setSelReport] = useState(null);
-  const [bannerText, setBannerText] = useState("");
+  const [bannerData, setBannerData] = useState({});
   const [bannerInput, setBannerInput] = useState("");
-  const [bannerOn, setBannerOn] = useState(true);
   const [editBanner, setEditBanner] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [reports, setReports] = useState([]);
@@ -94,6 +100,7 @@ export default function RestockApp() {
   const [newStore, setNewStore] = useState("");
   const [pin, setPin] = useState("");
   const [authed, setAuthed] = useState(false);
+  const [mgrWarehouse, setMgrWarehouse] = useState(null);
   const [catalog, setCatalog] = useState([]);
   const [catLoaded, setCatLoaded] = useState(false);
   const [mgrView, setMgrView] = useState("dashboard");
@@ -115,11 +122,13 @@ export default function RestockApp() {
 
   const PIN = "2588";
 
+  const activeWid = empWarehouse?.id || mgrWarehouse?.id || null;
   const catalogObj = {};
   catalog.forEach(c => {
-    const hidden = c.hidden_flavors || [];
-    const activeFlavors = (c.flavors || []).filter(f => !hidden.includes(f));
-    catalogObj[c.model_name] = { brand: c.brand, puffs: c.puffs, flavors: c.flavors || [], activeFlavors, hidden_flavors: hidden, id: c.id, category: c.category || "Vapes" };
+    const whVis = c.warehouse_visibility || {};
+    const hiddenForWarehouse = (activeWid && whVis[String(activeWid)]) ? whVis[String(activeWid)] : [];
+    const activeFlavors = (c.flavors || []).filter(f => !hiddenForWarehouse.includes(f));
+    catalogObj[c.model_name] = { brand: c.brand, puffs: c.puffs, flavors: c.flavors || [], activeFlavors, hidden_flavors: hiddenForWarehouse, warehouse_visibility: whVis, id: c.id, category: c.category || "Vapes" };
   });
 
   // Get unique categories
@@ -140,33 +149,42 @@ export default function RestockApp() {
   }, []);
 
   const loadBanner = useCallback(async () => {
-    try { const d = await sb.get("banner", { limit: 1, order: "id.asc" }); if (d && d[0]) { setBannerText(d[0].message || ""); setBannerOn(d[0].active); } } catch (e) { console.error(e); }
+    try {
+      const d = await sb.get("banner", { order: "id.asc" });
+      if (d && d.length > 0) {
+        const map = {};
+        d.forEach(b => { map[b.warehouse_id || 1] = { message: b.message || "", active: b.active, id: b.id }; });
+        setBannerData(map);
+      }
+    } catch (e) { console.error(e); }
   }, []);
 
   const loadMgr = useCallback(async () => {
+    if (!mgrWarehouse) return;
     setLoading(true);
     try {
       const today = new Date().toISOString().split("T")[0];
       const [subs, sugs, sl] = await Promise.all([
-        sb.get("submissions", { order: "created_at.desc", filter: `created_at=gte.${today}T00:00:00` }),
-        sb.get("suggestions", { order: "created_at.desc", filter: "status=eq.pending" }),
-        sb.get("stores", { order: "name.asc" }),
+        sb.get("submissions", { order: "created_at.desc", filter: `created_at=gte.${today}T00:00:00&warehouse_id=eq.${mgrWarehouse.id}` }),
+        sb.get("suggestions", { order: "created_at.desc", filter: `status=eq.pending&warehouse_id=eq.${mgrWarehouse.id}` }),
+        sb.get("stores", { order: "name.asc", filter: `warehouse_id=eq.${mgrWarehouse.id}` }),
       ]);
       setReports(subs || []); setAllSugs(sugs || []); setStores(sl || []);
     } catch (e) { console.error(e); }
     setLoading(false);
-  }, []);
+  }, [mgrWarehouse]);
 
   useEffect(() => { loadCatalog(); loadBanner(); }, [loadCatalog, loadBanner]);
-  useEffect(() => { if (view === "manager" && authed) loadMgr(); }, [view, authed, loadMgr]);
+  useEffect(() => { if (view === "manager" && authed && mgrWarehouse) loadMgr(); }, [view, authed, mgrWarehouse, loadMgr]);
 
   const submitOrder = async () => {
+    if (!empWarehouse) return;
     setSubmitting(true);
     try {
       const items = Object.entries(orderData);
       let tu = 0; items.forEach(([, v]) => { tu += v === "5+" ? 5 : parseInt(v) || 0; });
-      await sb.post("submissions", { employee_name: empName.trim(), store_location: storeLoc.trim(), items: orderData, total_flavors: items.length, total_units: tu });
-      for (const sg of suggestions) { await sb.post("suggestions", { suggestion_text: sg.text, employee_name: sg.from, store_location: sg.store }); }
+      await sb.post("submissions", { employee_name: empName.trim(), store_location: storeLoc.trim(), items: orderData, total_flavors: items.length, total_units: tu, warehouse_id: empWarehouse.id });
+      for (const sg of suggestions) { await sb.post("suggestions", { suggestion_text: sg.text, employee_name: sg.from, store_location: sg.store, warehouse_id: empWarehouse.id }); }
       sndSubmit(); setView("employee-done");
     } catch (e) { console.error(e); alert("Error submitting — check connection."); }
     setSubmitting(false);
@@ -183,11 +201,25 @@ export default function RestockApp() {
   const sndDone = () => playSound("/snd-done.wav");
 
   const deleteSubmission = async (id) => { try { await sb.del("submissions", `id=eq.${id}`); sndRemove(); setReports(p => p.filter(r => r.id !== id)); if (selReport && selReport.id === id) setSelReport(null); } catch (e) { console.error(e); } };
-  const saveBanner = async () => { try { await sb.patch("banner", { message: bannerInput, active: true, updated_at: new Date().toISOString() }, "id=eq.1"); setBannerText(bannerInput); setBannerOn(true); setEditBanner(false); } catch (e) { console.error(e); } };
-  const toggleBanner = async () => { try { await sb.patch("banner", { active: !bannerOn, updated_at: new Date().toISOString() }, "id=eq.1"); setBannerOn(!bannerOn); } catch (e) { console.error(e); } };
+  const saveBanner = async () => {
+    if (!mgrWarehouse) return;
+    const wid = mgrWarehouse.id;
+    const bd = bannerData[wid];
+    if (bd) {
+      try { await sb.patch("banner", { message: bannerInput, active: true, updated_at: new Date().toISOString() }, `id=eq.${bd.id}`); setBannerData(p => ({ ...p, [wid]: { ...p[wid], message: bannerInput, active: true } })); setEditBanner(false); } catch (e) { console.error(e); }
+    }
+  };
+  const toggleBanner = async () => {
+    if (!mgrWarehouse) return;
+    const wid = mgrWarehouse.id;
+    const bd = bannerData[wid];
+    if (bd) {
+      try { await sb.patch("banner", { active: !bd.active, updated_at: new Date().toISOString() }, `id=eq.${bd.id}`); setBannerData(p => ({ ...p, [wid]: { ...p[wid], active: !bd.active } })); } catch (e) { console.error(e); }
+    }
+  };
   const dismissSug = async (id) => { try { await sb.patch("suggestions", { status: "dismissed" }, `id=eq.${id}`); sndRemove(); setAllSugs(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
   const approveSug = async (id) => { try { await sb.patch("suggestions", { status: "approved" }, `id=eq.${id}`); sndAdd(); setAllSugs(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
-  const addStore = async () => { if (!newStore.trim()) return; try { await sb.post("stores", { name: newStore.trim() }); sndAdd(); setNewStore(""); loadMgr(); } catch (e) { console.error(e); } };
+  const addStore = async () => { if (!newStore.trim() || !mgrWarehouse) return; try { await sb.post("stores", { name: newStore.trim(), warehouse_id: mgrWarehouse.id }); sndAdd(); setNewStore(""); loadMgr(); } catch (e) { console.error(e); } };
   const removeStore = async (id) => { try { await sb.del("stores", `id=eq.${id}`); sndRemove(); setStores(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
 
   const addFlavorToModel = async (modelId, flavor) => {
@@ -198,15 +230,19 @@ export default function RestockApp() {
   const removeFlavorFromModel = async (modelId, flavor) => {
     const model = catalog.find(c => c.id === modelId); if (!model) return;
     const updated = (model.flavors || []).filter(f => f !== flavor);
-    const updatedHidden = (model.hidden_flavors || []).filter(f => f !== flavor);
-    try { await sb.patch("catalog", { flavors: updated, hidden_flavors: updatedHidden }, `id=eq.${modelId}`); sndRemove(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated, hidden_flavors: updatedHidden } : c)); } catch (e) { console.error(e); }
+    const whVis = { ...(model.warehouse_visibility || {}) };
+    Object.keys(whVis).forEach(k => { whVis[k] = (whVis[k] || []).filter(f => f !== flavor); });
+    try { await sb.patch("catalog", { flavors: updated, warehouse_visibility: whVis }, `id=eq.${modelId}`); sndRemove(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated, warehouse_visibility: whVis } : c)); } catch (e) { console.error(e); }
   };
   const toggleFlavorVisibility = async (modelId, flavor) => {
+    if (!mgrWarehouse) return;
     const model = catalog.find(c => c.id === modelId); if (!model) return;
-    const hidden = model.hidden_flavors || [];
+    const whVis = { ...(model.warehouse_visibility || {}) };
+    const wid = String(mgrWarehouse.id);
+    const hidden = whVis[wid] || [];
     const isHidden = hidden.includes(flavor);
-    const updatedHidden = isHidden ? hidden.filter(f => f !== flavor) : [...hidden, flavor];
-    try { await sb.patch("catalog", { hidden_flavors: updatedHidden }, `id=eq.${modelId}`); sndClick(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, hidden_flavors: updatedHidden } : c)); } catch (e) { console.error(e); }
+    whVis[wid] = isHidden ? hidden.filter(f => f !== flavor) : [...hidden, flavor];
+    try { await sb.patch("catalog", { warehouse_visibility: whVis }, `id=eq.${modelId}`); sndClick(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, warehouse_visibility: whVis } : c)); } catch (e) { console.error(e); }
   };
   const addModel = async () => {
     if (!newModelName.trim() || !newModelBrand.trim()) return;
@@ -253,11 +289,14 @@ export default function RestockApp() {
   };
 
   const Banner = () => {
-    if (!bannerOn || !bannerText) return null;
+    const wid = empWarehouse?.id || mgrWarehouse?.id || 1;
+    const bd = bannerData[wid];
+    if (!bd || !bd.active || !bd.message) return null;
+    const txt = bd.message;
     return (
       <div style={{ background: "linear-gradient(90deg, #FF6B35, #E63946, #FF6B35)", padding: "10px 0", marginBottom: "20px", borderRadius: "10px", overflow: "hidden" }}>
         <div style={{ display: "flex", animation: "scrollBanner 15s linear infinite", whiteSpace: "nowrap" }}>
-          <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700, paddingRight: "80px" }}>{"⚠️ " + bannerText + " \u00A0\u00A0\u00A0 ⚠️ " + bannerText + " \u00A0\u00A0\u00A0 ⚠️ " + bannerText}</span>
+          <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700, paddingRight: "80px" }}>{"⚠️ " + txt + " \u00A0\u00A0\u00A0 ⚠️ " + txt + " \u00A0\u00A0\u00A0 ⚠️ " + txt}</span>
         </div>
         <style>{`@keyframes scrollBanner { 0% { transform: translateX(0); } 100% { transform: translateX(-33.33%); } }`}</style>
       </div>
@@ -326,9 +365,9 @@ export default function RestockApp() {
       <p style={{ color: "#ffffff35", fontSize: "12px", margin: 0, letterSpacing: "4px", textTransform: "uppercase" }}>Tell Us What You Need</p>
       <div style={{ marginTop: "48px", display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
         <button onClick={() => setView("employee-login")} style={st.btn}>🏪 Submit Restock Request</button>
-        <button onClick={() => { setAuthed(false); setPin(""); setMgrView("dashboard"); setView("manager-login"); }} style={{ ...st.btn, background: "rgba(255,255,255,0.05)", border: "1px solid #ffffff15", boxShadow: "none" }}>📊 Manager Dashboard</button>
+        <button onClick={() => { setAuthed(false); setPin(""); setMgrView("dashboard"); setMgrWarehouse(null); setView("manager-login"); }} style={{ ...st.btn, background: "rgba(255,255,255,0.05)", border: "1px solid #ffffff15", boxShadow: "none" }}>📊 Manager Dashboard</button>
       </div>
-      <p style={{ color: "#ffffff18", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v2.1</p>
+      <p style={{ color: "#ffffff18", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v3.0</p>
     </div>
   );
 
@@ -338,25 +377,52 @@ export default function RestockApp() {
       <button onClick={() => { sndBack(); setView("splash"); }} style={st.back}>← Back</button>
       <h1 style={st.h1}>📊 Manager Access</h1><p style={st.sub}>Enter your PIN to continue</p>
       <div style={{ marginBottom: "24px" }}><label style={st.label}>Manager PIN</label>
-        <input type="password" placeholder="Enter PIN" value={pin} onChange={e => setPin(e.target.value)} style={st.input} onKeyDown={e => { if (e.key === "Enter" && pin === PIN) { sndLogin(); setAuthed(true); setView("manager"); } }} />
+        <input type="password" placeholder="Enter PIN" value={pin} onChange={e => setPin(e.target.value)} style={st.input} onKeyDown={e => { if (e.key === "Enter" && pin === PIN) { sndLogin(); setAuthed(true); setView("manager-warehouse"); } }} />
       </div>
       {pin.length >= 4 && pin !== PIN && <p style={{ color: "#E63946", fontSize: "13px", marginBottom: "12px" }}>Incorrect PIN</p>}
-      <button onClick={() => { if (pin === PIN) { sndLogin(); setAuthed(true); setView("manager"); } }} style={pin === PIN ? st.btn : st.btnOff} disabled={pin !== PIN}>Enter Dashboard →</button>
+      <button onClick={() => { if (pin === PIN) { sndLogin(); setAuthed(true); setView("manager-warehouse"); } }} style={pin === PIN ? st.btn : st.btnOff} disabled={pin !== PIN}>Enter Dashboard →</button>
+    </div>
+  );
+
+  // MANAGER WAREHOUSE SELECT
+  if (view === "manager-warehouse" && authed) return (
+    <div style={st.page}>
+      <button onClick={() => { sndBack(); setView("manager-login"); setAuthed(false); setPin(""); }} style={st.back}>← Back</button>
+      <h1 style={st.h1}>📊 Select Warehouse</h1><p style={st.sub}>Which warehouse are you managing?</p>
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        {WAREHOUSES.map(w => (
+          <button key={w.id} onClick={() => { sndLogin(); setMgrWarehouse(w); setView("manager"); }}
+            style={{ padding: "22px 20px", borderRadius: "14px", border: "1px solid #6C5CE730", background: "rgba(108,92,231,0.06)", color: "#fff", fontSize: "18px", fontWeight: 800, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span>{w.name}</span>
+            <span style={{ color: "#6C5CE7", fontSize: "20px" }}>›</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 
   // EMPLOYEE LOGIN
   if (view === "employee-login") {
-    const ok = empName.trim().length > 0 && storeLoc.trim().length > 0;
+    const codeValid = empCode.trim().length === 0 || getWarehouseByCode(empCode.trim());
+    const ok = empName.trim().length > 0 && empCode.trim().length > 0 && storeLoc.trim().length > 0 && codeValid;
     return (
       <div style={st.page}>
-        <button onClick={() => { sndBack(); setView("splash"); }} style={st.back}>← Back</button><Banner />
+        <button onClick={() => { sndBack(); setView("splash"); setEmpCode(""); setEmpCodeError(false); }} style={st.back}>← Back</button><Banner />
         <h1 style={st.h1}>Restock Request</h1><p style={st.sub}>Enter your info to start your order</p>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div><label style={st.label}>Your Name</label><input type="text" placeholder="e.g. Marcus" value={empName} onChange={e => setEmpName(e.target.value)} style={st.input} /></div>
-          <div><label style={st.label}>Store Location</label><input type="text" placeholder="e.g. Downtown, Eastside Mall" value={storeLoc} onChange={e => setStoreLoc(e.target.value)} style={st.input} /></div>
+          <div><label style={st.label}>Store Code</label>
+            <input type="text" inputMode="numeric" placeholder="Enter your store code" value={empCode} onChange={e => { setEmpCode(e.target.value); setEmpCodeError(false); }} style={{ ...st.input, borderColor: empCodeError ? "#E63946" : "#ffffff12" }} />
+            {empCodeError && <p style={{ color: "#E63946", fontSize: "12px", marginTop: "6px" }}>Invalid store code</p>}
+          </div>
+          <div><label style={st.label}>Store Name</label><input type="text" placeholder="e.g. Downtown, Eastside Mall" value={storeLoc} onChange={e => setStoreLoc(e.target.value)} style={st.input} /></div>
         </div>
-        <button onClick={() => { if (ok) { sndLogin(); setView("employee-products"); } }} style={{ ...(ok ? st.btn : st.btnOff), marginTop: "32px" }} disabled={!ok}>Continue →</button>
+        <button onClick={() => {
+          if (!empName.trim() || !empCode.trim() || !storeLoc.trim()) return;
+          const wh = getWarehouseByCode(empCode.trim());
+          if (!wh) { setEmpCodeError(true); return; }
+          sndLogin(); setEmpWarehouse(wh); setView("employee-products");
+        }} style={{ ...(ok ? st.btn : st.btnOff), marginTop: "32px" }} disabled={!ok}>Continue →</button>
       </div>
     );
   }
@@ -367,6 +433,7 @@ export default function RestockApp() {
     // Group by category
     const catGroups = {};
     Object.entries(catalogObj).forEach(([name, data]) => {
+      if (data.activeFlavors.length === 0) return;
       const cat = data.category || "Vapes";
       if (!catGroups[cat]) catGroups[cat] = { brands: {}, totalModels: 0, totalItems: 0, ordered: 0 };
       if (!catGroups[cat].brands[data.brand]) catGroups[cat].brands[data.brand] = [];
@@ -439,7 +506,7 @@ export default function RestockApp() {
               {submitting ? "Submitting..." : `✅ Submit Full Order (${ic} item${ic > 1 ? "s" : ""} • ~${tu} units)`}
             </button>
           )}
-          <FloatingBack onClick={() => setView("employee-login")} />
+          <FloatingBack onClick={() => { setView("employee-login"); setEmpWarehouse(null); setSelCategory(null); }} />
           <OrderDrawer />
         </div>
       );
@@ -580,7 +647,7 @@ export default function RestockApp() {
           ))}
         </div>
         {suggestions.length > 0 && (<div style={{ marginTop: "12px", padding: "12px 16px", borderRadius: "10px", background: "#6C5CE710", border: "1px solid #6C5CE720", width: "100%", maxWidth: "360px", textAlign: "left" }}><span style={{ color: "#6C5CE7", fontSize: "12px", fontWeight: 700 }}>💡 {suggestions.length} suggestion{suggestions.length > 1 ? "s" : ""} sent</span></div>)}
-        <button onClick={() => { setView("splash"); setOrderData({}); setEmpName(""); setStoreLoc(""); setSuggestions([]); }} style={{ ...st.btn, marginTop: "32px", background: "rgba(255,255,255,0.05)", border: "1px solid #ffffff15", boxShadow: "none", maxWidth: "360px" }}>Done</button>
+        <button onClick={() => { setView("splash"); setOrderData({}); setEmpName(""); setStoreLoc(""); setEmpCode(""); setEmpWarehouse(null); setSuggestions([]); setSelCategory(null); }} style={{ ...st.btn, marginTop: "32px", background: "rgba(255,255,255,0.05)", border: "1px solid #ffffff15", boxShadow: "none", maxWidth: "360px" }}>Done</button>
       </div>
     );
   }
@@ -592,7 +659,7 @@ export default function RestockApp() {
     return (
       <div style={st.page}>
         <button onClick={() => { sndBack(); setMgrView("dashboard"); }} style={st.back}>← Back to Dashboard</button>
-        <h1 style={st.h1}>🗂️ Manage Catalog</h1><p style={st.sub}>Add or remove models and items</p>
+        <h1 style={st.h1}>🗂️ Manage Catalog</h1><p style={st.sub}>Managing for {mgrWarehouse?.name} • toggle visibility per warehouse</p>
         {!showAddModel ? (
           <button onClick={() => setShowAddModel(true)} style={{ padding: "10px 18px", borderRadius: "8px", background: "#1DB95420", color: "#1DB954", border: "1px solid #1DB95430", fontSize: "13px", fontWeight: 700, cursor: "pointer", marginBottom: "20px" }}>+ Add New Model / Product</button>
         ) : (
@@ -622,13 +689,17 @@ export default function RestockApp() {
                     <div style={{ width: "3px", height: "16px", borderRadius: "2px", background: bc }}></div>
                     <span style={{ color: bc, fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>{brand}</span>
                   </div>
-                  {models.map(m => (
+                  {models.map(m => {
+                    const whVis = m.warehouse_visibility || {};
+                    const hiddenCount = mgrWarehouse ? (whVis[String(mgrWarehouse.id)] || []).length : 0;
+                    return (
                     <button key={m.id} onClick={() => { setEditModel(m); setMgrView("editModel"); setNewFlavor(""); setEditingModelInfo(false); }}
                       style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: "1px solid #ffffff0a", background: "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
                       <div><div>{m.model_name}</div><div style={{ fontSize: "11px", color: "#ffffff30", marginTop: "2px" }}>{m.puffs !== "N/A" ? m.puffs + " puffs" : cat}</div></div>
-                      <span style={{ fontSize: "12px", color: "#ffffff40" }}>{(m.flavors || []).length} items ›</span>
+                      <span style={{ fontSize: "12px", color: hiddenCount > 0 ? "#F59E0B" : "#ffffff40" }}>{(m.flavors || []).length} items{hiddenCount > 0 ? ` • ${hiddenCount} off` : ""} ›</span>
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               );
             })}
@@ -644,6 +715,8 @@ export default function RestockApp() {
   if (view === "manager" && authed && mgrView === "editModel" && editModel) {
     const m = catalog.find(c => c.id === editModel.id) || editModel;
     const bc = getBrandColor(m.brand);
+    const whVis = m.warehouse_visibility || {};
+    const hiddenForThis = mgrWarehouse ? (whVis[String(mgrWarehouse.id)] || []) : [];
     return (
       <div style={st.page}>
         <button onClick={() => { sndBack(); setMgrView("catalog"); setEditModel(null); setEditingModelInfo(false); }} style={st.back}>← Back to Catalog</button>
@@ -657,7 +730,7 @@ export default function RestockApp() {
               <button onClick={() => { setEditingModelInfo(true); setEditModelName(m.model_name); setEditModelBrand(m.brand); setEditModelPuffs(m.puffs || ""); setEditModelCategory(m.category || "Vapes"); }}
                 style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid #ffffff20", background: "transparent", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer", marginTop: "4px" }}>✏️ Edit</button>
             </div>
-            <p style={st.sub}>{(m.flavors || []).length} items{(m.hidden_flavors || []).length > 0 ? ` • ${(m.hidden_flavors || []).length} hidden` : ""}</p>
+            <p style={st.sub}>{(m.flavors || []).length} items{hiddenForThis.length > 0 ? ` • ${hiddenForThis.length} hidden for ${mgrWarehouse?.name}` : ""}</p>
           </div>
         ) : (
           <div style={{ padding: "16px", borderRadius: "12px", border: "1px solid #00B4D830", background: "#00B4D808", marginBottom: "20px" }}>
@@ -682,7 +755,7 @@ export default function RestockApp() {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           {(m.flavors || []).map(f => {
-            const isHidden = (m.hidden_flavors || []).includes(f);
+            const isHidden = hiddenForThis.includes(f);
             return (
               <div key={f} style={{ padding: "12px 14px", borderRadius: "8px", background: isHidden ? "rgba(255,255,255,0.01)" : "rgba(255,255,255,0.025)", border: `1px solid ${isHidden ? "#ffffff05" : "#ffffff08"}`, display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all 0.2s ease" }}>
                 <span style={{ color: isHidden ? "#ffffff30" : "#fff", fontSize: "13px", fontWeight: 600, textDecoration: isHidden ? "line-through" : "none", flex: 1 }}>{f}</span>
@@ -713,13 +786,14 @@ export default function RestockApp() {
     const pending = getPending();
     return (
       <div style={st.page}>
-        <button onClick={() => { sndBack(); setView("splash"); setAuthed(false); }} style={st.back}>← Back</button>
-        <h1 style={st.h1}>📊 Dashboard</h1><p style={st.sub}>{loading ? "Loading..." : `${reports.length} submission${reports.length !== 1 ? "s" : ""} today`}</p>
+        <button onClick={() => { sndBack(); setView("manager-warehouse"); setMgrWarehouse(null); }} style={st.back}>← Switch Warehouse</button>
+        <h1 style={st.h1}>📊 {mgrWarehouse?.name} Dashboard</h1><p style={st.sub}>{loading ? "Loading..." : `${reports.length} submission${reports.length !== 1 ? "s" : ""} today`}</p>
         <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
           <button onClick={loadMgr} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff50", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🔄 Refresh</button>
           <button onClick={() => setMgrView("catalog")} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #6C5CE730", background: "#6C5CE710", color: "#6C5CE7", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🗂️ Manage Catalog</button>
         </div>
         <div style={{ padding: "16px", borderRadius: "12px", border: "1px solid #FF6B3530", background: "rgba(255,107,53,0.05)", marginBottom: "20px" }}>
+          {(() => { const wid = mgrWarehouse?.id || 1; const bd = bannerData[wid] || { message: "", active: false }; const bannerText = bd.message; const bannerOn = bd.active; return (<>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: editBanner ? "12px" : "0" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}><span style={{ fontSize: "14px" }}>📢</span><span style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Employee Banner</span></div>
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
@@ -734,6 +808,7 @@ export default function RestockApp() {
               <button onClick={saveBanner} style={{ padding: "10px 20px", borderRadius: "10px", border: "none", background: bannerInput.trim() ? "#FF6B35" : "#ffffff10", color: bannerInput.trim() ? "#fff" : "#ffffff25", fontSize: "13px", fontWeight: 700, cursor: bannerInput.trim() ? "pointer" : "not-allowed", alignSelf: "flex-end" }}>Save & Broadcast</button>
             </div>
           )}
+          </>); })()}
         </div>
         <div style={{ marginBottom: "8px" }}><span style={{ color: "#ffffff60", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Today's Restock Requests</span></div>
         {reports.length === 0 && !loading && <div style={{ padding: "24px", textAlign: "center", borderRadius: "12px", border: "1px dashed #ffffff12", marginBottom: "20px" }}><p style={{ color: "#ffffff30", fontSize: "14px", margin: 0 }}>No submissions yet today</p></div>}
