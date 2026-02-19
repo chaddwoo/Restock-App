@@ -77,17 +77,24 @@ const getBrandColor = (brand) => {
 const timeAgo = (d) => { const m = Math.floor((new Date() - new Date(d)) / 60000); if (m < 1) return "just now"; if (m < 60) return `${m}m ago`; const h = Math.floor(m / 60); if (h < 24) return `${h}h ${m % 60}m ago`; return `${Math.floor(h / 24)}d ago`; };
 const fmtTime = (d) => new Date(d).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
 
+// Employee session persistence
+const LS_KEY = "restock_emp_session";
+const saveSession = (d) => { try { localStorage.setItem(LS_KEY, JSON.stringify(d)); } catch(e){} };
+const loadSession = () => { try { const s = localStorage.getItem(LS_KEY); return s ? JSON.parse(s) : null; } catch(e){ return null; } };
+const clearSession = () => { try { localStorage.removeItem(LS_KEY); } catch(e){} };
+const _saved = (() => { const s = loadSession(); if (!s) return null; const empViews = ["employee-login","employee-products","employee-flavors"]; if (!empViews.includes(s.view)) return null; return s; })();
+
 export default function RestockApp() {
-  const [view, setView] = useState("splash");
-  const [empName, setEmpName] = useState("");
-  const [storeLoc, setStoreLoc] = useState("");
-  const [empWarehouse, setEmpWarehouse] = useState(null);
-  const [empCode, setEmpCode] = useState("");
+  const [view, setView] = useState(_saved?.view || "splash");
+  const [empName, setEmpName] = useState(_saved?.empName || "");
+  const [storeLoc, setStoreLoc] = useState(_saved?.storeLoc || "");
+  const [empWarehouse, setEmpWarehouse] = useState(_saved?.empWarehouse || null);
+  const [empCode, setEmpCode] = useState(_saved?.empCode || "");
   const [empCodeError, setEmpCodeError] = useState(false);
-  const [selProduct, setSelProduct] = useState(null);
-  const [orderData, setOrderData] = useState({});
+  const [selProduct, setSelProduct] = useState(_saved?.selProduct || null);
+  const [orderData, setOrderData] = useState(_saved?.orderData || {});
   const [suggestion, setSuggestion] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState(_saved?.suggestions || []);
   const [selReport, setSelReport] = useState(null);
   const [bannerData, setBannerData] = useState({});
   const [bannerInput, setBannerInput] = useState("");
@@ -116,7 +123,7 @@ export default function RestockApp() {
   const [editModelBrand, setEditModelBrand] = useState("");
   const [editModelPuffs, setEditModelPuffs] = useState("");
   const [editModelCategory, setEditModelCategory] = useState("");
-  const [selCategory, setSelCategory] = useState(null);
+  const [selCategory, setSelCategory] = useState(_saved?.selCategory || null);
   const [showOrderEdit, setShowOrderEdit] = useState(false);
   const [pickedItems, setPickedItems] = useState({});
 
@@ -177,6 +184,32 @@ export default function RestockApp() {
   useEffect(() => { loadCatalog(); loadBanner(); }, [loadCatalog, loadBanner]);
   useEffect(() => { if (view === "manager" && authed && mgrWarehouse) loadMgr(); }, [view, authed, mgrWarehouse, loadMgr]);
 
+  // Save employee session to localStorage on every relevant change
+  useEffect(() => {
+    const empViews = ["employee-login", "employee-products", "employee-flavors"];
+    if (empViews.includes(view)) {
+      saveSession({ view, empName, storeLoc, empWarehouse, empCode, selProduct, orderData, suggestions, selCategory });
+    }
+  }, [view, empName, storeLoc, empWarehouse, empCode, selProduct, orderData, suggestions, selCategory]);
+
+  // Warn before unload if employee has items in order
+  useEffect(() => {
+    const handler = (e) => {
+      if (Object.keys(orderData).length > 0 && ["employee-products", "employee-flavors"].includes(view)) {
+        e.preventDefault(); e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [orderData, view]);
+
+  // Block pull-to-refresh on mobile
+  useEffect(() => {
+    document.body.style.overscrollBehavior = "none";
+    document.documentElement.style.overscrollBehavior = "none";
+    return () => { document.body.style.overscrollBehavior = ""; document.documentElement.style.overscrollBehavior = ""; };
+  }, []);
+
   const submitOrder = async () => {
     if (!empWarehouse) return;
     setSubmitting(true);
@@ -185,7 +218,7 @@ export default function RestockApp() {
       let tu = 0; items.forEach(([, v]) => { tu += v === "5+" ? 5 : parseInt(v) || 0; });
       await sb.post("submissions", { employee_name: empName.trim(), store_location: storeLoc.trim(), items: orderData, total_flavors: items.length, total_units: tu, warehouse_id: empWarehouse.id });
       for (const sg of suggestions) { await sb.post("suggestions", { suggestion_text: sg.text, employee_name: sg.from, store_location: sg.store, warehouse_id: empWarehouse.id }); }
-      sndSubmit(); setView("employee-done");
+      sndSubmit(); clearSession(); setView("employee-done");
     } catch (e) { console.error(e); alert("Error submitting — check connection."); }
     setSubmitting(false);
   };
@@ -407,7 +440,12 @@ export default function RestockApp() {
     const ok = empName.trim().length > 0 && empCode.trim().length > 0 && storeLoc.trim().length > 0 && codeValid;
     return (
       <div style={st.page}>
-        <button onClick={() => { sndBack(); setView("splash"); setEmpCode(""); setEmpCodeError(false); }} style={st.back}>← Back</button><Banner />
+        <button onClick={() => { 
+          if (Object.keys(orderData).length > 0) {
+            if (!window.confirm("You have items in your order. Backing out will lose your progress. Are you sure?")) return;
+          }
+          sndBack(); clearSession(); setView("splash"); setEmpCode(""); setEmpCodeError(false); 
+        }} style={st.back}>← Back</button><Banner />
         <h1 style={st.h1}>Restock Request</h1><p style={st.sub}>Enter your info to start your order</p>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div><label style={st.label}>Your Name</label><input type="text" placeholder="e.g. Marcus" value={empName} onChange={e => setEmpName(e.target.value)} style={st.input} /></div>
@@ -506,7 +544,12 @@ export default function RestockApp() {
               {submitting ? "Submitting..." : `✅ Submit Full Order (${ic} item${ic > 1 ? "s" : ""} • ~${tu} units)`}
             </button>
           )}
-          <FloatingBack onClick={() => { setView("employee-login"); setEmpWarehouse(null); setSelCategory(null); }} />
+          <FloatingBack onClick={() => { 
+            if (Object.keys(orderData).length > 0) {
+              if (!window.confirm("You have items in your order. Backing out will lose your progress. Are you sure?")) return;
+            }
+            clearSession(); setView("employee-login"); setEmpWarehouse(null); setSelCategory(null); 
+          }} />
           <OrderDrawer />
         </div>
       );
@@ -647,7 +690,7 @@ export default function RestockApp() {
           ))}
         </div>
         {suggestions.length > 0 && (<div style={{ marginTop: "12px", padding: "12px 16px", borderRadius: "10px", background: "#6C5CE710", border: "1px solid #6C5CE720", width: "100%", maxWidth: "360px", textAlign: "left" }}><span style={{ color: "#6C5CE7", fontSize: "12px", fontWeight: 700 }}>💡 {suggestions.length} suggestion{suggestions.length > 1 ? "s" : ""} sent</span></div>)}
-        <button onClick={() => { setView("splash"); setOrderData({}); setEmpName(""); setStoreLoc(""); setEmpCode(""); setEmpWarehouse(null); setSuggestions([]); setSelCategory(null); }} style={{ ...st.btn, marginTop: "32px", background: "rgba(255,255,255,0.05)", border: "1px solid #ffffff15", boxShadow: "none", maxWidth: "360px" }}>Done</button>
+        <button onClick={() => { clearSession(); setView("splash"); setOrderData({}); setEmpName(""); setStoreLoc(""); setEmpCode(""); setEmpWarehouse(null); setSuggestions([]); setSelCategory(null); }} style={{ ...st.btn, marginTop: "32px", background: "rgba(255,255,255,0.05)", border: "1px solid #ffffff15", boxShadow: "none", maxWidth: "360px" }}>Done</button>
       </div>
     );
   }
