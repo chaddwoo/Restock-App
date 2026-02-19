@@ -116,7 +116,11 @@ export default function RestockApp() {
   const PIN = "2588";
 
   const catalogObj = {};
-  catalog.forEach(c => { catalogObj[c.model_name] = { brand: c.brand, puffs: c.puffs, flavors: c.flavors || [], id: c.id, category: c.category || "Vapes" }; });
+  catalog.forEach(c => {
+    const hidden = c.hidden_flavors || [];
+    const activeFlavors = (c.flavors || []).filter(f => !hidden.includes(f));
+    catalogObj[c.model_name] = { brand: c.brand, puffs: c.puffs, flavors: c.flavors || [], activeFlavors, hidden_flavors: hidden, id: c.id, category: c.category || "Vapes" };
+  });
 
   // Get unique categories
   const categories = [...new Set(catalog.map(c => c.category || "Vapes"))].sort();
@@ -194,7 +198,15 @@ export default function RestockApp() {
   const removeFlavorFromModel = async (modelId, flavor) => {
     const model = catalog.find(c => c.id === modelId); if (!model) return;
     const updated = (model.flavors || []).filter(f => f !== flavor);
-    try { await sb.patch("catalog", { flavors: updated }, `id=eq.${modelId}`); sndRemove(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated } : c)); } catch (e) { console.error(e); }
+    const updatedHidden = (model.hidden_flavors || []).filter(f => f !== flavor);
+    try { await sb.patch("catalog", { flavors: updated, hidden_flavors: updatedHidden }, `id=eq.${modelId}`); sndRemove(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated, hidden_flavors: updatedHidden } : c)); } catch (e) { console.error(e); }
+  };
+  const toggleFlavorVisibility = async (modelId, flavor) => {
+    const model = catalog.find(c => c.id === modelId); if (!model) return;
+    const hidden = model.hidden_flavors || [];
+    const isHidden = hidden.includes(flavor);
+    const updatedHidden = isHidden ? hidden.filter(f => f !== flavor) : [...hidden, flavor];
+    try { await sb.patch("catalog", { hidden_flavors: updatedHidden }, `id=eq.${modelId}`); sndClick(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, hidden_flavors: updatedHidden } : c)); } catch (e) { console.error(e); }
   };
   const addModel = async () => {
     if (!newModelName.trim() || !newModelBrand.trim()) return;
@@ -360,7 +372,7 @@ export default function RestockApp() {
       if (!catGroups[cat].brands[data.brand]) catGroups[cat].brands[data.brand] = [];
       catGroups[cat].brands[data.brand].push(name);
       catGroups[cat].totalModels++;
-      catGroups[cat].totalItems += data.flavors.length;
+      catGroups[cat].totalItems += data.activeFlavors.length;
       catGroups[cat].ordered += getProductOrderCount(name);
     });
     const catKeys = Object.keys(catGroups).sort();
@@ -454,7 +466,7 @@ export default function RestockApp() {
                   return (
                     <button key={model} onClick={() => { setSelProduct(model); setView("employee-flavors"); }}
                       style={{ padding: "16px", borderRadius: "12px", border: `1px solid ${o > 0 ? bc + "25" : "#ffffff0a"}`, background: o > 0 ? bc + "08" : "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div><div style={{ marginBottom: "3px" }}>{model}</div><div style={{ fontSize: "11px", color: "#ffffff30", fontWeight: 500 }}>{p.puffs !== "N/A" ? p.puffs + " puffs • " : ""}{p.flavors.length} items</div></div>
+                      <div><div style={{ marginBottom: "3px" }}>{model}</div><div style={{ fontSize: "11px", color: "#ffffff30", fontWeight: 500 }}>{p.puffs !== "N/A" ? p.puffs + " puffs • " : ""}{p.activeFlavors.length} items</div></div>
                       <span style={{ fontSize: "12px", fontWeight: 700, color: o > 0 ? bc : "#ffffff25", whiteSpace: "nowrap" }}>{o > 0 ? `${o} requested` : ""}</span>
                     </button>
                   );
@@ -479,11 +491,11 @@ export default function RestockApp() {
         <h2 style={{ ...st.h2, marginTop: "4px", marginBottom: "4px" }}>{selProduct}</h2>
         <p style={st.sub}>How many of each do you need?</p>
         <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
-          <button onClick={() => p.flavors.forEach(f => { const key = `${selProduct}|||${f}`; setOrderData(prev => { const next = { ...prev }; delete next[key]; return next; }); })}
+          <button onClick={() => p.activeFlavors.forEach(f => { const key = `${selProduct}|||${f}`; setOrderData(prev => { const next = { ...prev }; delete next[key]; return next; }); })}
             style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff40", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>Skip All</button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {p.flavors.map(flavor => {
+          {p.activeFlavors.map(flavor => {
             const key = `${selProduct}|||${flavor}`; const cur = orderData[key]; const has = cur !== undefined; const col = has ? getQtyColor(cur) : "#ffffff10";
             return (
               <div key={flavor} style={{ padding: "14px 16px", borderRadius: "12px", border: `1px solid ${has ? col + "30" : "#ffffff08"}`, background: has ? col + "08" : "rgba(255,255,255,0.02)" }}>
@@ -645,7 +657,7 @@ export default function RestockApp() {
               <button onClick={() => { setEditingModelInfo(true); setEditModelName(m.model_name); setEditModelBrand(m.brand); setEditModelPuffs(m.puffs || ""); setEditModelCategory(m.category || "Vapes"); }}
                 style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid #ffffff20", background: "transparent", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer", marginTop: "4px" }}>✏️ Edit</button>
             </div>
-            <p style={st.sub}>{(m.flavors || []).length} items</p>
+            <p style={st.sub}>{(m.flavors || []).length} items{(m.hidden_flavors || []).length > 0 ? ` • ${(m.hidden_flavors || []).length} hidden` : ""}</p>
           </div>
         ) : (
           <div style={{ padding: "16px", borderRadius: "12px", border: "1px solid #00B4D830", background: "#00B4D808", marginBottom: "20px" }}>
@@ -669,12 +681,21 @@ export default function RestockApp() {
             style={{ padding: "12px 18px", borderRadius: "10px", border: "none", background: newFlavor.trim() ? "#1DB954" : "#ffffff10", color: newFlavor.trim() ? "#fff" : "#ffffff25", fontSize: "13px", fontWeight: 700, cursor: newFlavor.trim() ? "pointer" : "not-allowed", whiteSpace: "nowrap" }}>+ Add</button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          {(m.flavors || []).map(f => (
-            <div key={f} style={{ padding: "12px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.025)", border: "1px solid #ffffff08", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>{f}</span>
-              <button onClick={() => removeFlavorFromModel(m.id, f)} style={{ background: "none", border: "1px solid #E6394630", borderRadius: "6px", color: "#E63946", fontSize: "11px", fontWeight: 700, cursor: "pointer", padding: "4px 10px" }}>✕</button>
-            </div>
-          ))}
+          {(m.flavors || []).map(f => {
+            const isHidden = (m.hidden_flavors || []).includes(f);
+            return (
+              <div key={f} style={{ padding: "12px 14px", borderRadius: "8px", background: isHidden ? "rgba(255,255,255,0.01)" : "rgba(255,255,255,0.025)", border: `1px solid ${isHidden ? "#ffffff05" : "#ffffff08"}`, display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all 0.2s ease" }}>
+                <span style={{ color: isHidden ? "#ffffff30" : "#fff", fontSize: "13px", fontWeight: 600, textDecoration: isHidden ? "line-through" : "none", flex: 1 }}>{f}</span>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center", flexShrink: 0 }}>
+                  <button onClick={() => toggleFlavorVisibility(m.id, f)}
+                    style={{ width: "44px", height: "24px", borderRadius: "12px", border: "none", background: isHidden ? "#ffffff15" : "#1DB954", cursor: "pointer", position: "relative", transition: "background 0.2s ease", padding: 0 }}>
+                    <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: "#fff", position: "absolute", top: "3px", left: isHidden ? "3px" : "23px", transition: "left 0.2s ease", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
+                  </button>
+                  <button onClick={() => removeFlavorFromModel(m.id, f)} style={{ background: "none", border: "1px solid #E6394630", borderRadius: "6px", color: "#E63946", fontSize: "11px", fontWeight: 700, cursor: "pointer", padding: "4px 10px" }}>✕</button>
+                </div>
+              </div>
+            );
+          })}
         </div>
         <div style={{ marginTop: "40px", padding: "16px", borderRadius: "12px", border: "1px solid #E6394630", background: "rgba(230,57,70,0.05)" }}>
           <p style={{ color: "#E63946", fontSize: "12px", fontWeight: 700, margin: "0 0 10px 0" }}>DANGER ZONE</p>
