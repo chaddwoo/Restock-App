@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 
 const SUPABASE_URL = "https://unnonzpasuacdgiioqiu.supabase.co";
 const SUPABASE_KEY = "sb_publishable_XJO2XX_U8CYxvPemov9YUg_nMh4dc6Y";
@@ -130,16 +130,18 @@ export default function RestockApp() {
   const PIN = "2588";
 
   const activeWid = empWarehouse?.id || mgrWarehouse?.id || null;
-  const catalogObj = {};
-  catalog.forEach(c => {
-    const whVis = c.warehouse_visibility || {};
-    const hiddenForWarehouse = (activeWid && whVis[String(activeWid)]) ? whVis[String(activeWid)] : [];
-    const activeFlavors = (c.flavors || []).filter(f => !hiddenForWarehouse.includes(f));
-    catalogObj[c.model_name] = { brand: c.brand, puffs: c.puffs, flavors: c.flavors || [], activeFlavors, hidden_flavors: hiddenForWarehouse, warehouse_visibility: whVis, id: c.id, category: c.category || "Vapes" };
-  });
+  const catalogObj = useMemo(() => {
+    const obj = {};
+    catalog.forEach(c => {
+      const whVis = c.warehouse_visibility || {};
+      const hiddenForWarehouse = (activeWid && whVis[String(activeWid)]) ? whVis[String(activeWid)] : [];
+      const activeFlavors = (c.flavors || []).filter(f => !hiddenForWarehouse.includes(f));
+      obj[c.model_name] = { brand: c.brand, puffs: c.puffs, flavors: c.flavors || [], activeFlavors, hidden_flavors: hiddenForWarehouse, warehouse_visibility: whVis, id: c.id, category: c.category || "Vapes" };
+    });
+    return obj;
+  }, [catalog, activeWid]);
 
-  // Get unique categories
-  const categories = [...new Set(catalog.map(c => c.category || "Vapes"))].sort();
+  const categories = useMemo(() => [...new Set(catalog.map(c => c.category || "Vapes"))].sort(), [catalog]);
 
   const loadCatalog = useCallback(async () => {
     try {
@@ -223,15 +225,22 @@ export default function RestockApp() {
     setSubmitting(false);
   };
 
-  // Sound effects — custom audio files
-  const playSound = (src) => { try { const a = new Audio(process.env.PUBLIC_URL + src); a.volume = 0.5; const p = a.play(); if (p) p.catch(() => {}); } catch (e) {} };
-  const sndClick = () => playSound("/snd-click.wav");
-  const sndBack = () => playSound("/snd-back.wav");
-  const sndSubmit = () => playSound("/snd-submit.wav");
-  const sndLogin = () => playSound("/snd-login.wav");
-  const sndAdd = () => playSound("/snd-add.wav");
-  const sndRemove = () => playSound("/snd-remove.wav");
-  const sndDone = () => playSound("/snd-done.wav");
+  // Preloaded sound effects
+  const sounds = useRef({});
+  useEffect(() => {
+    ["click","back","submit","login","add","remove","done"].forEach(k => {
+      const a = new Audio(process.env.PUBLIC_URL + "/snd-" + k + ".wav");
+      a.preload = "auto"; a.volume = 0.5; sounds.current[k] = a;
+    });
+  }, []);
+  const playSound = (key) => { try { const a = sounds.current[key]; if (a) { a.currentTime = 0; const p = a.play(); if (p) p.catch(() => {}); } } catch (e) {} };
+  const sndClick = () => playSound("click");
+  const sndBack = () => playSound("back");
+  const sndSubmit = () => playSound("submit");
+  const sndLogin = () => playSound("login");
+  const sndAdd = () => playSound("add");
+  const sndRemove = () => playSound("remove");
+  const sndDone = () => playSound("done");
 
   const deleteSubmission = async (id) => { try { await sb.del("submissions", `id=eq.${id}`); sndRemove(); setReports(p => p.filter(r => r.id !== id)); if (selReport && selReport.id === id) setSelReport(null); } catch (e) { console.error(e); } };
   const saveBanner = async () => {
@@ -795,6 +804,20 @@ export default function RestockApp() {
             style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
           <button onClick={() => { if (newFlavor.trim()) { addFlavorToModel(m.id, newFlavor); setNewFlavor(""); } }}
             style={{ padding: "12px 18px", borderRadius: "10px", border: "none", background: newFlavor.trim() ? "#1DB954" : "#ffffff10", color: newFlavor.trim() ? "#fff" : "#ffffff25", fontSize: "13px", fontWeight: 700, cursor: newFlavor.trim() ? "pointer" : "not-allowed", whiteSpace: "nowrap" }}>+ Add</button>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+          <span style={{ color: "#ffffff30", fontSize: "12px", fontWeight: 600 }}>{hiddenForThis.length === 0 ? "All visible" : `${(m.flavors || []).length - hiddenForThis.length} visible / ${hiddenForThis.length} hidden`}</span>
+          <button onClick={async () => {
+            if (!mgrWarehouse) return;
+            const allFlavors = m.flavors || [];
+            const allHidden = hiddenForThis.length === allFlavors.length;
+            const whVis = { ...(m.warehouse_visibility || {}) };
+            const wid = String(mgrWarehouse.id);
+            whVis[wid] = allHidden ? [] : [...allFlavors];
+            try { await sb.patch("catalog", { warehouse_visibility: whVis }, `id=eq.${m.id}`); sndClick(); setCatalog(p => p.map(c => c.id === m.id ? { ...c, warehouse_visibility: whVis } : c)); } catch (e) { console.error(e); }
+          }} style={{ padding: "6px 14px", borderRadius: "8px", border: `1px solid ${hiddenForThis.length === (m.flavors || []).length ? "#1DB95430" : "#E6394630"}`, background: hiddenForThis.length === (m.flavors || []).length ? "#1DB95410" : "#E6394610", color: hiddenForThis.length === (m.flavors || []).length ? "#1DB954" : "#E63946", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>
+            {hiddenForThis.length === (m.flavors || []).length ? "Turn All On" : "Turn All Off"}
+          </button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           {(m.flavors || []).map(f => {
