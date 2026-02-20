@@ -228,8 +228,8 @@ export default function RestockApp() {
   // Preloaded sound pool — multiple instances per sound for rapid tapping
   const sounds = useRef({});
   useEffect(() => {
-    const POOL = 4;
     ["click","back","submit","login","add","remove","done"].forEach(k => {
+      const POOL = k === "click" ? 8 : 4;
       sounds.current[k] = { pool: [], idx: 0 };
       for (let i = 0; i < POOL; i++) {
         const a = new Audio(process.env.PUBLIC_URL + "/snd-" + k + ".wav");
