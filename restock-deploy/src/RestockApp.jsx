@@ -225,15 +225,19 @@ export default function RestockApp() {
     setSubmitting(false);
   };
 
-  // Preloaded sound effects
+  // Preloaded sound pool — multiple instances per sound for rapid tapping
   const sounds = useRef({});
   useEffect(() => {
+    const POOL = 4;
     ["click","back","submit","login","add","remove","done"].forEach(k => {
-      const a = new Audio(process.env.PUBLIC_URL + "/snd-" + k + ".wav");
-      a.preload = "auto"; a.volume = 0.5; sounds.current[k] = a;
+      sounds.current[k] = { pool: [], idx: 0 };
+      for (let i = 0; i < POOL; i++) {
+        const a = new Audio(process.env.PUBLIC_URL + "/snd-" + k + ".wav");
+        a.preload = "auto"; a.volume = 0.5; sounds.current[k].pool.push(a);
+      }
     });
   }, []);
-  const playSound = (key) => { try { const a = sounds.current[key]; if (a) { a.currentTime = 0; const p = a.play(); if (p) p.catch(() => {}); } } catch (e) {} };
+  const playSound = (key) => { try { const s = sounds.current[key]; if (!s) return; const a = s.pool[s.idx % s.pool.length]; s.idx++; a.currentTime = 0; const p = a.play(); if (p) p.catch(() => {}); } catch (e) {} };
   const sndClick = () => playSound("click");
   const sndBack = () => playSound("back");
   const sndSubmit = () => playSound("submit");
