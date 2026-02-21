@@ -318,7 +318,7 @@ export default function RestockApp() {
     });
   };
   const getFilledCount = () => Object.keys(orderData).length;
-  const getProductOrderCount = (name) => (catalogObj[name]?.flavors || []).filter(f => orderData[`${name}|||${f}`]).length;
+  const getProductOrderCount = (name) => (catalogObj[name]?.activeFlavors || []).filter(f => orderData[`${name}|||${f}`]).length;
   const getTotalUnits = () => { let t = 0; Object.values(orderData).forEach(v => { t += v === "5+" ? 5 : parseInt(v) || 0; }); return t; };
   const getPending = () => { const sub = reports.map(r => r.store_location.toLowerCase().trim()); return stores.filter(s => !sub.includes(s.name.toLowerCase().trim())); };
 
@@ -598,7 +598,12 @@ export default function RestockApp() {
             </div>
           );
         })}
-        <FloatingBack onClick={() => onlyOneCat ? setView("employee-login") : setSelCategory(null)} />
+        <FloatingBack onClick={() => {
+          if (Object.keys(orderData).length > 0) {
+            if (!window.confirm("You have items in your order. Backing out will lose your progress. Are you sure?")) return;
+          }
+          if (onlyOneCat) { clearSession(); setView("employee-login"); setEmpWarehouse(null); } else { setSelCategory(null); }
+        }} />
         <OrderDrawer />
       </div>
     );
@@ -606,7 +611,9 @@ export default function RestockApp() {
 
   // EMPLOYEE FLAVORS
   if (view === "employee-flavors") {
-    const p = catalogObj[selProduct]; const bc = getBrandColor(p.brand);
+    const p = catalogObj[selProduct];
+    if (!p) { setView("employee-products"); setSelProduct(null); return null; }
+    const bc = getBrandColor(p.brand);
     const ic = getFilledCount();
     return (
       <div style={{ ...st.page, paddingBottom: ic > 0 ? "100px" : "80px" }}>
