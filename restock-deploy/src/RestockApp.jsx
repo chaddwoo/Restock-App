@@ -944,9 +944,9 @@ export default function RestockApp() {
           <div style={{ width: "1px", background: "#ffffff10" }}></div>
           <div><div style={{ fontSize: "28px", fontWeight: 900, color: "#E63946", lineHeight: 1 }}>~{r.total_units}</div><div style={{ fontSize: "11px", fontWeight: 700, color: "#E63946", marginTop: "4px", opacity: 0.7 }}>TOTAL UNITS</div></div>
         </div>
-        {/* Progress bar */}
-        <div style={{ marginBottom: "20px", padding: "12px 16px", borderRadius: "10px", background: allDone ? "rgba(29,185,84,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${allDone ? "#1DB95430" : "#ffffff08"}` }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+        {/* Floating progress bar */}
+        <div style={{ position: "sticky", top: 0, zIndex: 80, padding: "12px 16px", borderRadius: "12px", background: allDone ? "rgba(29,185,84,0.15)" : "rgba(11,11,15,0.95)", backdropFilter: "blur(12px)", border: `1px solid ${allDone ? "#1DB95430" : "#ffffff10"}`, marginBottom: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.4)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
             <span style={{ color: allDone ? "#1DB954" : "#ffffff50", fontSize: "12px", fontWeight: 700 }}>{allDone ? "✅ ALL PICKED!" : `Picked ${totalPicked} of ${totalItems}`}</span>
             <span style={{ color: allDone ? "#1DB954" : "#ffffff30", fontSize: "12px", fontWeight: 700 }}>{totalItems > 0 ? Math.round((totalPicked / totalItems) * 100) : 0}%</span>
           </div>
