@@ -599,10 +599,12 @@ export default function RestockApp() {
           );
         })}
         <FloatingBack onClick={() => {
-          if (Object.keys(orderData).length > 0) {
-            if (!window.confirm("You have items in your order. Backing out will lose your progress. Are you sure?")) return;
-          }
-          if (onlyOneCat) { clearSession(); setView("employee-login"); setEmpWarehouse(null); } else { setSelCategory(null); }
+          if (onlyOneCat) {
+            if (Object.keys(orderData).length > 0) {
+              if (!window.confirm("You have items in your order. Backing out will lose your progress. Are you sure?")) return;
+            }
+            clearSession(); setView("employee-login"); setEmpWarehouse(null);
+          } else { setSelCategory(null); }
         }} />
         <OrderDrawer />
       </div>
