@@ -302,8 +302,18 @@ export default function RestockApp() {
 
   const addFlavorToModel = async (modelId, flavor) => {
     const model = catalog.find(c => c.id === modelId); if (!model || !flavor.trim()) return;
-    const updated = [...(model.flavors || []), flavor.trim()].sort();
-    try { await sb.patch("catalog", { flavors: updated }, `id=eq.${modelId}`); sndAdd(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated } : c)); } catch (e) { console.error(e); }
+    const f = flavor.trim();
+    const updated = [...(model.flavors || []), f].sort();
+    // Auto-hide from other warehouses
+    const whVis = { ...(model.warehouse_visibility || {}) };
+    if (mgrWarehouse) {
+      WAREHOUSES.forEach(w => {
+        if (w.id !== mgrWarehouse.id) {
+          whVis[String(w.id)] = [...(whVis[String(w.id)] || []), f];
+        }
+      });
+    }
+    try { await sb.patch("catalog", { flavors: updated, warehouse_visibility: whVis }, `id=eq.${modelId}`); sndAdd(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated, warehouse_visibility: whVis } : c)); } catch (e) { console.error(e); }
   };
   const removeFlavorFromModel = async (modelId, flavor) => {
     const model = catalog.find(c => c.id === modelId); if (!model) return;
@@ -324,8 +334,13 @@ export default function RestockApp() {
   };
   const addModel = async () => {
     if (!newModelName.trim() || !newModelBrand.trim()) return;
+    // Initialize visibility so other warehouses don't auto-see future flavors
+    const whVis = {};
+    if (mgrWarehouse) {
+      WAREHOUSES.forEach(w => { if (w.id !== mgrWarehouse.id) whVis[String(w.id)] = []; });
+    }
     try {
-      const res = await sb.post("catalog", { model_name: newModelName.trim(), brand: newModelBrand.trim(), puffs: newModelPuffs.trim() || "N/A", category: newModelCategory.trim() || "Vapes", flavors: [] });
+      const res = await sb.post("catalog", { model_name: newModelName.trim(), brand: newModelBrand.trim(), puffs: newModelPuffs.trim() || "N/A", category: newModelCategory.trim() || "Vapes", flavors: [], warehouse_visibility: whVis });
       if (res && res[0]) { sndAdd(); setCatalog(p => [...p, res[0]].sort((a, b) => (a.category || "").localeCompare(b.category || "") || a.brand.localeCompare(b.brand) || a.model_name.localeCompare(b.model_name))); }
       setNewModelName(""); setNewModelBrand(""); setNewModelPuffs(""); setNewModelCategory("Vapes"); setShowAddModel(false);
     } catch (e) { console.error(e); }
