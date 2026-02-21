@@ -164,7 +164,7 @@ export default function RestockApp() {
       if (data && Array.isArray(data) && data.length > 0) {
         setCatalog(data);
       } else {
-        for (const item of DEFAULT_CATALOG) { await sb.post("catalog", item); }
+        await Promise.all(DEFAULT_CATALOG.map(item => sb.post("catalog", item)));
         const seeded = await sb.get("catalog", { order: "brand.asc,model_name.asc" });
         setCatalog(seeded || []);
       }
@@ -567,7 +567,7 @@ export default function RestockApp() {
               <button onClick={() => { if (suggestion.trim()) { setSuggestions(p => [...p, { text: suggestion.trim(), from: empName, store: storeLoc }]); setSuggestion(""); } }}
                 style={{ padding: "12px 18px", borderRadius: "10px", border: "none", background: suggestion.trim() ? "#FF6B35" : "#ffffff10", color: suggestion.trim() ? "#fff" : "#ffffff25", fontSize: "13px", fontWeight: 700, cursor: suggestion.trim() ? "pointer" : "not-allowed", whiteSpace: "nowrap" }}>Send</button>
             </div>
-            {suggestions.map((sg, i) => (<div key={i} style={{ padding: "8px 12px", borderRadius: "8px", background: "#1DB95410", border: "1px solid #1DB95420", color: "#1DB954", fontSize: "12px", fontWeight: 600, marginTop: "6px" }}>✓ Suggested: {sg.text}</div>))}
+            {suggestions.map((sg, i) => (<div key={`${sg.text}-${i}`} style={{ padding: "8px 12px", borderRadius: "8px", background: "#1DB95410", border: "1px solid #1DB95420", color: "#1DB954", fontSize: "12px", fontWeight: 600, marginTop: "6px" }}>✓ Suggested: {sg.text}</div>))}
           </div>
           {ic > 0 && (
             <button onClick={submitOrder} disabled={submitting} style={{ ...( submitting ? st.btnOff : st.btn), marginTop: "20px", background: submitting ? "#ffffff10" : "linear-gradient(135deg, #1DB954, #10B981)", boxShadow: submitting ? "none" : "0 4px 20px rgba(29,185,84,0.3)" }}>
