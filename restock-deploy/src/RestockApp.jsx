@@ -172,7 +172,8 @@ export default function RestockApp() {
     if (!mgrWarehouse) return;
     setLoading(true);
     try {
-      const today = new Date().toISOString().split("T")[0];
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
       const [subs, sugs, sl] = await Promise.all([
         sb.get("submissions", { order: "created_at.desc", filter: `created_at=gte.${today}T00:00:00&warehouse_id=eq.${mgrWarehouse.id}` }),
         sb.get("suggestions", { order: "created_at.desc", filter: `status=eq.pending&warehouse_id=eq.${mgrWarehouse.id}` }),
