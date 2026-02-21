@@ -32,6 +32,13 @@ const sb = {
     });
     return r.ok;
   },
+  async rpc(fn, params) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+      method: "POST", headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    return r.json();
+  },
 };
 
 const DEFAULT_CATALOG = [
@@ -136,11 +143,23 @@ export default function RestockApp() {
     catalog.forEach(c => {
       const whVis = c.warehouse_visibility || {};
       const hiddenForWarehouse = (activeWid && whVis[String(activeWid)]) ? whVis[String(activeWid)] : [];
-      const activeFlavors = (c.flavors || []).filter(f => !hiddenForWarehouse.includes(f));
-      obj[c.model_name] = { brand: c.brand, puffs: c.puffs, flavors: c.flavors || [], activeFlavors, hidden_flavors: hiddenForWarehouse, warehouse_visibility: whVis, id: c.id, category: c.category || "Vapes" };
+      const stockLevels = c.stock_levels || {};
+      const warehouseStock = (activeWid && stockLevels[String(activeWid)]) ? stockLevels[String(activeWid)] : {};
+      // For employees: flavor must not be hidden AND must have stock > 0
+      // For managers: show all flavors (they manage stock counts)
+      const isEmployee = !!empWarehouse;
+      const activeFlavors = (c.flavors || []).filter(f => {
+        if (hiddenForWarehouse.includes(f)) return false;
+        if (isEmployee) {
+          const stock = warehouseStock[f];
+          if (stock === undefined || stock === null || stock <= 0) return false;
+        }
+        return true;
+      });
+      obj[c.model_name] = { brand: c.brand, puffs: c.puffs, flavors: c.flavors || [], activeFlavors, hidden_flavors: hiddenForWarehouse, warehouse_visibility: whVis, stock_levels: stockLevels, id: c.id, category: c.category || "Vapes" };
     });
     return obj;
-  }, [catalog, activeWid]);
+  }, [catalog, activeWid, empWarehouse]);
 
   const categories = useMemo(() => [...new Set(catalog.map(c => c.category || "Vapes"))].sort(), [catalog]);
 
@@ -250,8 +269,58 @@ export default function RestockApp() {
     try {
       const items = Object.entries(orderData);
       let tu = 0; items.forEach(([, v]) => { tu += v === "5+" ? 5 : parseInt(v) || 0; });
-      await sb.post("submissions", { employee_name: empName.trim(), store_location: storeLoc.trim(), items: orderData, total_flavors: items.length, total_units: tu, warehouse_id: empWarehouse.id });
-      for (const sg of suggestions) { await sb.post("suggestions", { suggestion_text: sg.text, employee_name: sg.from, store_location: sg.store, warehouse_id: empWarehouse.id }); }
+      
+      // Build stock deduction map: "modelId:::flavor" -> qty
+      const deductMap = {};
+      items.forEach(([key, val]) => {
+        const [product, flavor] = key.split("|||");
+        const model = catalog.find(c => c.model_name === product);
+        if (model) {
+          const qty = val === "5+" ? 5 : parseInt(val) || 0;
+          deductMap[`${model.id}:::${flavor}`] = qty;
+        }
+      });
+      
+      // Call atomic deduction function
+      const adjustments = await sb.rpc("deduct_stock", { p_warehouse_id: empWarehouse.id, p_items: deductMap });
+      
+      // Check for partial fills
+      let adjustedOrder = { ...orderData };
+      let adjustMsgs = [];
+      if (adjustments && typeof adjustments === "object" && Object.keys(adjustments).length > 0) {
+        Object.entries(adjustments).forEach(([dKey, actualQty]) => {
+          const [modelId, flavor] = dKey.split(":::");
+          const model = catalog.find(c => c.id === parseInt(modelId));
+          const orderKey = model ? `${model.model_name}|||${flavor}` : null;
+          if (orderKey && adjustedOrder[orderKey]) {
+            if (actualQty === 0) {
+              delete adjustedOrder[orderKey];
+              adjustMsgs.push(`${flavor} removed — out of stock`);
+            } else {
+              adjustedOrder[orderKey] = String(actualQty);
+              adjustMsgs.push(`${flavor} adjusted to ${actualQty} — limited availability`);
+            }
+          }
+        });
+      }
+      
+      // Recalculate totals with adjusted order
+      const adjItems = Object.entries(adjustedOrder);
+      let adjTu = 0; adjItems.forEach(([, v]) => { adjTu += v === "5+" ? 5 : parseInt(v) || 0; });
+      
+      // Save submission with adjusted data and deduction map for restore
+      if (adjItems.length > 0) {
+        await sb.post("submissions", { employee_name: empName.trim(), store_location: storeLoc.trim(), items: adjustedOrder, total_flavors: adjItems.length, total_units: adjTu, warehouse_id: empWarehouse.id, status: "pending" });
+        for (const sg of suggestions) { await sb.post("suggestions", { suggestion_text: sg.text, employee_name: sg.from, store_location: sg.store, warehouse_id: empWarehouse.id }); }
+      }
+      
+      // Reload catalog to reflect new stock
+      await loadCatalog();
+      
+      if (adjustMsgs.length > 0) {
+        alert("Order submitted with adjustments:\n\n" + adjustMsgs.join("\n"));
+      }
+      
       sndSubmit(); clearSession(); setView("employee-done");
     } catch (e) { console.error(e); alert("Error submitting — check connection."); }
     setSubmitting(false);
@@ -278,7 +347,30 @@ export default function RestockApp() {
   const sndRemove = () => playSound("remove");
   const sndDone = () => playSound("done");
 
-  const deleteSubmission = async (id) => { try { await sb.del("submissions", `id=eq.${id}`); sndRemove(); setReports(p => p.filter(r => r.id !== id)); if (selReport && selReport.id === id) setSelReport(null); } catch (e) { console.error(e); } };
+  const completeSubmission = async (id) => {
+    try { await sb.patch("submissions", { status: "completed" }, `id=eq.${id}`); await sb.del("submissions", `id=eq.${id}`); sndDone(); setReports(p => p.filter(r => r.id !== id)); if (selReport && selReport.id === id) setSelReport(null); } catch (e) { console.error(e); }
+  };
+  const cancelSubmission = async (report) => {
+    try {
+      // Build restore map from the order items
+      const restoreMap = {};
+      Object.entries(report.items || {}).forEach(([key, val]) => {
+        const [product, flavor] = key.split("|||");
+        const model = catalog.find(c => c.model_name === product);
+        if (model) {
+          const qty = val === "5+" ? 5 : parseInt(val) || 0;
+          restoreMap[`${model.id}:::${flavor}`] = qty;
+        }
+      });
+      // Restore stock
+      if (Object.keys(restoreMap).length > 0) {
+        await sb.rpc("restore_stock", { p_warehouse_id: report.warehouse_id || 1, p_items: restoreMap });
+      }
+      await sb.del("submissions", `id=eq.${report.id}`);
+      await loadCatalog(); // Refresh stock counts
+      sndRemove(); setReports(p => p.filter(r => r.id !== report.id)); if (selReport && selReport.id === report.id) setSelReport(null);
+    } catch (e) { console.error(e); }
+  };
   const saveBanner = async () => {
     if (!mgrWarehouse) return;
     const wid = mgrWarehouse.id;
@@ -313,14 +405,41 @@ export default function RestockApp() {
         }
       });
     }
-    try { await sb.patch("catalog", { flavors: updated, warehouse_visibility: whVis }, `id=eq.${modelId}`); sndAdd(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated, warehouse_visibility: whVis } : c)); } catch (e) { console.error(e); }
+    // Initialize stock at 0 for current warehouse (manager sets count after)
+    const sl = { ...(model.stock_levels || {}) };
+    if (mgrWarehouse) {
+      const wid = String(mgrWarehouse.id);
+      sl[wid] = { ...(sl[wid] || {}), [f]: 0 };
+    }
+    try { await sb.patch("catalog", { flavors: updated, warehouse_visibility: whVis, stock_levels: sl }, `id=eq.${modelId}`); sndAdd(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated, warehouse_visibility: whVis, stock_levels: sl } : c)); } catch (e) { console.error(e); }
   };
   const removeFlavorFromModel = async (modelId, flavor) => {
     const model = catalog.find(c => c.id === modelId); if (!model) return;
     const updated = (model.flavors || []).filter(f => f !== flavor);
     const whVis = { ...(model.warehouse_visibility || {}) };
     Object.keys(whVis).forEach(k => { whVis[k] = (whVis[k] || []).filter(f => f !== flavor); });
-    try { await sb.patch("catalog", { flavors: updated, warehouse_visibility: whVis }, `id=eq.${modelId}`); sndRemove(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated, warehouse_visibility: whVis } : c)); } catch (e) { console.error(e); }
+    // Also remove from stock_levels
+    const sl = { ...(model.stock_levels || {}) };
+    Object.keys(sl).forEach(k => { const ws = { ...(sl[k] || {}) }; delete ws[flavor]; sl[k] = ws; });
+    try { await sb.patch("catalog", { flavors: updated, warehouse_visibility: whVis, stock_levels: sl }, `id=eq.${modelId}`); sndRemove(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated, warehouse_visibility: whVis, stock_levels: sl } : c)); } catch (e) { console.error(e); }
+  };
+  const updateFlavorStock = async (modelId, flavor, count) => {
+    if (!mgrWarehouse) return;
+    const model = catalog.find(c => c.id === modelId); if (!model) return;
+    const sl = { ...(model.stock_levels || {}) };
+    const wid = String(mgrWarehouse.id);
+    sl[wid] = { ...(sl[wid] || {}), [flavor]: Math.max(0, parseInt(count) || 0) };
+    try { await sb.patch("catalog", { stock_levels: sl }, `id=eq.${modelId}`); setCatalog(p => p.map(c => c.id === modelId ? { ...c, stock_levels: sl } : c)); } catch (e) { console.error(e); }
+  };
+  const bulkSetStock = async (modelId, count) => {
+    if (!mgrWarehouse) return;
+    const model = catalog.find(c => c.id === modelId); if (!model) return;
+    const sl = { ...(model.stock_levels || {}) };
+    const wid = String(mgrWarehouse.id);
+    const ws = {};
+    (model.flavors || []).forEach(f => { ws[f] = Math.max(0, parseInt(count) || 0); });
+    sl[wid] = ws;
+    try { await sb.patch("catalog", { stock_levels: sl }, `id=eq.${modelId}`); sndClick(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, stock_levels: sl } : c)); } catch (e) { console.error(e); }
   };
   const toggleFlavorVisibility = async (modelId, flavor) => {
     if (!mgrWarehouse) return;
@@ -764,7 +883,7 @@ export default function RestockApp() {
     return (
       <div style={st.page}>
         <button onClick={() => { sndBack(); setMgrView("dashboard"); }} style={st.back}>← Back to Dashboard</button>
-        <h1 style={st.h1}>🗂️ Manage Catalog</h1><p style={st.sub}>Managing for {mgrWarehouse?.name} • toggle visibility per warehouse</p>
+        <h1 style={st.h1}>🗂️ Manage Catalog</h1><p style={st.sub}>Managing for {mgrWarehouse?.name} • set stock counts per item</p>
         {!showAddModel ? (
           <button onClick={() => setShowAddModel(true)} style={{ padding: "10px 18px", borderRadius: "8px", background: "#1DB95420", color: "#1DB954", border: "1px solid #1DB95430", fontSize: "13px", fontWeight: 700, cursor: "pointer", marginBottom: "20px" }}>+ Add New Model / Product</button>
         ) : (
@@ -795,13 +914,16 @@ export default function RestockApp() {
                     <span style={{ color: bc, fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>{brand}</span>
                   </div>
                   {models.map(m => {
-                    const whVis = m.warehouse_visibility || {};
-                    const hiddenCount = mgrWarehouse ? (whVis[String(mgrWarehouse.id)] || []).length : 0;
+                    const msl = m.stock_levels || {};
+                    const mws = mgrWarehouse ? (msl[String(mgrWarehouse.id)] || {}) : {};
+                    const mTotalStock = Object.values(mws).reduce((s, v) => s + (parseInt(v) || 0), 0);
+                    const mTracked = Object.keys(mws).length;
+                    const mTotal = (m.flavors || []).length;
                     return (
                     <button key={m.id} onClick={() => { setEditModel(m); setMgrView("editModel"); setNewFlavor(""); setEditingModelInfo(false); }}
                       style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: "1px solid #ffffff0a", background: "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
                       <div><div>{m.model_name}</div><div style={{ fontSize: "11px", color: "#ffffff30", marginTop: "2px" }}>{m.puffs !== "N/A" ? m.puffs + " puffs" : cat}</div></div>
-                      <span style={{ fontSize: "12px", color: hiddenCount > 0 ? "#F59E0B" : "#ffffff40" }}>{(m.flavors || []).length} items{hiddenCount > 0 ? ` • ${hiddenCount} off` : ""} ›</span>
+                      <span style={{ fontSize: "12px", color: mTracked < mTotal ? "#F59E0B" : mTotalStock > 0 ? "#1DB954" : "#E63946" }}>{mTotalStock} in stock ›</span>
                     </button>
                     );
                   })}
@@ -822,6 +944,10 @@ export default function RestockApp() {
     const bc = getBrandColor(m.brand);
     const whVis = m.warehouse_visibility || {};
     const hiddenForThis = mgrWarehouse ? (whVis[String(mgrWarehouse.id)] || []) : [];
+    const sl = m.stock_levels || {};
+    const warehouseStock = mgrWarehouse ? (sl[String(mgrWarehouse.id)] || {}) : {};
+    const totalStock = Object.values(warehouseStock).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
+    const trackedCount = Object.keys(warehouseStock).length;
     return (
       <div style={st.page}>
         <button onClick={() => { sndBack(); setMgrView("catalog"); setEditModel(null); setEditingModelInfo(false); }} style={st.back}>← Back to Catalog</button>
@@ -835,7 +961,7 @@ export default function RestockApp() {
               <button onClick={() => { setEditingModelInfo(true); setEditModelName(m.model_name); setEditModelBrand(m.brand); setEditModelPuffs(m.puffs || ""); setEditModelCategory(m.category || "Vapes"); }}
                 style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid #ffffff20", background: "transparent", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer", marginTop: "4px" }}>✏️ Edit</button>
             </div>
-            <p style={st.sub}>{(m.flavors || []).length} items{hiddenForThis.length > 0 ? ` • ${hiddenForThis.length} hidden for ${mgrWarehouse?.name}` : ""}</p>
+            <p style={st.sub}>{(m.flavors || []).length} items • {totalStock} total in stock for {mgrWarehouse?.name}</p>
           </div>
         ) : (
           <div style={{ padding: "16px", borderRadius: "12px", border: "1px solid #00B4D830", background: "#00B4D808", marginBottom: "20px" }}>
@@ -851,7 +977,7 @@ export default function RestockApp() {
             </div>
           </div>
         )}
-        <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
+        <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
           <input type="text" placeholder="Add new item..." value={newFlavor} onChange={e => setNewFlavor(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && newFlavor.trim()) { addFlavorToModel(m.id, newFlavor); setNewFlavor(""); } }}
             style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
@@ -859,26 +985,28 @@ export default function RestockApp() {
             style={{ padding: "12px 18px", borderRadius: "10px", border: "none", background: newFlavor.trim() ? "#1DB954" : "#ffffff10", color: newFlavor.trim() ? "#fff" : "#ffffff25", fontSize: "13px", fontWeight: 700, cursor: newFlavor.trim() ? "pointer" : "not-allowed", whiteSpace: "nowrap" }}>+ Add</button>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-          <span style={{ color: "#ffffff30", fontSize: "12px", fontWeight: 600 }}>{hiddenForThis.length === 0 ? "All visible" : `${(m.flavors || []).length - hiddenForThis.length} visible / ${hiddenForThis.length} hidden`}</span>
-          <button onClick={async () => {
-            if (!mgrWarehouse) return;
-            const allFlavors = m.flavors || [];
-            const allHidden = hiddenForThis.length === allFlavors.length;
-            const whVis = { ...(m.warehouse_visibility || {}) };
-            const wid = String(mgrWarehouse.id);
-            whVis[wid] = allHidden ? [] : [...allFlavors];
-            try { await sb.patch("catalog", { warehouse_visibility: whVis }, `id=eq.${m.id}`); sndClick(); setCatalog(p => p.map(c => c.id === m.id ? { ...c, warehouse_visibility: whVis } : c)); } catch (e) { console.error(e); }
-          }} style={{ padding: "6px 14px", borderRadius: "8px", border: `1px solid ${hiddenForThis.length === (m.flavors || []).length ? "#1DB95430" : "#E6394630"}`, background: hiddenForThis.length === (m.flavors || []).length ? "#1DB95410" : "#E6394610", color: hiddenForThis.length === (m.flavors || []).length ? "#1DB954" : "#E63946", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>
-            {hiddenForThis.length === (m.flavors || []).length ? "Turn All On" : "Turn All Off"}
-          </button>
+          <span style={{ color: "#ffffff30", fontSize: "12px", fontWeight: 600 }}>{trackedCount}/{(m.flavors || []).length} tracked • {totalStock} total</span>
+          <div style={{ display: "flex", gap: "6px" }}>
+            <button onClick={() => { const val = prompt("Set all flavors to this stock count:"); if (val !== null) bulkSetStock(m.id, val); }}
+              style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid #00B4D830", background: "#00B4D810", color: "#00B4D8", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>Set All</button>
+          </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           {(m.flavors || []).map(f => {
             const isHidden = hiddenForThis.includes(f);
+            const stock = warehouseStock[f];
+            const hasStock = stock !== undefined && stock !== null;
+            const stockVal = hasStock ? parseInt(stock) : null;
+            const isOut = hasStock && stockVal <= 0;
             return (
-              <div key={f} style={{ padding: "12px 14px", borderRadius: "8px", background: isHidden ? "rgba(255,255,255,0.01)" : "rgba(255,255,255,0.025)", border: `1px solid ${isHidden ? "#ffffff05" : "#ffffff08"}`, display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all 0.2s ease" }}>
-                <span style={{ color: isHidden ? "#ffffff30" : "#fff", fontSize: "13px", fontWeight: 600, textDecoration: isHidden ? "line-through" : "none", flex: 1 }}>{f}</span>
-                <div style={{ display: "flex", gap: "8px", alignItems: "center", flexShrink: 0 }}>
+              <div key={f} style={{ padding: "10px 14px", borderRadius: "8px", background: isHidden ? "rgba(255,255,255,0.01)" : isOut ? "rgba(230,57,70,0.05)" : "rgba(255,255,255,0.025)", border: `1px solid ${isHidden ? "#ffffff05" : isOut ? "#E6394615" : "#ffffff08"}`, display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all 0.2s ease" }}>
+                <span style={{ color: isHidden ? "#ffffff20" : isOut ? "#E63946" : "#fff", fontSize: "13px", fontWeight: 600, textDecoration: isHidden ? "line-through" : "none", flex: 1 }}>{f}</span>
+                <div style={{ display: "flex", gap: "6px", alignItems: "center", flexShrink: 0 }}>
+                  {!isHidden && (
+                    <input type="number" inputMode="numeric" value={hasStock ? stockVal : ""} placeholder="—"
+                      onChange={e => updateFlavorStock(m.id, f, e.target.value)}
+                      style={{ width: "52px", padding: "6px 8px", borderRadius: "6px", border: `1px solid ${isOut ? "#E6394640" : hasStock ? "#1DB95430" : "#ffffff15"}`, background: isOut ? "#E6394610" : hasStock ? "#1DB95408" : "transparent", color: isOut ? "#E63946" : hasStock ? "#1DB954" : "#ffffff30", fontSize: "14px", fontWeight: 800, textAlign: "center", outline: "none" }} />
+                  )}
                   <button onClick={() => toggleFlavorVisibility(m.id, f)}
                     style={{ width: "44px", height: "24px", borderRadius: "12px", border: "none", background: isHidden ? "#ffffff15" : "#1DB954", cursor: "pointer", position: "relative", transition: "background 0.2s ease", padding: 0 }}>
                     <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: "#fff", position: "absolute", top: "3px", left: isHidden ? "3px" : "23px", transition: "left 0.2s ease", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
@@ -1032,8 +1160,12 @@ export default function RestockApp() {
             </div>
           );
         })}
-        <button onClick={() => { if (window.confirm(`Remove ${r.employee_name}'s submission?`)) { deleteSubmission(r.id); } }}
-          style={{ marginTop: "20px", width: "100%", padding: "14px", borderRadius: "12px", border: "1px solid #E6394630", background: "rgba(230,57,70,0.05)", color: "#E63946", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>🗑️ Delete This Submission</button>
+        <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+          <button onClick={() => { if (window.confirm(`Mark ${r.employee_name}'s order as complete? Stock stays deducted.`)) { completeSubmission(r.id); } }}
+            style={{ flex: 1, padding: "14px", borderRadius: "12px", border: "1px solid #1DB95430", background: "rgba(29,185,84,0.08)", color: "#1DB954", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>✅ Complete Order</button>
+          <button onClick={() => { if (window.confirm(`Cancel ${r.employee_name}'s order? Stock will be restored.`)) { cancelSubmission(r); } }}
+            style={{ flex: 1, padding: "14px", borderRadius: "12px", border: "1px solid #E6394630", background: "rgba(230,57,70,0.05)", color: "#E63946", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>✕ Cancel Order</button>
+        </div>
         <div style={{ height: "70px" }} />
         <FloatingBack onClick={() => { setSelReport(null); setPickedItems({}); }} />
       </div>
