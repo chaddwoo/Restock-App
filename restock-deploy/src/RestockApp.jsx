@@ -558,10 +558,7 @@ export default function RestockApp() {
             </button>
           )}
           <FloatingBack onClick={() => { 
-            if (Object.keys(orderData).length > 0) {
-              if (!window.confirm("You have items in your order. Backing out will lose your progress. Are you sure?")) return;
-            }
-            clearSession(); setView("employee-login"); setEmpWarehouse(null); setSelCategory(null); 
+            setView("employee-login"); setSelCategory(null); 
           }} />
           <OrderDrawer />
         </div>
@@ -600,10 +597,7 @@ export default function RestockApp() {
         })}
         <FloatingBack onClick={() => {
           if (onlyOneCat) {
-            if (Object.keys(orderData).length > 0) {
-              if (!window.confirm("You have items in your order. Backing out will lose your progress. Are you sure?")) return;
-            }
-            clearSession(); setView("employee-login"); setEmpWarehouse(null);
+            setView("employee-login");
           } else { setSelCategory(null); }
         }} />
         <OrderDrawer />
