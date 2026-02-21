@@ -143,6 +143,21 @@ export default function RestockApp() {
 
   const categories = useMemo(() => [...new Set(catalog.map(c => c.category || "Vapes"))].sort(), [catalog]);
 
+  // Memoize category/brand structure — only rebuilds when catalog or warehouse changes
+  const catStructure = useMemo(() => {
+    const groups = {};
+    Object.entries(catalogObj).forEach(([name, data]) => {
+      if (data.activeFlavors.length === 0) return;
+      const cat = data.category || "Vapes";
+      if (!groups[cat]) groups[cat] = { brands: {}, totalModels: 0, totalItems: 0 };
+      if (!groups[cat].brands[data.brand]) groups[cat].brands[data.brand] = [];
+      groups[cat].brands[data.brand].push(name);
+      groups[cat].totalModels++;
+      groups[cat].totalItems += data.activeFlavors.length;
+    });
+    return groups;
+  }, [catalogObj]);
+
   const loadCatalog = useCallback(async () => {
     try {
       const data = await sb.get("catalog", { order: "brand.asc,model_name.asc" });
@@ -186,23 +201,31 @@ export default function RestockApp() {
   useEffect(() => { if (view === "manager" && authed && mgrWarehouse) loadMgr(); }, [view, authed, mgrWarehouse, loadMgr]);
 
   // Save employee session to localStorage on every relevant change
+  // Save employee session — debounced to reduce writes
+  const saveTimer = useRef(null);
   useEffect(() => {
     const empViews = ["employee-login", "employee-products", "employee-flavors"];
     if (empViews.includes(view)) {
-      saveSession({ view, empName, storeLoc, empWarehouse, empCode, selProduct, orderData, suggestions, selCategory });
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+        saveSession({ view, empName, storeLoc, empWarehouse, empCode, selProduct, orderData, suggestions, selCategory });
+      }, 500);
     }
+    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
   }, [view, empName, storeLoc, empWarehouse, empCode, selProduct, orderData, suggestions, selCategory]);
 
-  // Warn before unload if employee has items in order
+  // Warn before unload + flush pending save
   useEffect(() => {
     const handler = (e) => {
       if (Object.keys(orderData).length > 0 && ["employee-products", "employee-flavors"].includes(view)) {
+        if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
+        saveSession({ view, empName, storeLoc, empWarehouse, empCode, selProduct, orderData, suggestions, selCategory });
         e.preventDefault(); e.returnValue = "";
       }
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [orderData, view]);
+  }, [orderData, view, empName, storeLoc, empWarehouse, empCode, selProduct, suggestions, selCategory]);
 
   // Block pull-to-refresh on mobile
   useEffect(() => {
@@ -480,17 +503,12 @@ export default function RestockApp() {
   // EMPLOYEE PRODUCTS — category drill-down
   if (view === "employee-products") {
     const tu = getTotalUnits(); const ic = getFilledCount();
-    // Group by category
+    // Use memoized structure, add order counts (lightweight)
     const catGroups = {};
-    Object.entries(catalogObj).forEach(([name, data]) => {
-      if (data.activeFlavors.length === 0) return;
-      const cat = data.category || "Vapes";
-      if (!catGroups[cat]) catGroups[cat] = { brands: {}, totalModels: 0, totalItems: 0, ordered: 0 };
-      if (!catGroups[cat].brands[data.brand]) catGroups[cat].brands[data.brand] = [];
-      catGroups[cat].brands[data.brand].push(name);
-      catGroups[cat].totalModels++;
-      catGroups[cat].totalItems += data.activeFlavors.length;
-      catGroups[cat].ordered += getProductOrderCount(name);
+    Object.entries(catStructure).forEach(([cat, data]) => {
+      let ordered = 0;
+      Object.values(data.brands).forEach(models => models.forEach(name => { ordered += getProductOrderCount(name); }));
+      catGroups[cat] = { ...data, ordered };
     });
     const catKeys = Object.keys(catGroups).sort();
     const onlyOneCat = catKeys.length === 1;
