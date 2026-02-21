@@ -127,7 +127,8 @@ export default function RestockApp() {
   const [showOrderEdit, setShowOrderEdit] = useState(false);
   const [pickedItems, setPickedItems] = useState({});
 
-  const PIN = "2588";
+  const [mgrPin, setMgrPin] = useState(null);
+  const [pinLoading, setPinLoading] = useState(false);
 
   const activeWid = empWarehouse?.id || mgrWarehouse?.id || null;
   const catalogObj = useMemo(() => {
@@ -181,6 +182,15 @@ export default function RestockApp() {
         setBannerData(map);
       }
     } catch (e) { console.error(e); }
+  }, []);
+
+  const loadPin = useCallback(async () => {
+    setPinLoading(true);
+    try {
+      const d = await sb.get("settings", { limit: 1 });
+      if (d && d[0]) setMgrPin(d[0].manager_pin);
+    } catch (e) { console.error(e); }
+    setPinLoading(false);
   }, []);
 
   const loadMgr = useCallback(async () => {
@@ -433,24 +443,28 @@ export default function RestockApp() {
       <p style={{ color: "#ffffff35", fontSize: "12px", margin: 0, letterSpacing: "4px", textTransform: "uppercase" }}>Tell Us What You Need</p>
       <div style={{ marginTop: "48px", display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
         <button onClick={() => setView("employee-login")} style={st.btn}>🏪 Submit Restock Request</button>
-        <button onClick={() => { setAuthed(false); setPin(""); setMgrView("dashboard"); setMgrWarehouse(null); setView("manager-login"); }} style={{ ...st.btn, background: "rgba(255,255,255,0.05)", border: "1px solid #ffffff15", boxShadow: "none" }}>📊 Manager Dashboard</button>
+        <button onClick={() => { setAuthed(false); setPin(""); setMgrView("dashboard"); setMgrWarehouse(null); setMgrPin(null); loadPin(); setView("manager-login"); }} style={{ ...st.btn, background: "rgba(255,255,255,0.05)", border: "1px solid #ffffff15", boxShadow: "none" }}>📊 Manager Dashboard</button>
       </div>
       <p style={{ color: "#ffffff18", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v3.0</p>
     </div>
   );
 
   // MANAGER LOGIN
-  if (view === "manager-login") return (
-    <div style={st.page}>
-      <button onClick={() => { sndBack(); setView("splash"); }} style={st.back}>← Back</button>
-      <h1 style={st.h1}>📊 Manager Access</h1><p style={st.sub}>Enter your PIN to continue</p>
-      <div style={{ marginBottom: "24px" }}><label style={st.label}>Manager PIN</label>
-        <input type="password" placeholder="Enter PIN" value={pin} onChange={e => setPin(e.target.value)} style={st.input} onKeyDown={e => { if (e.key === "Enter" && pin === PIN) { sndLogin(); setAuthed(true); setView("manager-warehouse"); } }} />
+  if (view === "manager-login") {
+    const pinMatch = mgrPin && pin === mgrPin;
+    const pinWrong = mgrPin && pin.length >= 4 && pin !== mgrPin;
+    return (
+      <div style={st.page}>
+        <button onClick={() => { sndBack(); setView("splash"); }} style={st.back}>← Back</button>
+        <h1 style={st.h1}>📊 Manager Access</h1><p style={st.sub}>{pinLoading ? "Loading..." : "Enter your PIN to continue"}</p>
+        <div style={{ marginBottom: "24px" }}><label style={st.label}>Manager PIN</label>
+          <input type="password" placeholder="Enter PIN" value={pin} onChange={e => setPin(e.target.value)} style={st.input} onKeyDown={e => { if (e.key === "Enter" && pinMatch) { sndLogin(); setAuthed(true); setView("manager-warehouse"); } }} />
+        </div>
+        {pinWrong && <p style={{ color: "#E63946", fontSize: "13px", marginBottom: "12px" }}>Incorrect PIN</p>}
+        <button onClick={() => { if (pinMatch) { sndLogin(); setAuthed(true); setView("manager-warehouse"); } }} style={pinMatch ? st.btn : st.btnOff} disabled={!pinMatch}>Enter Dashboard →</button>
       </div>
-      {pin.length >= 4 && pin !== PIN && <p style={{ color: "#E63946", fontSize: "13px", marginBottom: "12px" }}>Incorrect PIN</p>}
-      <button onClick={() => { if (pin === PIN) { sndLogin(); setAuthed(true); setView("manager-warehouse"); } }} style={pin === PIN ? st.btn : st.btnOff} disabled={pin !== PIN}>Enter Dashboard →</button>
-    </div>
-  );
+    );
+  }
 
   // MANAGER WAREHOUSE SELECT
   if (view === "manager-warehouse" && authed) return (
