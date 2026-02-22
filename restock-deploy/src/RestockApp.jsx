@@ -423,13 +423,42 @@ export default function RestockApp() {
     Object.keys(sl).forEach(k => { const ws = { ...(sl[k] || {}) }; delete ws[flavor]; sl[k] = ws; });
     try { await sb.patch("catalog", { flavors: updated, warehouse_visibility: whVis, stock_levels: sl }, `id=eq.${modelId}`); sndRemove(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated, warehouse_visibility: whVis, stock_levels: sl } : c)); } catch (e) { console.error(e); }
   };
-  const updateFlavorStock = async (modelId, flavor, count) => {
+  // Stock update — instant local state, debounced DB save
+  const stockTimers = useRef({});
+  const catalogRef = useRef(catalog);
+  useEffect(() => { catalogRef.current = catalog; }, [catalog]);
+  const flushStock = () => {
+    Object.keys(stockTimers.current).forEach(pKey => {
+      clearTimeout(stockTimers.current[pKey]);
+      const modelId = parseInt(pKey);
+      const model = catalogRef.current.find(c => c.id === modelId);
+      if (model) {
+        sb.patch("catalog", { stock_levels: model.stock_levels || {} }, `id=eq.${modelId}`).catch(e => console.error(e));
+      }
+      delete stockTimers.current[pKey];
+    });
+  };
+  const updateFlavorStock = (modelId, flavor, count) => {
     if (!mgrWarehouse) return;
-    const model = catalog.find(c => c.id === modelId); if (!model) return;
-    const sl = { ...(model.stock_levels || {}) };
     const wid = String(mgrWarehouse.id);
-    sl[wid] = { ...(sl[wid] || {}), [flavor]: Math.max(0, parseInt(count) || 0) };
-    try { await sb.patch("catalog", { stock_levels: sl }, `id=eq.${modelId}`); setCatalog(p => p.map(c => c.id === modelId ? { ...c, stock_levels: sl } : c)); } catch (e) { console.error(e); }
+    const val = count === "" ? 0 : Math.max(0, parseInt(count) || 0);
+    // Instant local update
+    setCatalog(p => p.map(c => {
+      if (c.id !== modelId) return c;
+      const sl = { ...(c.stock_levels || {}) };
+      sl[wid] = { ...(sl[wid] || {}), [flavor]: val };
+      return { ...c, stock_levels: sl };
+    }));
+    // Debounced DB save per model (800ms)
+    const pKey = `${modelId}`;
+    if (stockTimers.current[pKey]) clearTimeout(stockTimers.current[pKey]);
+    stockTimers.current[pKey] = setTimeout(() => {
+      const model = catalogRef.current.find(c => c.id === modelId);
+      if (model) {
+        sb.patch("catalog", { stock_levels: model.stock_levels || {} }, `id=eq.${modelId}`).catch(e => console.error(e));
+      }
+      delete stockTimers.current[pKey];
+    }, 800);
   };
   const bulkSetStock = async (modelId, count) => {
     if (!mgrWarehouse) return;
@@ -950,7 +979,7 @@ export default function RestockApp() {
     const trackedCount = Object.keys(warehouseStock).length;
     return (
       <div style={st.page}>
-        <button onClick={() => { sndBack(); setMgrView("catalog"); setEditModel(null); setEditingModelInfo(false); }} style={st.back}>← Back to Catalog</button>
+        <button onClick={() => { flushStock(); sndBack(); setMgrView("catalog"); setEditModel(null); setEditingModelInfo(false); }} style={st.back}>← Back to Catalog</button>
         {!editingModelInfo ? (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -1005,7 +1034,8 @@ export default function RestockApp() {
                   {!isHidden && (
                     <input type="number" inputMode="numeric" value={hasStock ? stockVal : ""} placeholder="—"
                       onChange={e => updateFlavorStock(m.id, f, e.target.value)}
-                      style={{ width: "52px", padding: "6px 8px", borderRadius: "6px", border: `1px solid ${isOut ? "#E6394640" : hasStock ? "#1DB95430" : "#ffffff15"}`, background: isOut ? "#E6394610" : hasStock ? "#1DB95408" : "transparent", color: isOut ? "#E63946" : hasStock ? "#1DB954" : "#ffffff30", fontSize: "14px", fontWeight: 800, textAlign: "center", outline: "none" }} />
+                      onFocus={e => e.target.select()}
+                      style={{ width: "56px", padding: "6px 8px", borderRadius: "6px", border: `1px solid ${isOut ? "#E6394640" : hasStock ? "#1DB95430" : "#ffffff15"}`, background: isOut ? "#E6394610" : hasStock ? "#1DB95408" : "transparent", color: isOut ? "#E63946" : hasStock ? "#1DB954" : "#ffffff30", fontSize: "14px", fontWeight: 800, textAlign: "center", outline: "none" }} />
                   )}
                   <button onClick={() => toggleFlavorVisibility(m.id, f)}
                     style={{ width: "44px", height: "24px", borderRadius: "12px", border: "none", background: isHidden ? "#ffffff15" : "#1DB954", cursor: "pointer", position: "relative", transition: "background 0.2s ease", padding: 0 }}>
@@ -1023,7 +1053,7 @@ export default function RestockApp() {
             style={{ padding: "10px 18px", borderRadius: "8px", background: "#E63946", color: "#fff", border: "none", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Delete Entire Model</button>
         </div>
         <div style={{ height: "70px" }} />
-        <FloatingBack onClick={() => { setMgrView("catalog"); setEditModel(null); setEditingModelInfo(false); }} />
+        <FloatingBack onClick={() => { flushStock(); setMgrView("catalog"); setEditModel(null); setEditingModelInfo(false); }} />
       </div>
     );
   }
@@ -1068,7 +1098,7 @@ export default function RestockApp() {
               </div>
               <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                 <span style={{ padding: "4px 10px", borderRadius: "6px", background: "#FF6B3518", color: "#FF6B35", fontSize: "11px", fontWeight: 700 }}>{r.total_flavors} • ~{r.total_units}u</span>
-                <button onClick={(e) => { e.stopPropagation(); if (window.confirm(`Remove ${r.employee_name}'s submission?`)) deleteSubmission(r.id); }}
+                <button onClick={(e) => { e.stopPropagation(); if (window.confirm(`Cancel ${r.employee_name}'s order? Stock will be restored.`)) cancelSubmission(r); }}
                   style={{ background: "none", border: "1px solid #E6394630", borderRadius: "6px", color: "#E63946", fontSize: "12px", cursor: "pointer", padding: "4px 8px", fontWeight: 700 }}>✕</button>
               </div>
             </div>
