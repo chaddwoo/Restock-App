@@ -937,7 +937,6 @@ export default function RestockApp() {
     const totalUnits = data.reduce((s, r) => s + (r.total_units || 0), 0);
     const totalFlavors = data.reduce((s, r) => s + (r.total_flavors || 0), 0);
     const uniqueStores = [...new Set(data.map(r => r.store_location))];
-    const uniqueEmployees = [...new Set(data.map(r => r.employee_name))];
     
     // Top flavors
     const flavorCounts = {};
@@ -1006,23 +1005,69 @@ export default function RestockApp() {
 
         {/* Summary cards */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "24px" }}>
-          <div style={{ padding: "16px", borderRadius: "12px", background: "rgba(0,180,216,0.06)", border: "1px solid #00B4D820", textAlign: "center" }}>
-            <div style={{ fontSize: "28px", fontWeight: 900, color: "#00B4D8" }}>{totalOrders}</div>
-            <div style={{ fontSize: "11px", color: "#00B4D880", fontWeight: 700, marginTop: "4px" }}>ORDERS</div>
-          </div>
           <div style={{ padding: "16px", borderRadius: "12px", background: "rgba(29,185,84,0.06)", border: "1px solid #1DB95420", textAlign: "center" }}>
             <div style={{ fontSize: "28px", fontWeight: 900, color: "#1DB954" }}>{totalUnits}</div>
             <div style={{ fontSize: "11px", color: "#1DB95480", fontWeight: 700, marginTop: "4px" }}>UNITS MOVED</div>
+          </div>
+          <div style={{ padding: "16px", borderRadius: "12px", background: "rgba(0,180,216,0.06)", border: "1px solid #00B4D820", textAlign: "center" }}>
+            <div style={{ fontSize: "28px", fontWeight: 900, color: "#00B4D8" }}>{totalOrders}</div>
+            <div style={{ fontSize: "11px", color: "#00B4D880", fontWeight: 700, marginTop: "4px" }}>ORDERS</div>
           </div>
           <div style={{ padding: "16px", borderRadius: "12px", background: "rgba(255,107,53,0.06)", border: "1px solid #FF6B3520", textAlign: "center" }}>
             <div style={{ fontSize: "28px", fontWeight: 900, color: "#FF6B35" }}>{uniqueStores.length}</div>
             <div style={{ fontSize: "11px", color: "#FF6B3580", fontWeight: 700, marginTop: "4px" }}>ACTIVE STORES</div>
           </div>
           <div style={{ padding: "16px", borderRadius: "12px", background: "rgba(108,92,231,0.06)", border: "1px solid #6C5CE720", textAlign: "center" }}>
-            <div style={{ fontSize: "28px", fontWeight: 900, color: "#6C5CE7" }}>{uniqueEmployees.length}</div>
-            <div style={{ fontSize: "11px", color: "#6C5CE780", fontWeight: 700, marginTop: "4px" }}>EMPLOYEES</div>
+            <div style={{ fontSize: "28px", fontWeight: 900, color: "#6C5CE7" }}>{totalOrders > 0 ? Math.round(totalUnits / totalOrders) : 0}</div>
+            <div style={{ fontSize: "11px", color: "#6C5CE780", fontWeight: 700, marginTop: "4px" }}>AVG ORDER SIZE</div>
           </div>
         </div>
+
+        {/* Top products first */}
+        {topProducts.length > 0 && (
+          <div style={{ marginBottom: "24px" }}>
+            <span style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>📦 Top Products</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "12px" }}>
+              {topProducts.map(([name, count], i) => (
+                <div key={name} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.02)" }}>
+                  <span style={{ color: "#ffffff30", fontSize: "11px", fontWeight: 700, width: "20px" }}>#{i + 1}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                      <span style={{ color: "#fff", fontSize: "12px", fontWeight: 600 }}>{name}</span>
+                      <span style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 800 }}>{count}u</span>
+                    </div>
+                    <div style={{ height: "4px", borderRadius: "2px", background: "#ffffff08", overflow: "hidden" }}>
+                      <div style={{ height: "100%", borderRadius: "2px", background: "#FF6B35", width: `${(count / maxProd) * 100}%`, transition: "width 0.3s ease" }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Top flavors */}
+        {topFlavors.length > 0 && (
+          <div style={{ marginBottom: "24px" }}>
+            <span style={{ color: "#1DB954", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>🔥 Top Flavors</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "12px" }}>
+              {topFlavors.map(([name, count], i) => (
+                <div key={name} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.02)" }}>
+                  <span style={{ color: "#ffffff30", fontSize: "11px", fontWeight: 700, width: "20px" }}>#{i + 1}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                      <span style={{ color: "#fff", fontSize: "12px", fontWeight: 600 }}>{name}</span>
+                      <span style={{ color: "#1DB954", fontSize: "12px", fontWeight: 800 }}>{count}u</span>
+                    </div>
+                    <div style={{ height: "4px", borderRadius: "2px", background: "#ffffff08", overflow: "hidden" }}>
+                      <div style={{ height: "100%", borderRadius: "2px", background: "#1DB954", width: `${(count / maxBar) * 100}%`, transition: "width 0.3s ease" }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Daily order chart */}
         <div style={{ marginBottom: "24px" }}>
@@ -1039,52 +1084,6 @@ export default function RestockApp() {
             ))}
           </div>
         </div>
-
-        {/* Top flavors */}
-        {topFlavors.length > 0 && (
-          <div style={{ marginBottom: "24px" }}>
-            <span style={{ color: "#1DB954", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>🔥 Top Flavors</span>
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "12px" }}>
-              {topFlavors.map(([name, count], i) => (
-                <div key={name} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.02)" }}>
-                  <span style={{ color: "#ffffff30", fontSize: "11px", fontWeight: 700, width: "20px" }}>#{i + 1}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                      <span style={{ color: "#fff", fontSize: "12px", fontWeight: 600 }}>{name}</span>
-                      <span style={{ color: "#1DB954", fontSize: "12px", fontWeight: 800 }}>{count}</span>
-                    </div>
-                    <div style={{ height: "4px", borderRadius: "2px", background: "#ffffff08", overflow: "hidden" }}>
-                      <div style={{ height: "100%", borderRadius: "2px", background: "#1DB954", width: `${(count / maxBar) * 100}%`, transition: "width 0.3s ease" }} />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Top products */}
-        {topProducts.length > 0 && (
-          <div style={{ marginBottom: "24px" }}>
-            <span style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>📦 Top Products</span>
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "12px" }}>
-              {topProducts.map(([name, count], i) => (
-                <div key={name} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.02)" }}>
-                  <span style={{ color: "#ffffff30", fontSize: "11px", fontWeight: 700, width: "20px" }}>#{i + 1}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                      <span style={{ color: "#fff", fontSize: "12px", fontWeight: 600 }}>{name}</span>
-                      <span style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 800 }}>{count}</span>
-                    </div>
-                    <div style={{ height: "4px", borderRadius: "2px", background: "#ffffff08", overflow: "hidden" }}>
-                      <div style={{ height: "100%", borderRadius: "2px", background: "#FF6B35", width: `${(count / maxProd) * 100}%`, transition: "width 0.3s ease" }} />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Store rankings */}
         {storeUnitRank.length > 0 && (
