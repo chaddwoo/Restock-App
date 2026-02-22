@@ -133,6 +133,8 @@ export default function RestockApp() {
   const [selCategory, setSelCategory] = useState(_saved?.selCategory || null);
   const [showOrderEdit, setShowOrderEdit] = useState(false);
   const [pickedItems, setPickedItems] = useState({});
+  const [analyticsData, setAnalyticsData] = useState([]);
+  const [analyticsRange, setAnalyticsRange] = useState("7d");
 
   const [mgrPin, setMgrPin] = useState(null);
   const [pinLoading, setPinLoading] = useState(false);
@@ -217,13 +219,25 @@ export default function RestockApp() {
     setLoading(true);
     try {
       const [subs, sugs, sl] = await Promise.all([
-        sb.get("submissions", { order: "created_at.desc", filter: `warehouse_id=eq.${mgrWarehouse.id}` }),
+        sb.get("submissions", { order: "created_at.desc", filter: `status=eq.pending&warehouse_id=eq.${mgrWarehouse.id}` }),
         sb.get("suggestions", { order: "created_at.desc", filter: `status=eq.pending&warehouse_id=eq.${mgrWarehouse.id}` }),
         sb.get("stores", { order: "name.asc", filter: `warehouse_id=eq.${mgrWarehouse.id}` }),
       ]);
       setReports(subs || []); setAllSugs(sugs || []); setStores(sl || []);
     } catch (e) { console.error(e); }
     setLoading(false);
+  }, [mgrWarehouse]);
+
+  const loadAnalytics = useCallback(async (range) => {
+    if (!mgrWarehouse) return;
+    const days = range === "30d" ? 30 : range === "14d" ? 14 : 7;
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+    const sinceStr = since.toISOString();
+    try {
+      const data = await sb.get("submissions", { order: "created_at.desc", filter: `warehouse_id=eq.${mgrWarehouse.id}&status=eq.completed&created_at=gte.${sinceStr}`, limit: 500 });
+      setAnalyticsData(data || []);
+    } catch (e) { console.error(e); setAnalyticsData([]); }
   }, [mgrWarehouse]);
 
   useEffect(() => { loadCatalog(); loadBanner(); }, [loadCatalog, loadBanner]);
@@ -348,7 +362,10 @@ export default function RestockApp() {
   const sndDone = () => playSound("done");
 
   const completeSubmission = async (id) => {
-    try { await sb.patch("submissions", { status: "completed" }, `id=eq.${id}`); await sb.del("submissions", `id=eq.${id}`); sndDone(); setReports(p => p.filter(r => r.id !== id)); if (selReport && selReport.id === id) setSelReport(null); } catch (e) { console.error(e); }
+    try { 
+      await sb.patch("submissions", { status: "completed", completed_at: new Date().toISOString() }, `id=eq.${id}`); 
+      sndDone(); setReports(p => p.filter(r => r.id !== id)); if (selReport && selReport.id === id) { setSelReport(null); setPickedItems({}); }
+    } catch (e) { console.error(e); }
   };
   const cancelSubmission = async (report) => {
     try {
@@ -905,6 +922,188 @@ export default function RestockApp() {
     );
   }
 
+  // MANAGER ANALYTICS
+  if (view === "manager" && authed && mgrView === "analytics") {
+    const data = analyticsData;
+    const totalOrders = data.length;
+    const totalUnits = data.reduce((s, r) => s + (r.total_units || 0), 0);
+    const totalFlavors = data.reduce((s, r) => s + (r.total_flavors || 0), 0);
+    const uniqueStores = [...new Set(data.map(r => r.store_location))];
+    const uniqueEmployees = [...new Set(data.map(r => r.employee_name))];
+    
+    // Top flavors
+    const flavorCounts = {};
+    data.forEach(r => {
+      Object.entries(r.items || {}).forEach(([key, qty]) => {
+        const [product, flavor] = key.split("|||");
+        const fKey = `${flavor}`;
+        const q = qty === "5+" ? 5 : parseInt(qty) || 0;
+        flavorCounts[fKey] = (flavorCounts[fKey] || 0) + q;
+      });
+    });
+    const topFlavors = Object.entries(flavorCounts).sort((a, b) => b[1] - a[1]).slice(0, 15);
+    
+    // Top products (models)
+    const productCounts = {};
+    data.forEach(r => {
+      Object.entries(r.items || {}).forEach(([key, qty]) => {
+        const [product] = key.split("|||");
+        const q = qty === "5+" ? 5 : parseInt(qty) || 0;
+        productCounts[product] = (productCounts[product] || 0) + q;
+      });
+    });
+    const topProducts = Object.entries(productCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    
+    // Orders per store
+    const storeOrders = {};
+    data.forEach(r => { storeOrders[r.store_location] = (storeOrders[r.store_location] || 0) + 1; });
+    const storeRank = Object.entries(storeOrders).sort((a, b) => b[1] - a[1]);
+    
+    // Orders per day
+    const dailyCounts = {};
+    data.forEach(r => {
+      const d = new Date(r.created_at);
+      const key = `${d.getMonth() + 1}/${d.getDate()}`;
+      dailyCounts[key] = (dailyCounts[key] || 0) + 1;
+    });
+    const days = analyticsRange === "30d" ? 30 : analyticsRange === "14d" ? 14 : 7;
+    const dailyLabels = [];
+    const dailyValues = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const key = `${d.getMonth() + 1}/${d.getDate()}`;
+      dailyLabels.push(key);
+      dailyValues.push(dailyCounts[key] || 0);
+    }
+
+    // Units per store
+    const storeUnits = {};
+    data.forEach(r => { storeUnits[r.store_location] = (storeUnits[r.store_location] || 0) + (r.total_units || 0); });
+    const storeUnitRank = Object.entries(storeUnits).sort((a, b) => b[1] - a[1]);
+
+    const maxBar = topFlavors.length > 0 ? topFlavors[0][1] : 1;
+    const maxProd = topProducts.length > 0 ? topProducts[0][1] : 1;
+    const maxDaily = Math.max(...dailyValues, 1);
+
+    return (
+      <div style={st.page}>
+        <button onClick={() => { sndBack(); setMgrView("dashboard"); }} style={st.back}>← Back to Dashboard</button>
+        <h1 style={st.h1}>📈 Analytics</h1><p style={st.sub}>{mgrWarehouse?.name} • completed orders</p>
+        <div style={{ display: "flex", gap: "6px", marginBottom: "20px" }}>
+          {["7d", "14d", "30d"].map(r => (
+            <button key={r} onClick={() => { setAnalyticsRange(r); loadAnalytics(r); }}
+              style={{ padding: "6px 14px", borderRadius: "8px", border: `1px solid ${analyticsRange === r ? "#00B4D850" : "#ffffff15"}`, background: analyticsRange === r ? "#00B4D820" : "transparent", color: analyticsRange === r ? "#00B4D8" : "#ffffff40", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>{r === "7d" ? "7 Days" : r === "14d" ? "14 Days" : "30 Days"}</button>
+          ))}
+        </div>
+
+        {/* Summary cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "24px" }}>
+          <div style={{ padding: "16px", borderRadius: "12px", background: "rgba(0,180,216,0.06)", border: "1px solid #00B4D820", textAlign: "center" }}>
+            <div style={{ fontSize: "28px", fontWeight: 900, color: "#00B4D8" }}>{totalOrders}</div>
+            <div style={{ fontSize: "11px", color: "#00B4D880", fontWeight: 700, marginTop: "4px" }}>ORDERS</div>
+          </div>
+          <div style={{ padding: "16px", borderRadius: "12px", background: "rgba(29,185,84,0.06)", border: "1px solid #1DB95420", textAlign: "center" }}>
+            <div style={{ fontSize: "28px", fontWeight: 900, color: "#1DB954" }}>{totalUnits}</div>
+            <div style={{ fontSize: "11px", color: "#1DB95480", fontWeight: 700, marginTop: "4px" }}>UNITS MOVED</div>
+          </div>
+          <div style={{ padding: "16px", borderRadius: "12px", background: "rgba(255,107,53,0.06)", border: "1px solid #FF6B3520", textAlign: "center" }}>
+            <div style={{ fontSize: "28px", fontWeight: 900, color: "#FF6B35" }}>{uniqueStores.length}</div>
+            <div style={{ fontSize: "11px", color: "#FF6B3580", fontWeight: 700, marginTop: "4px" }}>ACTIVE STORES</div>
+          </div>
+          <div style={{ padding: "16px", borderRadius: "12px", background: "rgba(108,92,231,0.06)", border: "1px solid #6C5CE720", textAlign: "center" }}>
+            <div style={{ fontSize: "28px", fontWeight: 900, color: "#6C5CE7" }}>{uniqueEmployees.length}</div>
+            <div style={{ fontSize: "11px", color: "#6C5CE780", fontWeight: 700, marginTop: "4px" }}>EMPLOYEES</div>
+          </div>
+        </div>
+
+        {/* Daily order chart */}
+        <div style={{ marginBottom: "24px" }}>
+          <span style={{ color: "#00B4D8", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>📊 Orders Per Day</span>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: "3px", height: "120px", marginTop: "12px", padding: "0 4px" }}>
+            {dailyValues.map((v, i) => (
+              <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", height: "100%" }}>
+                <div style={{ flex: 1, display: "flex", alignItems: "flex-end", width: "100%" }}>
+                  <div style={{ width: "100%", height: `${Math.max((v / maxDaily) * 100, v > 0 ? 8 : 2)}%`, background: v > 0 ? "linear-gradient(180deg, #00B4D8, #00B4D860)" : "#ffffff08", borderRadius: "3px 3px 0 0", transition: "height 0.3s ease" }} />
+                </div>
+                {v > 0 && <span style={{ fontSize: "9px", color: "#00B4D8", fontWeight: 700, marginTop: "2px" }}>{v}</span>}
+                <span style={{ fontSize: "8px", color: "#ffffff25", marginTop: "2px" }}>{dailyLabels[i]}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top flavors */}
+        {topFlavors.length > 0 && (
+          <div style={{ marginBottom: "24px" }}>
+            <span style={{ color: "#1DB954", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>🔥 Top Flavors</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "12px" }}>
+              {topFlavors.map(([name, count], i) => (
+                <div key={name} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.02)" }}>
+                  <span style={{ color: "#ffffff30", fontSize: "11px", fontWeight: 700, width: "20px" }}>#{i + 1}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                      <span style={{ color: "#fff", fontSize: "12px", fontWeight: 600 }}>{name}</span>
+                      <span style={{ color: "#1DB954", fontSize: "12px", fontWeight: 800 }}>{count}</span>
+                    </div>
+                    <div style={{ height: "4px", borderRadius: "2px", background: "#ffffff08", overflow: "hidden" }}>
+                      <div style={{ height: "100%", borderRadius: "2px", background: "#1DB954", width: `${(count / maxBar) * 100}%`, transition: "width 0.3s ease" }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Top products */}
+        {topProducts.length > 0 && (
+          <div style={{ marginBottom: "24px" }}>
+            <span style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>📦 Top Products</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "12px" }}>
+              {topProducts.map(([name, count], i) => (
+                <div key={name} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.02)" }}>
+                  <span style={{ color: "#ffffff30", fontSize: "11px", fontWeight: 700, width: "20px" }}>#{i + 1}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                      <span style={{ color: "#fff", fontSize: "12px", fontWeight: 600 }}>{name}</span>
+                      <span style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 800 }}>{count}</span>
+                    </div>
+                    <div style={{ height: "4px", borderRadius: "2px", background: "#ffffff08", overflow: "hidden" }}>
+                      <div style={{ height: "100%", borderRadius: "2px", background: "#FF6B35", width: `${(count / maxProd) * 100}%`, transition: "width 0.3s ease" }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Store rankings */}
+        {storeUnitRank.length > 0 && (
+          <div style={{ marginBottom: "24px" }}>
+            <span style={{ color: "#6C5CE7", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>🏪 Units Per Store</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "12px" }}>
+              {storeUnitRank.map(([name, units]) => (
+                <div key={name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.02)" }}>
+                  <span style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>{name}</span>
+                  <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                    <span style={{ color: "#6C5CE7", fontSize: "13px", fontWeight: 800 }}>{units}u</span>
+                    <span style={{ color: "#ffffff25", fontSize: "11px" }}>{storeOrders[name]} order{storeOrders[name] !== 1 ? "s" : ""}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {totalOrders === 0 && <div style={{ padding: "40px 20px", textAlign: "center", borderRadius: "12px", border: "1px dashed #ffffff12" }}><p style={{ color: "#ffffff30", fontSize: "14px", margin: 0 }}>No completed orders yet for this period</p><p style={{ color: "#ffffff20", fontSize: "12px", marginTop: "8px" }}>Complete orders from your dashboard to see analytics here</p></div>}
+
+        <div style={{ height: "70px" }} />
+        <FloatingBack onClick={() => setMgrView("dashboard")} />
+      </div>
+    );
+  }
+
   // MANAGER CATALOG
   if (view === "manager" && authed && mgrView === "catalog") {
     const catBrands = {};
@@ -1067,7 +1266,8 @@ export default function RestockApp() {
         <h1 style={st.h1}>📊 {mgrWarehouse?.name} Dashboard</h1><p style={st.sub}>{loading ? "Loading..." : `${reports.length} pending order${reports.length !== 1 ? "s" : ""}`}</p>
         <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
           <button onClick={loadMgr} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff50", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🔄 Refresh</button>
-          <button onClick={() => setMgrView("catalog")} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #6C5CE730", background: "#6C5CE710", color: "#6C5CE7", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🗂️ Manage Catalog</button>
+          <button onClick={() => setMgrView("catalog")} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #6C5CE730", background: "#6C5CE710", color: "#6C5CE7", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🗂️ Catalog</button>
+          <button onClick={() => { setMgrView("analytics"); loadAnalytics(analyticsRange); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #00B4D830", background: "#00B4D810", color: "#00B4D8", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>📈 Analytics</button>
         </div>
         <div style={{ padding: "16px", borderRadius: "12px", border: "1px solid #FF6B3530", background: "rgba(255,107,53,0.05)", marginBottom: "20px" }}>
           {(() => { const wid = mgrWarehouse?.id || 1; const bd = bannerData[wid] || { message: "", active: false }; const bannerText = bd.message; const bannerOn = bd.active; return (<>
