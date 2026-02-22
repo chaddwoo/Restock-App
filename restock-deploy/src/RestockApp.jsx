@@ -365,28 +365,36 @@ export default function RestockApp() {
     try { 
       await sb.patch("submissions", { status: "completed", completed_at: new Date().toISOString() }, `id=eq.${id}`); 
       sndDone(); setReports(p => p.filter(r => r.id !== id)); if (selReport && selReport.id === id) { setSelReport(null); setPickedItems({}); }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Complete failed:", e); alert("Failed to complete order. Try again."); }
   };
   const cancelSubmission = async (report) => {
     try {
-      // Build restore map from the order items
-      const restoreMap = {};
-      Object.entries(report.items || {}).forEach(([key, val]) => {
-        const [product, flavor] = key.split("|||");
-        const model = catalog.find(c => c.model_name === product);
-        if (model) {
-          const qty = val === "5+" ? 5 : parseInt(val) || 0;
-          restoreMap[`${model.id}:::${flavor}`] = qty;
+      // Delete the submission first (most important action)
+      const deleted = await sb.del("submissions", `id=eq.${report.id}`);
+      if (!deleted) { console.error("Failed to delete submission"); return; }
+      
+      // Remove from UI immediately
+      sndRemove(); 
+      setReports(p => p.filter(r => r.id !== report.id)); 
+      if (selReport && selReport.id === report.id) { setSelReport(null); setPickedItems({}); }
+      
+      // Try to restore stock (non-blocking)
+      try {
+        const restoreMap = {};
+        Object.entries(report.items || {}).forEach(([key, val]) => {
+          const [product, flavor] = key.split("|||");
+          const model = catalog.find(c => c.model_name === product);
+          if (model) {
+            const qty = val === "5+" ? 5 : parseInt(val) || 0;
+            restoreMap[`${model.id}:::${flavor}`] = qty;
+          }
+        });
+        if (Object.keys(restoreMap).length > 0) {
+          await sb.rpc("restore_stock", { p_warehouse_id: report.warehouse_id || 1, p_items: restoreMap });
+          await loadCatalog();
         }
-      });
-      // Restore stock
-      if (Object.keys(restoreMap).length > 0) {
-        await sb.rpc("restore_stock", { p_warehouse_id: report.warehouse_id || 1, p_items: restoreMap });
-      }
-      await sb.del("submissions", `id=eq.${report.id}`);
-      await loadCatalog(); // Refresh stock counts
-      sndRemove(); setReports(p => p.filter(r => r.id !== report.id)); if (selReport && selReport.id === report.id) setSelReport(null);
-    } catch (e) { console.error(e); }
+      } catch (stockErr) { console.error("Stock restore failed:", stockErr); }
+    } catch (e) { console.error("Cancel failed:", e); alert("Failed to cancel order. Try again."); }
   };
   const saveBanner = async () => {
     if (!mgrWarehouse) return;
