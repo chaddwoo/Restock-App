@@ -127,6 +127,7 @@ export default function RestockApp() {
   const [showAddModel, setShowAddModel] = useState(false);
   const [expandedBrands, setExpandedBrands] = useState({});
   const [expandedCats, setExpandedCats] = useState({});
+  const [catalogSearch, setCatalogSearch] = useState("");
   const [editingModelInfo, setEditingModelInfo] = useState(false);
   const [editModelName, setEditModelName] = useState("");
   const [editModelBrand, setEditModelBrand] = useState("");
@@ -1284,11 +1285,18 @@ export default function RestockApp() {
 
   // MANAGER CATALOG
   if (view === "manager" && authed && mgrView === "catalog") {
+    const searchTerm = catalogSearch.toLowerCase().trim();
+    const filteredCatalog = searchTerm ? catalog.filter(c => 
+      c.model_name.toLowerCase().includes(searchTerm) || 
+      c.brand.toLowerCase().includes(searchTerm) || 
+      (c.category || "").toLowerCase().includes(searchTerm) ||
+      (c.flavors || []).some(f => f.toLowerCase().includes(searchTerm))
+    ) : catalog;
     const catBrands = {};
-    catalog.forEach(c => { const cat = c.category || "Vapes"; if (!catBrands[cat]) catBrands[cat] = {}; if (!catBrands[cat][c.brand]) catBrands[cat][c.brand] = []; catBrands[cat][c.brand].push(c); });
+    filteredCatalog.forEach(c => { const cat = c.category || "Vapes"; if (!catBrands[cat]) catBrands[cat] = {}; if (!catBrands[cat][c.brand]) catBrands[cat][c.brand] = []; catBrands[cat][c.brand].push(c); });
     return (
       <div style={st.page}>
-        <button onClick={() => { sndBack(); setMgrView("dashboard"); }} style={st.back}>← Back to Dashboard</button>
+        <button onClick={() => { sndBack(); setCatalogSearch(""); setMgrView("dashboard"); }} style={st.back}>← Back to Dashboard</button>
         <h1 style={st.h1}>🗂️ Manage Catalog</h1><p style={st.sub}>Managing for {mgrWarehouse?.name} • set stock counts per item</p>
         {!showAddModel ? (
           <button onClick={() => setShowAddModel(true)} style={{ padding: "10px 18px", borderRadius: "8px", background: "#1DB95420", color: "#1DB954", border: "1px solid #1DB95430", fontSize: "13px", fontWeight: 700, cursor: "pointer", marginBottom: "20px" }}>+ Add New Model / Product</button>
@@ -1306,8 +1314,12 @@ export default function RestockApp() {
             </div>
           </div>
         )}
+        <div style={{ marginBottom: "16px" }}>
+          <input type="text" placeholder="🔍  Search models, brands, flavors..." value={catalogSearch} onChange={e => setCatalogSearch(e.target.value)}
+            style={{ ...st.input, fontSize: "13px", padding: "12px 16px", background: "rgba(255,255,255,0.04)", border: "1px solid #ffffff12" }} />
+        </div>
         {Object.entries(catBrands).map(([cat, brands]) => {
-          const catExpanded = expandedCats[cat];
+          const catExpanded = searchTerm ? true : expandedCats[cat];
           const catBrandCount = Object.keys(brands).length;
           const catModelCount = Object.values(brands).reduce((s, m) => s + m.length, 0);
           return (
@@ -1323,7 +1335,7 @@ export default function RestockApp() {
             {catExpanded && Object.entries(brands).map(([brand, models]) => {
               const bc = getBrandColor(brand);
               const brandKey = `${cat}:::${brand}`;
-              const isExpanded = expandedBrands[brandKey];
+              const isExpanded = searchTerm ? true : expandedBrands[brandKey];
               const brandTotalStock = models.reduce((sum, m) => {
                 const mws = mgrWarehouse ? ((m.stock_levels || {})[String(mgrWarehouse.id)] || {}) : {};
                 return sum + Object.values(mws).reduce((s, v) => s + (parseInt(v) || 0), 0);
