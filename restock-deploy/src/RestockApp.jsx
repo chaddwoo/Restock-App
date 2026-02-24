@@ -1178,8 +1178,8 @@ export default function RestockApp() {
                       <div style={{ color: "#ffffff35", fontSize: "11px", marginTop: "2px" }}>{order.store_location} • {dateStr}</div>
                       <div style={{ color: "#ffffff25", fontSize: "11px", marginTop: "2px" }}>{order.total_flavors} items • {order.total_units}u</div>
                     </div>
+                    <div style={{ display: "flex", gap: "6px", alignItems: "center", flexShrink: 0 }}>
                     <button onClick={() => {
-                      // Generate invoice PDF
                       const grp = {};
                       entries.forEach(([k, q]) => { const [pr, fl] = k.split("|||"); if (!grp[pr]) grp[pr] = []; grp[pr].push({ flavor: fl, qty: q }); });
                       const completedDate = order.completed_at ? new Date(order.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : dateStr;
@@ -1218,6 +1218,9 @@ export default function RestockApp() {
                       setTimeout(() => URL.revokeObjectURL(url), 5000);
                     }}
                       style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>📄 Invoice</button>
+                    <button onClick={async () => { if (window.confirm(`Delete ${order.employee_name}'s completed order?`)) { try { await sb.del("submissions", `id=eq.${order.id}`); sndRemove(); setAnalyticsData(p => p.filter(o => o.id !== order.id)); } catch (e) { console.error(e); } } }}
+                      style={{ padding: "8px 8px", borderRadius: "8px", border: "1px solid #E6394625", background: "transparent", color: "#E6394680", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>✕</button>
+                    </div>
                   </div>
                 );
               })}
