@@ -1163,6 +1163,68 @@ export default function RestockApp() {
 
         {totalOrders === 0 && <div style={{ padding: "40px 20px", textAlign: "center", borderRadius: "12px", border: "1px dashed #ffffff12" }}><p style={{ color: "#ffffff30", fontSize: "14px", margin: 0 }}>No completed orders yet for this period</p><p style={{ color: "#ffffff20", fontSize: "12px", marginTop: "8px" }}>Complete orders from your dashboard to see analytics here</p></div>}
 
+        {/* Order History */}
+        {data.length > 0 && (
+          <div style={{ marginBottom: "24px" }}>
+            <span style={{ color: "#ffffff60", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>📋 Order History</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "12px" }}>
+              {data.map(order => {
+                const entries = Object.entries(order.items || {});
+                const dateStr = new Date(order.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+                return (
+                  <div key={order.id} style={{ padding: "14px 16px", borderRadius: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid #ffffff08", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ color: "#fff", fontSize: "14px", fontWeight: 700 }}>{order.employee_name}</div>
+                      <div style={{ color: "#ffffff35", fontSize: "11px", marginTop: "2px" }}>{order.store_location} • {dateStr}</div>
+                      <div style={{ color: "#ffffff25", fontSize: "11px", marginTop: "2px" }}>{order.total_flavors} items • {order.total_units}u</div>
+                    </div>
+                    <button onClick={() => {
+                      // Generate invoice PDF
+                      const grp = {};
+                      entries.forEach(([k, q]) => { const [pr, fl] = k.split("|||"); if (!grp[pr]) grp[pr] = []; grp[pr].push({ flavor: fl, qty: q }); });
+                      const completedDate = order.completed_at ? new Date(order.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : dateStr;
+                      const orderDate = new Date(order.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+                      let rows = "";
+                      Object.entries(grp).forEach(([product, items]) => {
+                        rows += `<tr><td colspan="2" style="padding:10px 12px;font-weight:700;background:#f8f8f8;border-bottom:1px solid #eee;font-size:13px;">${product}</td></tr>`;
+                        items.forEach(({ flavor, qty }) => {
+                          rows += `<tr><td style="padding:8px 12px 8px 28px;border-bottom:1px solid #f0f0f0;font-size:13px;">${flavor}</td><td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700;font-size:13px;">×${qty}</td></tr>`;
+                        });
+                      });
+                      const html = `<!DOCTYPE html><html><head><title>Invoice - ${order.store_location}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:40px;color:#222;max-width:600px;margin:0 auto}@media print{body{padding:20px}}</style></head><body>
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px">
+                          <div><h1 style="font-size:24px;font-weight:800;margin-bottom:4px">Restock Invoice</h1><p style="color:#888;font-size:13px">${mgrWarehouse?.name || "Warehouse"}</p></div>
+                          <div style="text-align:right"><p style="font-size:12px;color:#888">Order #${order.id}</p></div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+                          <div style="padding:14px;border-radius:8px;border:1px solid #eee"><p style="font-size:11px;color:#888;font-weight:600;margin-bottom:4px">STORE</p><p style="font-size:14px;font-weight:700">${order.store_location}</p></div>
+                          <div style="padding:14px;border-radius:8px;border:1px solid #eee"><p style="font-size:11px;color:#888;font-weight:600;margin-bottom:4px">EMPLOYEE</p><p style="font-size:14px;font-weight:700">${order.employee_name}</p></div>
+                          <div style="padding:14px;border-radius:8px;border:1px solid #eee"><p style="font-size:11px;color:#888;font-weight:600;margin-bottom:4px">ORDERED</p><p style="font-size:14px;font-weight:700">${orderDate}</p></div>
+                          <div style="padding:14px;border-radius:8px;border:1px solid #eee"><p style="font-size:11px;color:#888;font-weight:600;margin-bottom:4px">COMPLETED</p><p style="font-size:14px;font-weight:700">${completedDate}</p></div>
+                        </div>
+                        <div style="padding:16px;border-radius:8px;background:#f8f8f8;display:flex;justify-content:space-around;text-align:center;margin-bottom:24px">
+                          <div><p style="font-size:24px;font-weight:900">${order.total_flavors}</p><p style="font-size:11px;color:#888;font-weight:600">ITEMS</p></div>
+                          <div style="width:1px;background:#ddd"></div>
+                          <div><p style="font-size:24px;font-weight:900">${order.total_units}</p><p style="font-size:11px;color:#888;font-weight:600">TOTAL UNITS</p></div>
+                        </div>
+                        <table style="width:100%;border-collapse:collapse;border:1px solid #eee;border-radius:8px;overflow:hidden">${rows}</table>
+                        <p style="text-align:center;color:#bbb;font-size:11px;margin-top:30px">Generated by RestockSD • ${new Date().toLocaleDateString()}</p>
+                      </body></html>`;
+                      const blob = new Blob([html], { type: "text/html" });
+                      const url = URL.createObjectURL(blob);
+                      const w = window.open(url, "_blank");
+                      if (w) { w.onload = () => { setTimeout(() => { w.print(); }, 300); }; }
+                      else { const a = document.createElement("a"); a.href = url; a.download = `invoice-${order.store_location}-${order.id}.html`; a.click(); }
+                      setTimeout(() => URL.revokeObjectURL(url), 5000);
+                    }}
+                      style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>📄 Invoice</button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div style={{ height: "70px" }} />
         <FloatingBack onClick={() => setMgrView("dashboard")} />
       </div>
