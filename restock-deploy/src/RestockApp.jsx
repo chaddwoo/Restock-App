@@ -125,6 +125,7 @@ export default function RestockApp() {
   const [newModelPuffs, setNewModelPuffs] = useState("");
   const [newModelCategory, setNewModelCategory] = useState("Vapes");
   const [showAddModel, setShowAddModel] = useState(false);
+  const [expandedBrands, setExpandedBrands] = useState({});
   const [editingModelInfo, setEditingModelInfo] = useState(false);
   const [editModelName, setEditModelName] = useState("");
   const [editModelBrand, setEditModelBrand] = useState("");
@@ -1265,12 +1266,30 @@ export default function RestockApp() {
             </div>
             {Object.entries(brands).map(([brand, models]) => {
               const bc = getBrandColor(brand);
+              const brandKey = `${cat}:::${brand}`;
+              const isExpanded = expandedBrands[brandKey];
+              const brandTotalStock = models.reduce((sum, m) => {
+                const mws = mgrWarehouse ? ((m.stock_levels || {})[String(mgrWarehouse.id)] || {}) : {};
+                return sum + Object.values(mws).reduce((s, v) => s + (parseInt(v) || 0), 0);
+              }, 0);
               return (
-                <div key={brand} style={{ marginBottom: "16px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                    <div style={{ width: "3px", height: "16px", borderRadius: "2px", background: bc }}></div>
-                    <span style={{ color: bc, fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>{brand}</span>
-                  </div>
+                <div key={brand} style={{ marginBottom: "6px" }}>
+                  <button onClick={() => { sndClick(); setExpandedBrands(p => ({ ...p, [brandKey]: !isExpanded })); }}
+                    style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1px solid #ffffff08", background: isExpanded ? `${bc}10` : "rgba(255,255,255,0.02)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <div style={{ width: "3px", height: "20px", borderRadius: "2px", background: bc }}></div>
+                      <div>
+                        <span style={{ color: bc, fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>{brand}</span>
+                        <div style={{ color: "#ffffff30", fontSize: "11px", marginTop: "2px" }}>{models.length} model{models.length !== 1 ? "s" : ""}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <span style={{ color: brandTotalStock > 0 ? "#1DB954" : "#E63946", fontSize: "12px", fontWeight: 700 }}>{brandTotalStock}u</span>
+                      <span style={{ color: "#ffffff30", fontSize: "16px", transition: "transform 0.2s ease", transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)" }}>›</span>
+                    </div>
+                  </button>
+                  {isExpanded && (
+                    <div style={{ paddingLeft: "8px", marginTop: "4px" }}>
                   {models.map(m => {
                     const msl = m.stock_levels || {};
                     const mws = mgrWarehouse ? (msl[String(mgrWarehouse.id)] || {}) : {};
@@ -1285,6 +1304,8 @@ export default function RestockApp() {
                     </button>
                     );
                   })}
+                    </div>
+                  )}
                 </div>
               );
             })}
