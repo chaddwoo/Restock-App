@@ -547,7 +547,7 @@ export default function RestockApp() {
     const ws = {};
     (model.flavors || []).forEach(f => { ws[f] = Math.max(0, parseInt(count) || 0); });
     sl[wid] = ws;
-    try { await sb.patch("catalog", { stock_levels: sl }, `id=eq.${modelId}`); sndClick(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, stock_levels: sl } : c)); } catch (e) { console.error(e); }
+    try { await sb.patch("catalog", { stock_levels: sl }, `id=eq.${modelId}`); setCatalog(p => p.map(c => c.id === modelId ? { ...c, stock_levels: sl } : c)); } catch (e) { console.error(e); }
   };
   const toggleFlavorVisibility = async (modelId, flavor) => {
     if (!mgrWarehouse) return;
@@ -557,7 +557,7 @@ export default function RestockApp() {
     const hidden = whVis[wid] || [];
     const isHidden = hidden.includes(flavor);
     whVis[wid] = isHidden ? hidden.filter(f => f !== flavor) : [...hidden, flavor];
-    try { await sb.patch("catalog", { warehouse_visibility: whVis }, `id=eq.${modelId}`); sndClick(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, warehouse_visibility: whVis } : c)); } catch (e) { console.error(e); }
+    try { await sb.patch("catalog", { warehouse_visibility: whVis }, `id=eq.${modelId}`); setCatalog(p => p.map(c => c.id === modelId ? { ...c, warehouse_visibility: whVis } : c)); } catch (e) { console.error(e); }
   };
   const addModel = async () => {
     if (!newModelName.trim() || !newModelBrand.trim()) return;
@@ -1266,7 +1266,7 @@ export default function RestockApp() {
           const catModelCount = Object.values(brands).reduce((s, m) => s + m.length, 0);
           return (
           <div key={cat}>
-            <button onClick={() => { sndClick(); setExpandedCats(p => ({ ...p, [cat]: !catExpanded })); }}
+            <button onClick={() => { setExpandedCats(p => ({ ...p, [cat]: !catExpanded })); }}
               style={{ width: "100%", padding: "12px 0", marginBottom: "8px", marginTop: "12px", borderBottom: "1px solid #ffffff10", paddingBottom: "10px", background: "transparent", border: "none", borderBottom: "1px solid #ffffff10", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left" }}>
               <span style={{ color: "#ffffff70", fontSize: "15px", fontWeight: 800 }}>{cat}</span>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -1284,7 +1284,7 @@ export default function RestockApp() {
               }, 0);
               return (
                 <div key={brand} style={{ marginBottom: "6px" }}>
-                  <button onClick={() => { sndClick(); setExpandedBrands(p => ({ ...p, [brandKey]: !isExpanded })); }}
+                  <button onClick={() => { setExpandedBrands(p => ({ ...p, [brandKey]: !isExpanded })); }}
                     style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1px solid #ffffff08", background: isExpanded ? `${bc}10` : "rgba(255,255,255,0.02)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                       <div style={{ width: "3px", height: "20px", borderRadius: "2px", background: bc }}></div>
@@ -1503,7 +1503,7 @@ export default function RestockApp() {
     const totalPicked = Object.keys(pickedItems).filter(k => pickedItems[k]).length;
     const allDone = totalPicked === totalItems && totalItems > 0;
     const hasAdjustments = Object.keys(adjustedQtys).length > 0;
-    const togglePick = (key) => { sndClick(); setPickedItems(p => ({ ...p, [key]: !p[key] })); };
+    const togglePick = (key) => { setPickedItems(p => ({ ...p, [key]: !p[key] })); };
     const adjustQty = (itemKey, newVal) => {
       const origQty = r.items[itemKey];
       const origNum = origQty === "5+" ? 5 : parseInt(origQty) || 0;
