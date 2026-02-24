@@ -133,11 +133,14 @@ export default function RestockApp() {
   const [selCategory, setSelCategory] = useState(_saved?.selCategory || null);
   const [showOrderEdit, setShowOrderEdit] = useState(false);
   const [pickedItems, setPickedItems] = useState({});
+  const [adjustedQtys, setAdjustedQtys] = useState({});
   const [analyticsData, setAnalyticsData] = useState([]);
   const [analyticsRange, setAnalyticsRange] = useState("7d");
 
   const [mgrPin, setMgrPin] = useState(null);
+  const [ownerPin, setOwnerPin] = useState(null);
   const [pinLoading, setPinLoading] = useState(false);
+  const [accessLevel, setAccessLevel] = useState(null); // "manager" or "owner"
 
   const activeWid = empWarehouse?.id || mgrWarehouse?.id || null;
   const catalogObj = useMemo(() => {
@@ -209,7 +212,7 @@ export default function RestockApp() {
     setPinLoading(true);
     try {
       const d = await sb.get("settings", { limit: 1 });
-      if (d && d[0]) setMgrPin(d[0].manager_pin);
+      if (d && d[0]) { setMgrPin(d[0].manager_pin); setOwnerPin(d[0].owner_pin || null); }
     } catch (e) { console.error(e); }
     setPinLoading(false);
   }, []);
@@ -361,10 +364,59 @@ export default function RestockApp() {
   const sndRemove = () => playSound("remove");
   const sndDone = () => playSound("done");
 
-  const completeSubmission = async (id) => {
-    try { 
-      await sb.patch("submissions", { status: "completed", completed_at: new Date().toISOString() }, `id=eq.${id}`); 
-      sndDone(); setReports(p => p.filter(r => r.id !== id)); if (selReport && selReport.id === id) { setSelReport(null); setPickedItems({}); }
+  const completeSubmission = async (report, adjustments) => {
+    try {
+      // Build final items with adjustments applied
+      const finalItems = { ...(report.items || {}) };
+      const restoreMap = {};
+      
+      if (adjustments && Object.keys(adjustments).length > 0) {
+        Object.entries(adjustments).forEach(([key, newQty]) => {
+          const origQty = finalItems[key];
+          const origNum = origQty === "5+" ? 5 : parseInt(origQty) || 0;
+          const newNum = parseInt(newQty) || 0;
+          const diff = origNum - newNum;
+          
+          if (diff > 0) {
+            // Manager gave less than requested — restore the difference
+            const [product, flavor] = key.split("|||");
+            const model = catalog.find(c => c.model_name === product);
+            if (model) {
+              restoreMap[`${model.id}:::${flavor}`] = diff;
+            }
+          }
+          
+          if (newNum <= 0) {
+            delete finalItems[key];
+          } else {
+            finalItems[key] = String(newNum);
+          }
+        });
+      }
+      
+      // Restore stock difference
+      if (Object.keys(restoreMap).length > 0) {
+        try {
+          await sb.rpc("restore_stock", { p_warehouse_id: report.warehouse_id || 1, p_items: restoreMap });
+          await loadCatalog();
+        } catch (stockErr) { console.error("Stock restore failed:", stockErr); }
+      }
+      
+      // Recalculate totals
+      const adjEntries = Object.entries(finalItems);
+      let adjTu = 0; adjEntries.forEach(([, v]) => { adjTu += v === "5+" ? 5 : parseInt(v) || 0; });
+      
+      await sb.patch("submissions", { 
+        status: "completed", 
+        completed_at: new Date().toISOString(),
+        items: finalItems,
+        total_flavors: adjEntries.length,
+        total_units: adjTu
+      }, `id=eq.${report.id}`);
+      
+      sndDone(); 
+      setReports(p => p.filter(r => r.id !== report.id)); 
+      if (selReport && selReport.id === report.id) { setSelReport(null); setPickedItems({}); setAdjustedQtys({}); setAdjustedQtys({}); }
     } catch (e) { console.error("Complete failed:", e); alert("Failed to complete order. Try again."); }
   };
   const cancelSubmission = async (report) => {
@@ -376,7 +428,7 @@ export default function RestockApp() {
       // Remove from UI immediately
       sndRemove(); 
       setReports(p => p.filter(r => r.id !== report.id)); 
-      if (selReport && selReport.id === report.id) { setSelReport(null); setPickedItems({}); }
+      if (selReport && selReport.id === report.id) { setSelReport(null); setPickedItems({}); setAdjustedQtys({}); }
       
       // Try to restore stock (non-blocking)
       try {
@@ -631,7 +683,7 @@ export default function RestockApp() {
       <p style={{ color: "#ffffff35", fontSize: "12px", margin: 0, letterSpacing: "4px", textTransform: "uppercase" }}>Tell Us What You Need</p>
       <div style={{ marginTop: "48px", display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
         <button onClick={() => setView("employee-login")} style={st.btn}>🏪 Submit Restock Request</button>
-        <button onClick={() => { setAuthed(false); setPin(""); setMgrView("dashboard"); setMgrWarehouse(null); setMgrPin(null); loadPin(); setView("manager-login"); }} style={{ ...st.btn, background: "rgba(255,255,255,0.05)", border: "1px solid #ffffff15", boxShadow: "none" }}>📊 Manager Dashboard</button>
+        <button onClick={() => { setAuthed(false); setPin(""); setMgrView("dashboard"); setMgrWarehouse(null); setMgrPin(null); setOwnerPin(null); setAccessLevel(null); loadPin(); setView("manager-login"); }} style={{ ...st.btn, background: "rgba(255,255,255,0.05)", border: "1px solid #ffffff15", boxShadow: "none" }}>📊 Manager Dashboard</button>
       </div>
       <p style={{ color: "#ffffff18", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v3.0</p>
     </div>
@@ -639,17 +691,23 @@ export default function RestockApp() {
 
   // MANAGER LOGIN
   if (view === "manager-login") {
-    const pinMatch = mgrPin && pin === mgrPin;
-    const pinWrong = mgrPin && pin.length >= 4 && pin !== mgrPin;
+    const isMgrPin = mgrPin && pin === mgrPin;
+    const isOwnerPin = ownerPin && pin === ownerPin;
+    const pinMatch = isMgrPin || isOwnerPin;
+    const pinWrong = (mgrPin || ownerPin) && pin.length >= 4 && !pinMatch;
+    const handleLogin = () => {
+      if (isMgrPin) { sndLogin(); setAccessLevel("manager"); setAuthed(true); setView("manager-warehouse"); }
+      else if (isOwnerPin) { sndLogin(); setAccessLevel("owner"); setAuthed(true); setView("manager-warehouse"); }
+    };
     return (
       <div style={st.page}>
         <button onClick={() => { sndBack(); setView("splash"); }} style={st.back}>← Back</button>
         <h1 style={st.h1}>📊 Manager Access</h1><p style={st.sub}>{pinLoading ? "Loading..." : "Enter your PIN to continue"}</p>
         <div style={{ marginBottom: "24px" }}><label style={st.label}>Manager PIN</label>
-          <input type="password" placeholder="Enter PIN" value={pin} onChange={e => setPin(e.target.value)} style={st.input} onKeyDown={e => { if (e.key === "Enter" && pinMatch) { sndLogin(); setAuthed(true); setView("manager-warehouse"); } }} />
+          <input type="password" placeholder="Enter PIN" value={pin} onChange={e => setPin(e.target.value)} style={st.input} onKeyDown={e => { if (e.key === "Enter" && pinMatch) handleLogin(); }} />
         </div>
         {pinWrong && <p style={{ color: "#E63946", fontSize: "13px", marginBottom: "12px" }}>Incorrect PIN</p>}
-        <button onClick={() => { if (pinMatch) { sndLogin(); setAuthed(true); setView("manager-warehouse"); } }} style={pinMatch ? st.btn : st.btnOff} disabled={!pinMatch}>Enter Dashboard →</button>
+        <button onClick={handleLogin} style={pinMatch ? st.btn : st.btnOff} disabled={!pinMatch}>Enter Dashboard →</button>
       </div>
     );
   }
@@ -1273,10 +1331,10 @@ export default function RestockApp() {
         <h1 style={st.h1}>📊 {mgrWarehouse?.name} Dashboard</h1><p style={st.sub}>{loading ? "Loading..." : `${reports.length} pending order${reports.length !== 1 ? "s" : ""}`}</p>
         <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
           <button onClick={loadMgr} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff50", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🔄 Refresh</button>
-          <button onClick={() => setMgrView("catalog")} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #6C5CE730", background: "#6C5CE710", color: "#6C5CE7", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🗂️ Catalog</button>
-          <button onClick={() => { setMgrView("analytics"); loadAnalytics(analyticsRange); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #00B4D830", background: "#00B4D810", color: "#00B4D8", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>📈 Analytics</button>
+          {accessLevel === "manager" && <button onClick={() => setMgrView("catalog")} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #6C5CE730", background: "#6C5CE710", color: "#6C5CE7", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🗂️ Catalog</button>}
+          {accessLevel === "manager" && <button onClick={() => { setMgrView("analytics"); loadAnalytics(analyticsRange); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #00B4D830", background: "#00B4D810", color: "#00B4D8", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>📈 Analytics</button>}
         </div>
-        <div style={{ padding: "16px", borderRadius: "12px", border: "1px solid #FF6B3530", background: "rgba(255,107,53,0.05)", marginBottom: "20px" }}>
+        {accessLevel === "manager" && <div style={{ padding: "16px", borderRadius: "12px", border: "1px solid #FF6B3530", background: "rgba(255,107,53,0.05)", marginBottom: "20px" }}>
           {(() => { const wid = mgrWarehouse?.id || 1; const bd = bannerData[wid] || { message: "", active: false }; const bannerText = bd.message; const bannerOn = bd.active; return (<>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: editBanner ? "12px" : "0" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}><span style={{ fontSize: "14px" }}>📢</span><span style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Employee Banner</span></div>
@@ -1293,7 +1351,7 @@ export default function RestockApp() {
             </div>
           )}
           </>); })()}
-        </div>
+        </div>}
         <div style={{ marginBottom: "8px" }}><span style={{ color: "#ffffff60", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Pending Restock Requests</span></div>
         {reports.length === 0 && !loading && <div style={{ padding: "24px", textAlign: "center", borderRadius: "12px", border: "1px dashed #ffffff12", marginBottom: "20px" }}><p style={{ color: "#ffffff30", fontSize: "14px", margin: 0 }}>No pending orders</p></div>}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "20px" }}>
@@ -1311,6 +1369,7 @@ export default function RestockApp() {
             </div>
           ))}
         </div>
+        {accessLevel === "manager" && <>
         <div style={{ marginBottom: "8px" }}><span style={{ color: "#E63946", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>⏳ Still Waiting ({pending.length})</span></div>
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "12px" }}>
           {pending.map(s => (<span key={s.id} style={{ padding: "7px 12px", borderRadius: "8px", background: "rgba(230,57,70,0.07)", border: "1px solid #E6394620", fontSize: "12px", fontWeight: 600, color: "#E63946", display: "flex", alignItems: "center", gap: "6px" }}>{s.name}<button onClick={() => removeStore(s.id)} style={{ background: "none", border: "none", color: "#E6394680", cursor: "pointer", fontSize: "10px", padding: "0 2px" }}>✕</button></span>))}
@@ -1334,6 +1393,7 @@ export default function RestockApp() {
             ))}
           </div>
         )}
+        </>}
       </div>
     );
   }
@@ -1345,16 +1405,34 @@ export default function RestockApp() {
     const totalItems = entries.length;
     const totalPicked = Object.keys(pickedItems).filter(k => pickedItems[k]).length;
     const allDone = totalPicked === totalItems && totalItems > 0;
+    const hasAdjustments = Object.keys(adjustedQtys).length > 0;
     const togglePick = (key) => { sndClick(); setPickedItems(p => ({ ...p, [key]: !p[key] })); };
+    const adjustQty = (itemKey, newVal) => {
+      const origQty = r.items[itemKey];
+      const origNum = origQty === "5+" ? 5 : parseInt(origQty) || 0;
+      const newNum = Math.max(0, Math.min(origNum, parseInt(newVal) || 0));
+      if (newNum === origNum) {
+        setAdjustedQtys(p => { const n = { ...p }; delete n[itemKey]; return n; });
+      } else {
+        setAdjustedQtys(p => ({ ...p, [itemKey]: String(newNum) }));
+      }
+    };
+    // Calculate adjusted totals
+    let adjTotalUnits = 0;
+    entries.forEach(([key, qty]) => {
+      const adjQty = adjustedQtys[key];
+      const num = adjQty !== undefined ? parseInt(adjQty) : (qty === "5+" ? 5 : parseInt(qty) || 0);
+      adjTotalUnits += num;
+    });
     return (
       <div style={st.page}>
-        <button onClick={() => { sndBack(); setSelReport(null); setPickedItems({}); }} style={st.back}>← Back to Dashboard</button>
+        <button onClick={() => { sndBack(); setSelReport(null); setPickedItems({}); setAdjustedQtys({}); }} style={st.back}>← Back to Dashboard</button>
         <h2 style={st.h2}>{r.employee_name}'s Request</h2>
         <p style={{ color: "#ffffff45", fontSize: "13px", margin: "4px 0 20px 0" }}>{r.store_location} • {fmtTime(r.created_at)}</p>
         <div style={{ padding: "20px", borderRadius: "14px", marginBottom: "12px", background: "linear-gradient(135deg, rgba(255,107,53,0.08), rgba(230,57,70,0.08))", border: "1px solid #FF6B3520", display: "flex", justifyContent: "space-around", textAlign: "center" }}>
           <div><div style={{ fontSize: "28px", fontWeight: 900, color: "#FF6B35", lineHeight: 1 }}>{r.total_flavors}</div><div style={{ fontSize: "11px", fontWeight: 700, color: "#FF6B35", marginTop: "4px", opacity: 0.7 }}>ITEMS</div></div>
           <div style={{ width: "1px", background: "#ffffff10" }}></div>
-          <div><div style={{ fontSize: "28px", fontWeight: 900, color: "#E63946", lineHeight: 1 }}>~{r.total_units}</div><div style={{ fontSize: "11px", fontWeight: 700, color: "#E63946", marginTop: "4px", opacity: 0.7 }}>TOTAL UNITS</div></div>
+          <div><div style={{ fontSize: "28px", fontWeight: 900, color: hasAdjustments ? "#F59E0B" : "#E63946", lineHeight: 1 }}>{hasAdjustments ? adjTotalUnits : `~${r.total_units}`}</div><div style={{ fontSize: "11px", fontWeight: 700, color: hasAdjustments ? "#F59E0B" : "#E63946", marginTop: "4px", opacity: 0.7 }}>{hasAdjustments ? "ADJUSTED" : "TOTAL UNITS"}</div></div>
         </div>
         {/* Floating progress bar */}
         <div style={{ position: "sticky", top: 0, zIndex: 80, padding: "12px 16px", borderRadius: "12px", background: allDone ? "rgba(29,185,84,0.15)" : "rgba(11,11,15,0.95)", backdropFilter: "blur(12px)", border: `1px solid ${allDone ? "#1DB95430" : "#ffffff10"}`, marginBottom: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.4)" }}>
@@ -1366,7 +1444,7 @@ export default function RestockApp() {
             <div style={{ height: "100%", borderRadius: "3px", background: allDone ? "#1DB954" : "linear-gradient(90deg, #FF6B35, #FF8C42)", width: `${totalItems > 0 ? (totalPicked / totalItems) * 100 : 0}%`, transition: "width 0.3s ease" }} />
           </div>
         </div>
-        <p style={{ color: "#ffffff25", fontSize: "11px", margin: "0 0 16px 0", textAlign: "center" }}>Tap items to mark as picked</p>
+        <p style={{ color: "#ffffff25", fontSize: "11px", margin: "0 0 16px 0", textAlign: "center" }}>Tap items to mark as picked • tap quantity to adjust</p>
         {Object.entries(grp).map(([product, items]) => {
           const bn = catalogObj[product]?.brand; const bc = getBrandColor(bn);
           const sectionPicked = items.filter(({ flavor }) => pickedItems[`${r.id}|||${product}|||${flavor}`]).length;
@@ -1380,16 +1458,26 @@ export default function RestockApp() {
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 {items.sort((a, b) => (b.qty === "5+" ? 6 : parseInt(b.qty)) - (a.qty === "5+" ? 6 : parseInt(a.qty))).map(({ flavor, qty }) => {
                   const key = `${r.id}|||${product}|||${flavor}`;
+                  const itemKey = `${product}|||${flavor}`;
                   const picked = pickedItems[key];
-                  const col = picked ? "#1DB954" : getQtyColor(qty);
+                  const origNum = qty === "5+" ? 5 : parseInt(qty) || 0;
+                  const adjVal = adjustedQtys[itemKey];
+                  const isAdjusted = adjVal !== undefined;
+                  const displayQty = isAdjusted ? adjVal : qty;
+                  const col = picked ? "#1DB954" : isAdjusted ? "#F59E0B" : getQtyColor(qty);
                   return (
-                    <div key={flavor} onClick={() => togglePick(key)}
-                      style={{ padding: "10px 12px", borderRadius: "8px", background: picked ? "rgba(29,185,84,0.12)" : "rgba(0,0,0,0.25)", border: picked ? "1px solid #1DB95425" : "1px solid transparent", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", transition: "all 0.2s ease" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div key={flavor} style={{ padding: "10px 12px", borderRadius: "8px", background: picked ? "rgba(29,185,84,0.12)" : isAdjusted ? "rgba(245,158,11,0.06)" : "rgba(0,0,0,0.25)", border: picked ? "1px solid #1DB95425" : isAdjusted ? "1px solid #F59E0B20" : "1px solid transparent", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all 0.2s ease" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, cursor: "pointer" }} onClick={() => togglePick(key)}>
                         <span style={{ width: "22px", height: "22px", borderRadius: "6px", border: picked ? "2px solid #1DB954" : "2px solid #ffffff20", background: picked ? "#1DB954" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", color: "#fff", flexShrink: 0, transition: "all 0.2s ease" }}>{picked ? "✓" : ""}</span>
                         <span style={{ color: picked ? "#ffffff40" : "#fff", fontSize: "13px", fontWeight: 600, textDecoration: picked ? "line-through" : "none", transition: "all 0.2s ease" }}>{flavor}</span>
                       </div>
-                      <span style={{ fontSize: "18px", fontWeight: 800, color: col, minWidth: "36px", textAlign: "right", opacity: picked ? 0.4 : 1, transition: "opacity 0.2s ease" }}>×{qty}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+                        <button onClick={(e) => { e.stopPropagation(); adjustQty(itemKey, (isAdjusted ? parseInt(adjVal) : origNum) - 1); }}
+                          style={{ width: "28px", height: "28px", borderRadius: "6px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.05)", color: "#ffffff60", fontSize: "16px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>−</button>
+                        <span style={{ fontSize: "18px", fontWeight: 800, color: col, minWidth: "32px", textAlign: "center", opacity: picked ? 0.4 : 1, transition: "opacity 0.2s ease" }}>{displayQty}</span>
+                        <button onClick={(e) => { e.stopPropagation(); adjustQty(itemKey, (isAdjusted ? parseInt(adjVal) : origNum) + 1); }}
+                          style={{ width: "28px", height: "28px", borderRadius: "6px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.05)", color: "#ffffff60", fontSize: "16px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>+</button>
+                      </div>
                     </div>
                   );
                 })}
@@ -1398,13 +1486,19 @@ export default function RestockApp() {
           );
         })}
         <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
-          <button onClick={() => { if (window.confirm(`Mark ${r.employee_name}'s order as complete? Stock stays deducted.`)) { completeSubmission(r.id); } }}
-            style={{ flex: 1, padding: "14px", borderRadius: "12px", border: "1px solid #1DB95430", background: "rgba(29,185,84,0.08)", color: "#1DB954", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>✅ Complete Order</button>
+          <button onClick={() => { 
+            const adjCount = Object.keys(adjustedQtys).length;
+            const msg = adjCount > 0 
+              ? `Complete ${r.employee_name}'s order with ${adjCount} adjustment${adjCount > 1 ? "s" : ""}? Difference will be restored to stock.`
+              : `Complete ${r.employee_name}'s order?`;
+            if (window.confirm(msg)) { completeSubmission(r, adjustedQtys); }
+          }}
+            style={{ flex: 1, padding: "14px", borderRadius: "12px", border: `1px solid ${hasAdjustments ? "#F59E0B30" : "#1DB95430"}`, background: hasAdjustments ? "rgba(245,158,11,0.08)" : "rgba(29,185,84,0.08)", color: hasAdjustments ? "#F59E0B" : "#1DB954", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>{hasAdjustments ? "✅ Complete (Adjusted)" : "✅ Complete Order"}</button>
           <button onClick={() => { if (window.confirm(`Cancel ${r.employee_name}'s order? Stock will be restored.`)) { cancelSubmission(r); } }}
             style={{ flex: 1, padding: "14px", borderRadius: "12px", border: "1px solid #E6394630", background: "rgba(230,57,70,0.05)", color: "#E63946", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>✕ Cancel Order</button>
         </div>
         <div style={{ height: "70px" }} />
-        <FloatingBack onClick={() => { setSelReport(null); setPickedItems({}); }} />
+        <FloatingBack onClick={() => { setSelReport(null); setPickedItems({}); setAdjustedQtys({}); }} />
       </div>
     );
   }
