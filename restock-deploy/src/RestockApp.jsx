@@ -126,6 +126,7 @@ export default function RestockApp() {
   const [newModelCategory, setNewModelCategory] = useState("Vapes");
   const [showAddModel, setShowAddModel] = useState(false);
   const [expandedBrands, setExpandedBrands] = useState({});
+  const [expandedCats, setExpandedCats] = useState({});
   const [editingModelInfo, setEditingModelInfo] = useState(false);
   const [editModelName, setEditModelName] = useState("");
   const [editModelBrand, setEditModelBrand] = useState("");
@@ -1259,12 +1260,21 @@ export default function RestockApp() {
             </div>
           </div>
         )}
-        {Object.entries(catBrands).map(([cat, brands]) => (
+        {Object.entries(catBrands).map(([cat, brands]) => {
+          const catExpanded = expandedCats[cat];
+          const catBrandCount = Object.keys(brands).length;
+          const catModelCount = Object.values(brands).reduce((s, m) => s + m.length, 0);
+          return (
           <div key={cat}>
-            <div style={{ padding: "8px 0", marginBottom: "8px", marginTop: "12px", borderBottom: "1px solid #ffffff10", paddingBottom: "10px" }}>
+            <button onClick={() => { sndClick(); setExpandedCats(p => ({ ...p, [cat]: !catExpanded })); }}
+              style={{ width: "100%", padding: "12px 0", marginBottom: "8px", marginTop: "12px", borderBottom: "1px solid #ffffff10", paddingBottom: "10px", background: "transparent", border: "none", borderBottom: "1px solid #ffffff10", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left" }}>
               <span style={{ color: "#ffffff70", fontSize: "15px", fontWeight: 800 }}>{cat}</span>
-            </div>
-            {Object.entries(brands).map(([brand, models]) => {
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ color: "#ffffff30", fontSize: "11px" }}>{catBrandCount} brand{catBrandCount !== 1 ? "s" : ""} • {catModelCount} model{catModelCount !== 1 ? "s" : ""}</span>
+                <span style={{ color: "#ffffff30", fontSize: "16px", transition: "transform 0.2s ease", transform: catExpanded ? "rotate(90deg)" : "rotate(0deg)" }}>›</span>
+              </div>
+            </button>
+            {catExpanded && Object.entries(brands).map(([brand, models]) => {
               const bc = getBrandColor(brand);
               const brandKey = `${cat}:::${brand}`;
               const isExpanded = expandedBrands[brandKey];
@@ -1310,7 +1320,8 @@ export default function RestockApp() {
               );
             })}
           </div>
-        ))}
+          );
+        })}
         <div style={{ height: "70px" }} />
         <FloatingBack onClick={() => setMgrView("dashboard")} />
       </div>
