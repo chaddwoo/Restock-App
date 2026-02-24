@@ -330,11 +330,27 @@ export default function RestockApp() {
       // Save submission with adjusted data and deduction map for restore
       if (adjItems.length > 0) {
         await sb.post("submissions", { employee_name: empName.trim(), store_location: storeLoc.trim(), items: adjustedOrder, total_flavors: adjItems.length, total_units: adjTu, warehouse_id: empWarehouse.id, status: "pending" });
-        for (const sg of suggestions) { await sb.post("suggestions", { suggestion_text: sg.text, employee_name: sg.from, store_location: sg.store, warehouse_id: empWarehouse.id }); }
+        if (suggestions.length > 0) await Promise.all(suggestions.map(sg => sb.post("suggestions", { suggestion_text: sg.text, employee_name: sg.from, store_location: sg.store, warehouse_id: empWarehouse.id })));
       }
       
-      // Reload catalog to reflect new stock
-      await loadCatalog();
+      // Update local catalog stock instead of full reload (stock already deducted server-side)
+      setCatalog(prev => prev.map(c => {
+        const wid = String(empWarehouse.id);
+        const sl = { ...(c.stock_levels || {}) };
+        const ws = { ...(sl[wid] || {}) };
+        let changed = false;
+        Object.entries(deductMap).forEach(([dKey, qty]) => {
+          const [modelId, flavor] = dKey.split(":::");
+          if (c.id === parseInt(modelId) && ws[flavor] !== undefined) {
+            const adj = adjustments?.[dKey];
+            const actualDeducted = adj !== undefined ? (qty - adj) : qty;
+            ws[flavor] = Math.max(0, (parseInt(ws[flavor]) || 0) - actualDeducted);
+            changed = true;
+          }
+        });
+        if (changed) { sl[wid] = ws; return { ...c, stock_levels: sl }; }
+        return c;
+      }));
       
       if (adjustMsgs.length > 0) {
         alert("Order submitted with adjustments:\n\n" + adjustMsgs.join("\n"));
@@ -400,7 +416,21 @@ export default function RestockApp() {
       if (Object.keys(restoreMap).length > 0) {
         try {
           await sb.rpc("restore_stock", { p_warehouse_id: report.warehouse_id || 1, p_items: restoreMap });
-          await loadCatalog();
+          setCatalog(prev => prev.map(c => {
+            const wid = String(report.warehouse_id || 1);
+            const sl = { ...(c.stock_levels || {}) };
+            const ws = { ...(sl[wid] || {}) };
+            let changed = false;
+            Object.entries(restoreMap).forEach(([dKey, qty]) => {
+              const [modelId, flavor] = dKey.split(":::");
+              if (c.id === parseInt(modelId) && ws[flavor] !== undefined) {
+                ws[flavor] = (parseInt(ws[flavor]) || 0) + qty;
+                changed = true;
+              }
+            });
+            if (changed) { sl[wid] = ws; return { ...c, stock_levels: sl }; }
+            return c;
+          }));
         } catch (stockErr) { console.error("Stock restore failed:", stockErr); }
       }
       
@@ -418,7 +448,7 @@ export default function RestockApp() {
       
       sndDone(); 
       setReports(p => p.filter(r => r.id !== report.id)); 
-      if (selReport && selReport.id === report.id) { setSelReport(null); setPickedItems({}); setAdjustedQtys({}); setAdjustedQtys({}); }
+      if (selReport && selReport.id === report.id) { setSelReport(null); setPickedItems({}); setAdjustedQtys({}); }
     } catch (e) { console.error("Complete failed:", e); alert("Failed to complete order. Try again."); }
   };
   const cancelSubmission = async (report) => {
@@ -445,7 +475,22 @@ export default function RestockApp() {
         });
         if (Object.keys(restoreMap).length > 0) {
           await sb.rpc("restore_stock", { p_warehouse_id: report.warehouse_id || 1, p_items: restoreMap });
-          await loadCatalog();
+          // Update local stock instead of full reload
+          setCatalog(prev => prev.map(c => {
+            const wid = String(report.warehouse_id || 1);
+            const sl = { ...(c.stock_levels || {}) };
+            const ws = { ...(sl[wid] || {}) };
+            let changed = false;
+            Object.entries(restoreMap).forEach(([dKey, qty]) => {
+              const [modelId, flavor] = dKey.split(":::");
+              if (c.id === parseInt(modelId) && ws[flavor] !== undefined) {
+                ws[flavor] = (parseInt(ws[flavor]) || 0) + qty;
+                changed = true;
+              }
+            });
+            if (changed) { sl[wid] = ws; return { ...c, stock_levels: sl }; }
+            return c;
+          }));
         }
       } catch (stockErr) { console.error("Stock restore failed:", stockErr); }
     } catch (e) { console.error("Cancel failed:", e); alert("Failed to cancel order. Try again."); }
@@ -609,7 +654,8 @@ export default function RestockApp() {
   };
 
   const Banner = () => {
-    const wid = empWarehouse?.id || mgrWarehouse?.id || 1;
+    const wid = empWarehouse?.id || null;
+    if (!wid) return null;
     const bd = bannerData[wid];
     if (!bd || !bd.active || !bd.message) return null;
     const txt = bd.message;
@@ -742,7 +788,7 @@ export default function RestockApp() {
             if (!window.confirm("You have items in your order. Backing out will lose your progress. Are you sure?")) return;
           }
           sndBack(); clearSession(); setView("splash"); setEmpCode(""); setEmpCodeError(false); 
-        }} style={st.back}>← Back</button><Banner />
+        }} style={st.back}>← Back</button>
         <h1 style={st.h1}>Restock Request</h1><p style={st.sub}>Enter your info to start your order</p>
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div><label style={st.label}>Your Name</label><input type="text" placeholder="e.g. Marcus" value={empName} onChange={e => setEmpName(e.target.value)} style={st.input} /></div>
