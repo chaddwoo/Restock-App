@@ -1291,15 +1291,31 @@ export default function RestockApp() {
                     </div>
                     <div style={{ display: "flex", gap: "6px", alignItems: "center", flexShrink: 0 }}>
                     <button onClick={() => {
-                      const grp = {};
-                      entries.forEach(([k, q]) => { const [pr, fl] = k.split("|||"); if (!grp[pr]) grp[pr] = []; grp[pr].push({ flavor: fl, qty: q }); });
+                      // Group by category → product → flavors, all alphabetical
+                      const catGrp = {};
+                      entries.forEach(([k, q]) => {
+                        const [pr, fl] = k.split("|||");
+                        const model = catalog.find(c => c.model_name === pr);
+                        const cat = model?.category || "Other";
+                        if (!catGrp[cat]) catGrp[cat] = {};
+                        if (!catGrp[cat][pr]) catGrp[cat][pr] = [];
+                        catGrp[cat][pr].push({ flavor: fl, qty: q });
+                      });
+                      // Sort everything
+                      const sortedCats = Object.keys(catGrp).sort();
                       const completedDate = order.completed_at ? new Date(order.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : dateStr;
                       const orderDate = new Date(order.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
                       let rows = "";
-                      Object.entries(grp).forEach(([product, items]) => {
-                        rows += `<tr><td colspan="2" style="padding:10px 12px;font-weight:700;background:#f8f8f8;border-bottom:1px solid #eee;font-size:13px;">${product}</td></tr>`;
-                        items.forEach(({ flavor, qty }) => {
-                          rows += `<tr><td style="padding:8px 12px 8px 28px;border-bottom:1px solid #f0f0f0;font-size:13px;">${flavor}</td><td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700;font-size:13px;">&times;${qty}</td></tr>`;
+                      sortedCats.forEach(cat => {
+                        rows += `<tr><td colspan="2" style="padding:12px;font-weight:800;font-size:15px;background:#e8e8e8;border-bottom:2px solid #ddd;text-transform:uppercase;letter-spacing:0.5px;color:#444">${cat}</td></tr>`;
+                        const sortedProducts = Object.keys(catGrp[cat]).sort();
+                        sortedProducts.forEach(product => {
+                          const items = catGrp[cat][product].sort((a, b) => a.flavor.localeCompare(b.flavor));
+                          const productUnits = items.reduce((s, i) => s + (parseInt(i.qty) || 0), 0);
+                          rows += `<tr><td style="padding:10px 12px;font-weight:700;background:#f5f5f5;border-bottom:1px solid #eee;font-size:13px;">${product}</td><td style="padding:10px 12px;background:#f5f5f5;border-bottom:1px solid #eee;text-align:right;font-size:11px;color:#888;font-weight:600">${items.length} items &bull; ${productUnits}u</td></tr>`;
+                          items.forEach(({ flavor, qty }) => {
+                            rows += `<tr><td style="padding:8px 12px 8px 28px;border-bottom:1px solid #f0f0f0;font-size:13px;">${flavor}</td><td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700;font-size:13px;">&times;${qty}</td></tr>`;
+                          });
                         });
                       });
                       const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice - ${order.store_location}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:40px;color:#222;max-width:600px;margin:0 auto}@media print{body{padding:20px}}</style></head><body>
