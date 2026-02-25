@@ -101,6 +101,8 @@ export default function RestockApp() {
   const [selProduct, setSelProduct] = useState(_saved?.selProduct || null);
   const [orderData, setOrderData] = useState(_saved?.orderData || {});
   const [suggestion, setSuggestion] = useState("");
+  const [empSearch, setEmpSearch] = useState("");
+  const [empExpandedBrands, setEmpExpandedBrands] = useState({});
   const [suggestions, setSuggestions] = useState(_saved?.suggestions || []);
   const [selReport, setSelReport] = useState(null);
   const [bannerData, setBannerData] = useState({});
@@ -853,11 +855,42 @@ export default function RestockApp() {
 
     // CATEGORY LIST VIEW
     if (!activeCat) {
+      const empSearchTerm = empSearch.toLowerCase().trim();
+      const searchResults = empSearchTerm ? Object.entries(catalogObj).filter(([name, p]) =>
+        name.toLowerCase().includes(empSearchTerm) ||
+        p.brand.toLowerCase().includes(empSearchTerm) ||
+        (p.category || "").toLowerCase().includes(empSearchTerm) ||
+        p.activeFlavors.some(f => f.toLowerCase().includes(empSearchTerm))
+      ) : [];
       return (
         <div style={{ ...st.page, paddingBottom: ic > 0 ? "100px" : "24px" }}>
           <Banner />
           <h2 style={st.h2}>What Do You Need?</h2>
-          <p style={{ color: "#ffffff50", fontSize: "13px", margin: "0 0 20px 0" }}>{empName} • {storeLoc}</p>
+          <p style={{ color: "#ffffff50", fontSize: "13px", margin: "0 0 16px 0" }}>{empName} • {storeLoc}</p>
+          <div style={{ marginBottom: "20px", position: "sticky", top: 0, zIndex: 80, paddingTop: "8px", paddingBottom: "12px", background: "linear-gradient(180deg, #0B0B0F 85%, transparent)", marginLeft: "-20px", marginRight: "-20px", paddingLeft: "20px", paddingRight: "20px" }}>
+            <input type="text" placeholder="🔍  Search products, brands, flavors..." value={empSearch} onChange={e => setEmpSearch(e.target.value)}
+              style={{ ...st.input, fontSize: "14px", padding: "14px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid #ffffff15", borderRadius: "12px" }} />
+            {empSearchTerm && <div style={{ color: "#ffffff30", fontSize: "11px", marginTop: "6px", textAlign: "center" }}>{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</div>}
+          </div>
+          {empSearchTerm ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {searchResults.length === 0 && <div style={{ padding: "40px 20px", textAlign: "center" }}><p style={{ color: "#ffffff30", fontSize: "14px" }}>No results for "{empSearch}"</p></div>}
+              {searchResults.map(([model, p]) => {
+                const bc = getBrandColor(p.brand);
+                const o = getProductOrderCount(model);
+                return (
+                  <button key={model} onClick={() => { setSelProduct(model); setView("employee-flavors"); }}
+                    style={{ padding: "16px", borderRadius: "12px", border: `1px solid ${o > 0 ? bc + "25" : "#ffffff0a"}`, background: o > 0 ? bc + "08" : "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ marginBottom: "3px" }}>{model}</div>
+                      <div style={{ fontSize: "11px", color: "#ffffff30", fontWeight: 500 }}>{p.brand} • {p.activeFlavors.length} items</div>
+                    </div>
+                    <span style={{ fontSize: "12px", fontWeight: 700, color: o > 0 ? bc : "#ffffff25", whiteSpace: "nowrap" }}>{o > 0 ? `${o} requested` : ""}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {catKeys.map(cat => {
               const g = catGroups[cat];
@@ -881,6 +914,7 @@ export default function RestockApp() {
               );
             })}
           </div>
+          )}
           <div style={{ marginTop: "20px", padding: "16px", borderRadius: "12px", border: "1px dashed #ffffff15", background: "rgba(255,255,255,0.015)" }}>
             <label style={{ ...st.label, marginBottom: "10px" }}>💡 Suggest a Product</label>
             <div style={{ display: "flex", gap: "8px" }}>
@@ -896,7 +930,7 @@ export default function RestockApp() {
             </button>
           )}
           <FloatingBack onClick={() => { 
-            setView("employee-login"); setSelCategory(null); 
+            setView("employee-login"); setSelCategory(null); setEmpSearch(""); 
           }} />
           <OrderDrawer />
         </div>
@@ -912,24 +946,40 @@ export default function RestockApp() {
         <p style={{ color: "#ffffff50", fontSize: "13px", margin: "0 0 16px 0" }}>{empName} • {storeLoc}</p>
         {Object.entries(brands).map(([brand, models]) => {
           const bc = getBrandColor(brand);
+          const brandKey = `${activeCat}:::${brand}`;
+          const isExpanded = empExpandedBrands[brandKey];
+          const brandOrdered = models.reduce((s, m) => s + getProductOrderCount(m), 0);
+          const totalModels = models.length;
           return (
-            <div key={brand} style={{ marginBottom: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-                <div style={{ width: "3px", height: "16px", borderRadius: "2px", background: bc }}></div>
-                <span style={{ color: bc, fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>{brand}</span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div key={brand} style={{ marginBottom: "6px" }}>
+              <button onClick={() => { sndClick(); setEmpExpandedBrands(p => ({ ...p, [brandKey]: !isExpanded })); }}
+                style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: `1px solid ${isExpanded ? bc + "20" : brandOrdered > 0 ? bc + "15" : "#ffffff08"}`, background: isExpanded ? `${bc}08` : brandOrdered > 0 ? `${bc}05` : "rgba(255,255,255,0.02)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left", transition: "all 0.2s ease" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ width: "3px", height: "20px", borderRadius: "2px", background: bc }}></div>
+                  <div>
+                    <span style={{ color: bc, fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>{brand}</span>
+                    <div style={{ color: "#ffffff25", fontSize: "10px", marginTop: "2px" }}>{totalModels} model{totalModels !== 1 ? "s" : ""}</div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  {brandOrdered > 0 && <span style={{ padding: "3px 8px", borderRadius: "6px", background: bc + "20", color: bc, fontSize: "11px", fontWeight: 800 }}>{brandOrdered}</span>}
+                  <span style={{ color: "#ffffff25", fontSize: "16px", transition: "transform 0.2s ease", transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)" }}>›</span>
+                </div>
+              </button>
+              {isExpanded && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", paddingLeft: "12px", marginTop: "6px" }}>
                 {models.map(model => {
                   const p = catalogObj[model]; const o = getProductOrderCount(model);
                   return (
                     <button key={model} onClick={() => { setSelProduct(model); setView("employee-flavors"); }}
-                      style={{ padding: "16px", borderRadius: "12px", border: `1px solid ${o > 0 ? bc + "25" : "#ffffff0a"}`, background: o > 0 ? bc + "08" : "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      style={{ padding: "14px 16px", borderRadius: "12px", border: `1px solid ${o > 0 ? bc + "25" : "#ffffff0a"}`, background: o > 0 ? bc + "08" : "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div><div style={{ marginBottom: "3px" }}>{model}</div><div style={{ fontSize: "11px", color: "#ffffff30", fontWeight: 500 }}>{p.puffs !== "N/A" ? p.puffs + " puffs • " : ""}{p.activeFlavors.length} items</div></div>
                       <span style={{ fontSize: "12px", fontWeight: 700, color: o > 0 ? bc : "#ffffff25", whiteSpace: "nowrap" }}>{o > 0 ? `${o} requested` : ""}</span>
                     </button>
                   );
                 })}
               </div>
+              )}
             </div>
           );
         })}
