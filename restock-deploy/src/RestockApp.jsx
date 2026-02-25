@@ -1492,20 +1492,16 @@ export default function RestockApp() {
       <div style={st.page}>
         <button onClick={() => { flushStock(); sndBack(); setMgrView("catalog"); setEditModel(null); setEditingModelInfo(false); }} style={st.back}>← Back to Catalog</button>
         {!editingModelInfo ? (
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <div>
-                <span style={{ color: bc, fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" }}>{m.brand} {m.puffs !== "N/A" ? `• ${m.puffs} puffs` : ""} • {m.category || "Vapes"}</span>
-                <h2 style={{ ...st.h2, marginTop: "4px" }}>{m.model_name}</h2>
-              </div>
-              <div style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
+          <div style={{ marginBottom: "20px" }}>
+            <span style={{ color: bc, fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" }}>{m.brand} {m.puffs !== "N/A" ? `• ${m.puffs} puffs` : ""} • {m.category || "Vapes"}</span>
+            <h2 style={{ ...st.h2, marginTop: "4px", marginBottom: "6px" }}>{m.model_name}</h2>
+            <p style={{ ...st.sub, margin: "0 0 14px 0" }}>{(m.flavors || []).length} items • {totalStock} total in stock for {mgrWarehouse?.name}</p>
+            <div style={{ display: "flex", gap: "6px" }}>
               <button onClick={() => { setEditingModelInfo(true); setEditModelName(m.model_name); setEditModelBrand(m.brand); setEditModelPuffs(m.puffs || ""); setEditModelCategory(m.category || "Vapes"); }}
-                style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid #ffffff20", background: "transparent", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>✏️ Edit</button>
+                style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.03)", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>✏️ Edit Info</button>
               <button onClick={async () => { await loadCatalog(); const updated = catalog.find(c => c.id === m.id); if (updated) setEditModel(updated); }}
-                style={{ padding: "6px 10px", borderRadius: "8px", border: "1px solid #ffffff20", background: "transparent", color: "#ffffff50", fontSize: "11px", cursor: "pointer" }}>🔄</button>
-              </div>
+                style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.03)", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>🔄 Refresh</button>
             </div>
-            <p style={st.sub}>{(m.flavors || []).length} items • {totalStock} total in stock for {mgrWarehouse?.name}</p>
           </div>
         ) : (
           <div style={{ padding: "16px", borderRadius: "12px", border: "1px solid #00B4D830", background: "#00B4D808", marginBottom: "20px" }}>
