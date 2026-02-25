@@ -1326,25 +1326,36 @@ export default function RestockApp() {
             </div>
           </div>
         )}
-        <div style={{ marginBottom: "16px" }}>
+        <div style={{ marginBottom: "20px", position: "sticky", top: 0, zIndex: 80, paddingTop: "8px", paddingBottom: "12px", background: "linear-gradient(180deg, #0B0B0F 85%, transparent)", marginLeft: "-20px", marginRight: "-20px", paddingLeft: "20px", paddingRight: "20px" }}>
           <input type="text" placeholder="🔍  Search models, brands, flavors..." value={catalogSearch} onChange={e => setCatalogSearch(e.target.value)}
-            style={{ ...st.input, fontSize: "13px", padding: "12px 16px", background: "rgba(255,255,255,0.04)", border: "1px solid #ffffff12" }} />
+            style={{ ...st.input, fontSize: "14px", padding: "14px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid #ffffff15", borderRadius: "12px" }} />
+          {searchTerm && <div style={{ color: "#ffffff30", fontSize: "11px", marginTop: "6px", textAlign: "center" }}>{filteredCatalog.length} result{filteredCatalog.length !== 1 ? "s" : ""}</div>}
         </div>
+        {Object.keys(catBrands).length === 0 && searchTerm && <div style={{ padding: "40px 20px", textAlign: "center" }}><p style={{ color: "#ffffff30", fontSize: "14px" }}>No results for "{catalogSearch}"</p></div>}
         {Object.entries(catBrands).map(([cat, brands]) => {
           const catExpanded = searchTerm ? true : expandedCats[cat];
           const catBrandCount = Object.keys(brands).length;
           const catModelCount = Object.values(brands).reduce((s, m) => s + m.length, 0);
+          const catTotalStock = Object.values(brands).flat().reduce((sum, m) => {
+            const mws = mgrWarehouse ? ((m.stock_levels || {})[String(mgrWarehouse.id)] || {}) : {};
+            return sum + Object.values(mws).reduce((s, v) => s + (parseInt(v) || 0), 0);
+          }, 0);
           return (
-          <div key={cat}>
+          <div key={cat} style={{ marginBottom: "8px" }}>
             <button onClick={() => { setExpandedCats(p => ({ ...p, [cat]: !catExpanded })); }}
-              style={{ width: "100%", padding: "12px 0", marginBottom: "8px", marginTop: "12px", borderBottom: "1px solid #ffffff10", paddingBottom: "10px", background: "transparent", border: "none", borderBottom: "1px solid #ffffff10", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left" }}>
-              <span style={{ color: "#ffffff70", fontSize: "15px", fontWeight: 800 }}>{cat}</span>
+              style={{ width: "100%", padding: "16px 18px", borderRadius: "12px", background: catExpanded ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.02)", border: "1px solid #ffffff08", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left" }}>
+              <div>
+                <span style={{ color: "#fff", fontSize: "16px", fontWeight: 800 }}>{cat}</span>
+                <div style={{ color: "#ffffff30", fontSize: "11px", marginTop: "3px" }}>{catBrandCount} brand{catBrandCount !== 1 ? "s" : ""} • {catModelCount} model{catModelCount !== 1 ? "s" : ""}</div>
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <span style={{ color: "#ffffff30", fontSize: "11px" }}>{catBrandCount} brand{catBrandCount !== 1 ? "s" : ""} • {catModelCount} model{catModelCount !== 1 ? "s" : ""}</span>
-                <span style={{ color: "#ffffff30", fontSize: "16px", transition: "transform 0.2s ease", transform: catExpanded ? "rotate(90deg)" : "rotate(0deg)" }}>›</span>
+                <span style={{ color: catTotalStock > 0 ? "#1DB95480" : "#E6394680", fontSize: "12px", fontWeight: 700 }}>{catTotalStock}u</span>
+                <span style={{ color: "#ffffff25", fontSize: "18px", transition: "transform 0.2s ease", transform: catExpanded ? "rotate(90deg)" : "rotate(0deg)" }}>›</span>
               </div>
             </button>
-            {catExpanded && Object.entries(brands).map(([brand, models]) => {
+            {catExpanded && (
+              <div style={{ paddingLeft: "4px", paddingTop: "6px" }}>
+            {Object.entries(brands).map(([brand, models]) => {
               const bc = getBrandColor(brand);
               const brandKey = `${cat}:::${brand}`;
               const isExpanded = searchTerm ? true : expandedBrands[brandKey];
@@ -1353,23 +1364,23 @@ export default function RestockApp() {
                 return sum + Object.values(mws).reduce((s, v) => s + (parseInt(v) || 0), 0);
               }, 0);
               return (
-                <div key={brand} style={{ marginBottom: "6px" }}>
+                <div key={brand} style={{ marginBottom: "4px" }}>
                   <button onClick={() => { setExpandedBrands(p => ({ ...p, [brandKey]: !isExpanded })); }}
-                    style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1px solid #ffffff08", background: isExpanded ? `${bc}10` : "rgba(255,255,255,0.02)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left" }}>
+                    style={{ width: "100%", padding: "12px 14px", borderRadius: "10px", border: `1px solid ${isExpanded ? bc + "20" : "#ffffff06"}`, background: isExpanded ? `${bc}08` : "transparent", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left", transition: "all 0.2s ease" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <div style={{ width: "3px", height: "20px", borderRadius: "2px", background: bc }}></div>
+                      <div style={{ width: "3px", height: "18px", borderRadius: "2px", background: bc }}></div>
                       <div>
-                        <span style={{ color: bc, fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>{brand}</span>
-                        <div style={{ color: "#ffffff30", fontSize: "11px", marginTop: "2px" }}>{models.length} model{models.length !== 1 ? "s" : ""}</div>
+                        <span style={{ color: bc, fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>{brand}</span>
+                        <div style={{ color: "#ffffff25", fontSize: "10px", marginTop: "2px" }}>{models.length} model{models.length !== 1 ? "s" : ""}</div>
                       </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <span style={{ color: brandTotalStock > 0 ? "#1DB954" : "#E63946", fontSize: "12px", fontWeight: 700 }}>{brandTotalStock}u</span>
-                      <span style={{ color: "#ffffff30", fontSize: "16px", transition: "transform 0.2s ease", transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)" }}>›</span>
+                      <span style={{ color: "#ffffff20", fontSize: "14px", transition: "transform 0.2s ease", transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)" }}>›</span>
                     </div>
                   </button>
                   {isExpanded && (
-                    <div style={{ paddingLeft: "8px", marginTop: "4px" }}>
+                    <div style={{ paddingLeft: "16px", marginTop: "4px", marginBottom: "4px" }}>
                   {models.map(m => {
                     const msl = m.stock_levels || {};
                     const mws = mgrWarehouse ? (msl[String(mgrWarehouse.id)] || {}) : {};
@@ -1378,9 +1389,9 @@ export default function RestockApp() {
                     const mTotal = (m.flavors || []).length;
                     return (
                     <button key={m.id} onClick={() => { setEditModel(m); setMgrView("editModel"); setNewFlavor(""); setEditingModelInfo(false); }}
-                      style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: "1px solid #ffffff0a", background: "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                      <div><div>{m.model_name}</div><div style={{ fontSize: "11px", color: "#ffffff30", marginTop: "2px" }}>{m.puffs !== "N/A" ? m.puffs + " puffs" : cat}</div></div>
-                      <span style={{ fontSize: "12px", color: mTracked < mTotal ? "#F59E0B" : mTotalStock > 0 ? "#1DB954" : "#E63946" }}>{mTotalStock} in stock ›</span>
+                      style={{ width: "100%", padding: "12px 14px", borderRadius: "10px", border: "1px solid #ffffff06", background: "rgba(255,255,255,0.02)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px", transition: "background 0.15s ease" }}>
+                      <div><div style={{ fontSize: "13px" }}>{m.model_name}</div><div style={{ fontSize: "10px", color: "#ffffff25", marginTop: "2px" }}>{m.puffs !== "N/A" ? m.puffs + " puffs" : m.brand}</div></div>
+                      <span style={{ fontSize: "12px", fontWeight: 700, color: mTracked < mTotal ? "#F59E0B" : mTotalStock > 0 ? "#1DB954" : "#E63946" }}>{mTotalStock} in stock ›</span>
                     </button>
                     );
                   })}
@@ -1389,6 +1400,8 @@ export default function RestockApp() {
                 </div>
               );
             })}
+              </div>
+            )}
           </div>
           );
         })}
