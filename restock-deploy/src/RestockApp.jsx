@@ -1164,7 +1164,7 @@ export default function RestockApp() {
 
     return (
       <div style={st.page}>
-        <button onClick={() => { sndBack(); setMgrView("dashboard"); }} style={st.back}>← Back to Dashboard</button>
+        <button onClick={() => { sndBack(); setMgrView("dashboard"); setEditModel(null); }} style={st.back}>← Back to Dashboard</button>
         <h1 style={st.h1}>📈 Analytics</h1><p style={st.sub}>{mgrWarehouse?.name} • completed orders</p>
         <div style={{ display: "flex", gap: "6px", marginBottom: "20px" }}>
           {["7d", "14d", "30d"].map(r => (
@@ -1357,7 +1357,7 @@ export default function RestockApp() {
         )}
 
         <div style={{ height: "70px" }} />
-        <FloatingBack onClick={() => setMgrView("dashboard")} />
+        <FloatingBack onClick={() => { setMgrView("dashboard"); setEditModel(null); }} />
       </div>
     );
   }
@@ -1375,7 +1375,7 @@ export default function RestockApp() {
     filteredCatalog.forEach(c => { const cat = c.category || "Vapes"; if (!catBrands[cat]) catBrands[cat] = {}; if (!catBrands[cat][c.brand]) catBrands[cat][c.brand] = []; catBrands[cat][c.brand].push(c); });
     return (
       <div style={st.page}>
-        <button onClick={() => { sndBack(); setCatalogSearch(""); setMgrView("dashboard"); }} style={st.back}>← Back to Dashboard</button>
+        <button onClick={() => { sndBack(); setCatalogSearch(""); setMgrView("dashboard"); setEditModel(null); }} style={st.back}>← Back to Dashboard</button>
         <h1 style={st.h1}>🗂️ Manage Catalog</h1><p style={st.sub}>Managing for {mgrWarehouse?.name} • set stock counts per item</p>
         {!showAddModel ? (
           <button onClick={() => setShowAddModel(true)} style={{ padding: "10px 18px", borderRadius: "8px", background: "#1DB95420", color: "#1DB954", border: "1px solid #1DB95430", fontSize: "13px", fontWeight: 700, cursor: "pointer", marginBottom: "20px" }}>+ Add New Model / Product</button>
@@ -1473,7 +1473,7 @@ export default function RestockApp() {
           );
         })}
         <div style={{ height: "70px" }} />
-        <FloatingBack onClick={() => setMgrView("dashboard")} />
+        <FloatingBack onClick={() => { setMgrView("dashboard"); setEditModel(null); }} />
       </div>
     );
   }
@@ -1498,8 +1498,12 @@ export default function RestockApp() {
                 <span style={{ color: bc, fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" }}>{m.brand} {m.puffs !== "N/A" ? `• ${m.puffs} puffs` : ""} • {m.category || "Vapes"}</span>
                 <h2 style={{ ...st.h2, marginTop: "4px" }}>{m.model_name}</h2>
               </div>
+              <div style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
               <button onClick={() => { setEditingModelInfo(true); setEditModelName(m.model_name); setEditModelBrand(m.brand); setEditModelPuffs(m.puffs || ""); setEditModelCategory(m.category || "Vapes"); }}
-                style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid #ffffff20", background: "transparent", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer", marginTop: "4px" }}>✏️ Edit</button>
+                style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid #ffffff20", background: "transparent", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>✏️ Edit</button>
+              <button onClick={async () => { await loadCatalog(); const updated = catalog.find(c => c.id === m.id); if (updated) setEditModel(updated); }}
+                style={{ padding: "6px 10px", borderRadius: "8px", border: "1px solid #ffffff20", background: "transparent", color: "#ffffff50", fontSize: "11px", cursor: "pointer" }}>🔄</button>
+              </div>
             </div>
             <p style={st.sub}>{(m.flavors || []).length} items • {totalStock} total in stock for {mgrWarehouse?.name}</p>
           </div>
