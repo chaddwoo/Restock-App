@@ -548,21 +548,36 @@ export default function RestockApp() {
     Object.keys(sl).forEach(k => { const ws = { ...(sl[k] || {}) }; delete ws[flavor]; sl[k] = ws; });
     try { await sb.patch("catalog", { flavors: updated, warehouse_visibility: whVis, stock_levels: sl }, `id=eq.${modelId}`); sndRemove(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated, warehouse_visibility: whVis, stock_levels: sl } : c)); } catch (e) { console.error(e); }
   };
-  // Stock update — instant local state, debounced DB save
+  // Stock update — instant local state, save after short delay, auto-flush on navigation
   const stockTimers = useRef({});
   const catalogRef = useRef(catalog);
   useEffect(() => { catalogRef.current = catalog; }, [catalog]);
+  const saveStockNow = (modelId) => {
+    const model = catalogRef.current.find(c => c.id === modelId);
+    if (model) {
+      sb.patch("catalog", { stock_levels: model.stock_levels || {} }, `id=eq.${modelId}`).catch(e => console.error(e));
+    }
+  };
   const flushStock = () => {
     Object.keys(stockTimers.current).forEach(pKey => {
       clearTimeout(stockTimers.current[pKey]);
-      const modelId = parseInt(pKey);
-      const model = catalogRef.current.find(c => c.id === modelId);
-      if (model) {
-        sb.patch("catalog", { stock_levels: model.stock_levels || {} }, `id=eq.${modelId}`).catch(e => console.error(e));
-      }
+      saveStockNow(parseInt(pKey));
       delete stockTimers.current[pKey];
     });
   };
+  // Auto-flush on any navigation away or page unload
+  useEffect(() => {
+    const handleUnload = () => flushStock();
+    window.addEventListener("beforeunload", handleUnload);
+    window.addEventListener("pagehide", handleUnload);
+    return () => { window.removeEventListener("beforeunload", handleUnload); window.removeEventListener("pagehide", handleUnload); };
+  }, []);
+  // Auto-flush when leaving editModel view
+  const prevMgrView = useRef(mgrView);
+  useEffect(() => {
+    if (prevMgrView.current === "editModel" && mgrView !== "editModel") { flushStock(); }
+    prevMgrView.current = mgrView;
+  }, [mgrView]);
   const updateFlavorStock = (modelId, flavor, count) => {
     if (!mgrWarehouse) return;
     const wid = String(mgrWarehouse.id);
@@ -574,16 +589,13 @@ export default function RestockApp() {
       sl[wid] = { ...(sl[wid] || {}), [flavor]: val };
       return { ...c, stock_levels: sl };
     }));
-    // Debounced DB save per model (800ms)
+    // Debounced DB save per model (400ms - shorter, safer)
     const pKey = `${modelId}`;
     if (stockTimers.current[pKey]) clearTimeout(stockTimers.current[pKey]);
     stockTimers.current[pKey] = setTimeout(() => {
-      const model = catalogRef.current.find(c => c.id === modelId);
-      if (model) {
-        sb.patch("catalog", { stock_levels: model.stock_levels || {} }, `id=eq.${modelId}`).catch(e => console.error(e));
-      }
+      saveStockNow(modelId);
       delete stockTimers.current[pKey];
-    }, 800);
+    }, 400);
   };
   const bulkSetStock = async (modelId, count) => {
     if (!mgrWarehouse) return;
@@ -1642,11 +1654,24 @@ export default function RestockApp() {
         })}
         <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
           <button onClick={() => { 
-            const adjCount = Object.keys(adjustedQtys).length;
-            const msg = adjCount > 0 
-              ? `Complete ${r.employee_name}'s order with ${adjCount} adjustment${adjCount > 1 ? "s" : ""}? Difference will be restored to stock.`
-              : `Complete ${r.employee_name}'s order?`;
-            if (window.confirm(msg)) { completeSubmission(r, adjustedQtys); }
+            // Merge pick state: unchecked items get set to 0
+            const finalAdj = { ...adjustedQtys };
+            Object.entries(r.items || {}).forEach(([itemKey]) => {
+              const pickKey = `${r.id}|||${itemKey}`;
+              if (!pickedItems[pickKey]) {
+                finalAdj[itemKey] = "0";
+              }
+            });
+            const unpickedCount = Object.values(finalAdj).filter(v => v === "0").length;
+            const adjCount = Object.keys(finalAdj).filter(k => finalAdj[k] !== undefined && finalAdj[k] !== r.items[k]).length;
+            const totalEntries = Object.keys(r.items || {}).length;
+            const pickedCount = totalEntries - unpickedCount;
+            const msg = unpickedCount > 0 
+              ? `Complete with ${pickedCount} of ${totalEntries} items? ${unpickedCount} unpicked item${unpickedCount > 1 ? "s" : ""} will be restored to stock.`
+              : adjCount > 0 
+                ? `Complete ${r.employee_name}'s order with ${adjCount} adjustment${adjCount > 1 ? "s" : ""}? Difference will be restored to stock.`
+                : `Complete ${r.employee_name}'s order?`;
+            if (window.confirm(msg)) { completeSubmission(r, finalAdj); }
           }}
             style={{ flex: 1, padding: "14px", borderRadius: "12px", border: `1px solid ${hasAdjustments ? "#F59E0B30" : "#1DB95430"}`, background: hasAdjustments ? "rgba(245,158,11,0.08)" : "rgba(29,185,84,0.08)", color: hasAdjustments ? "#F59E0B" : "#1DB954", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>{hasAdjustments ? "✅ Complete (Adjusted)" : "✅ Complete Order"}</button>
           <button onClick={() => { if (window.confirm(`Cancel ${r.employee_name}'s order? Stock will be restored.`)) { cancelSubmission(r); } }}
