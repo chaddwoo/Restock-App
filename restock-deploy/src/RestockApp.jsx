@@ -752,17 +752,17 @@ export default function RestockApp() {
   // SPLASH
   if (view === "splash") return (
     <div style={{ ...st.page, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: "12px", background: "radial-gradient(ellipse at 50% 20%, #1a1a2e 0%, #0B0B0F 70%)" }}>
-      <div style={{ width: "64px", height: "64px", borderRadius: "16px", background: "linear-gradient(135deg, #FF6B35, #FF8C42)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", boxShadow: "0 8px 32px rgba(255,107,53,0.3)", marginBottom: "8px" }}>📦</div>
+      <div style={{ fontSize: "56px", marginBottom: "8px" }}>📦</div>
       <h1 style={{ color: "#fff", fontSize: "36px", fontWeight: 900, letterSpacing: "-2px", margin: 0 }}>BACKSTOCK</h1>
       <p style={{ color: "#ffffff45", fontSize: "14px", margin: "4px 0 0 0", fontWeight: 500, fontStyle: "italic" }}>Inventory that just works.</p>
       <div style={{ marginTop: "48px", display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
-        <button onClick={() => setView("employee-login")} style={{ ...st.btn, position: "relative", textAlign: "left", padding: "20px 24px", display: "flex", alignItems: "center", gap: "14px" }}>
+        <button onClick={() => setView("employee-login")} style={{ ...st.btn, textAlign: "left", padding: "20px 24px", display: "flex", alignItems: "center", gap: "14px" }}>
           <span style={{ fontSize: "24px" }}>🏪</span>
           <div><div style={{ fontSize: "15px", fontWeight: 700 }}>Submit Restock Request</div><div style={{ fontSize: "11px", fontWeight: 500, opacity: 0.7, marginTop: "2px" }}>Employees — request product for your store</div></div>
         </button>
         <button onClick={() => { setAuthed(false); setPin(""); setMgrView("dashboard"); setMgrWarehouse(null); setMgrPin(null); setOwnerPin(null); setAccessLevel(null); loadPin(); setView("manager-login"); }} style={{ ...st.btn, background: "rgba(255,255,255,0.04)", border: "1px solid #ffffff12", boxShadow: "none", textAlign: "left", padding: "20px 24px", display: "flex", alignItems: "center", gap: "14px" }}>
           <span style={{ fontSize: "24px" }}>📊</span>
-          <div><div style={{ fontSize: "15px", fontWeight: 700 }}>Manager Dashboard</div><div style={{ fontSize: "11px", fontWeight: 500, opacity: 0.4, marginTop: "2px" }}>Warehouse ops, analytics & catalog</div></div>
+          <div><div style={{ fontSize: "15px", fontWeight: 700 }}>Manager Dashboard</div><div style={{ fontSize: "11px", fontWeight: 500, opacity: 0.4, marginTop: "2px" }}>Manage orders & inventory</div></div>
         </button>
       </div>
       <p style={{ color: "#ffffff12", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v5.0</p>
@@ -880,7 +880,7 @@ export default function RestockApp() {
         p.activeFlavors.some(f => f.toLowerCase().includes(empSearchTerm))
       ) : [];
       return (
-        <div style={{ ...st.page, paddingBottom: ic > 0 ? "100px" : "24px" }}>
+        <div style={{ ...st.page, paddingBottom: ic > 0 ? "110px" : "90px" }}>
           <Banner />
           <h2 style={st.h2}>What Do You Need?</h2>
           <p style={{ color: "#ffffff50", fontSize: "13px", margin: "0 0 16px 0" }}>{empName} • {storeLoc}</p>
@@ -946,6 +946,7 @@ export default function RestockApp() {
               {submitting ? "Submitting..." : `✅ Review & Submit (${ic} item${ic > 1 ? "s" : ""} • ~${tu} units)`}
             </button>
           )}
+          <div style={{ height: "70px" }} />
           <FloatingBack onClick={() => { 
             setView("employee-login"); setSelCategory(null); setEmpSearch(""); 
           }} />
