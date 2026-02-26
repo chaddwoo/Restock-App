@@ -1139,14 +1139,13 @@ export default function RestockApp() {
           );
         })}
         {suggestions.length > 0 && (<div style={{ padding: "10px 14px", borderRadius: "10px", background: "#6C5CE708", border: "1px solid #6C5CE715", marginBottom: "12px" }}><span style={{ color: "#6C5CE7", fontSize: "11px", fontWeight: 700 }}>💡 {suggestions.length} suggestion{suggestions.length > 1 ? "s" : ""} will be sent</span></div>)}
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "16px 20px", background: "linear-gradient(180deg, transparent, #0B0B0F 20%)", zIndex: 90 }}>
-          <div style={{ maxWidth: "480px", margin: "0 auto" }}>
-            <button onClick={submitOrder} disabled={submitting} style={{ ...( submitting ? st.btnOff : st.btn), background: submitting ? "#ffffff10" : "linear-gradient(135deg, #1DB954, #10B981)", boxShadow: submitting ? "none" : "0 4px 20px rgba(29,185,84,0.3)" }}>
-              {submitting ? "Submitting..." : `✅ Confirm & Submit Order`}
-            </button>
-          </div>
+        <div style={{ position: "fixed", bottom: "24px", left: "20px", right: "20px", display: "flex", gap: "10px", alignItems: "center", zIndex: 90 }}>
+          <button onClick={() => { sndBack(); setView("employee-products"); }}
+            style={{ width: "56px", height: "56px", borderRadius: "50%", border: "none", background: "linear-gradient(135deg, #FF6B35, #FF8C42)", color: "#000", fontSize: "22px", fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 4px 20px rgba(255,107,53,0.4)" }}>←</button>
+          <button onClick={submitOrder} disabled={submitting} style={{ flex: 1, padding: "16px", borderRadius: "14px", border: "none", background: submitting ? "#ffffff10" : "linear-gradient(135deg, #1DB954, #10B981)", color: submitting ? "#ffffff25" : "#fff", fontSize: "15px", fontWeight: 700, cursor: submitting ? "not-allowed" : "pointer", boxShadow: submitting ? "none" : "0 4px 20px rgba(29,185,84,0.3)" }}>
+            {submitting ? "Submitting..." : "✅ Confirm & Submit"}
+          </button>
         </div>
-        <FloatingBack onClick={() => setView("employee-products")} />
       </div>
     );
   }
