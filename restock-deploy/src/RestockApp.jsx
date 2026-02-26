@@ -643,6 +643,7 @@ export default function RestockApp() {
   };
 
   const setOrder = (product, flavor, value) => {
+    sndClick();
     setOrderData(prev => {
       const key = `${product}|||${flavor}`;
       if (value === "skip" || prev[key] === value) { const next = { ...prev }; delete next[key]; return next; }
@@ -701,6 +702,8 @@ export default function RestockApp() {
   );
 
   // Order edit drawer
+  const drawerScrollRef = useRef(null);
+  const drawerScrollPos = useRef(0);
   const OrderDrawer = () => {
     const ic = getFilledCount(); const tu = getTotalUnits();
     if (ic === 0) return null;
@@ -718,7 +721,9 @@ export default function RestockApp() {
         </div>
         {/* Expanded edit drawer */}
         {showOrderEdit && (
-          <div style={{ position: "fixed", bottom: "85px", left: "20px", right: "20px", maxHeight: "60vh", overflowY: "auto", borderRadius: "16px", background: "rgba(20,20,28,0.97)", backdropFilter: "blur(10px)", border: "1px solid #ffffff15", zIndex: 89, boxShadow: "0 -4px 30px rgba(0,0,0,0.6)", padding: "16px" }}>
+          <div ref={el => { if (el) { drawerScrollRef.current = el; requestAnimationFrame(() => { el.scrollTop = drawerScrollPos.current; }); } }}
+            onScroll={e => { drawerScrollPos.current = e.target.scrollTop; }}
+            style={{ position: "fixed", bottom: "85px", left: "20px", right: "20px", maxHeight: "60vh", overflowY: "auto", borderRadius: "16px", background: "rgba(20,20,28,0.97)", backdropFilter: "blur(10px)", border: "1px solid #ffffff15", zIndex: 89, boxShadow: "0 -4px 30px rgba(0,0,0,0.6)", padding: "16px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
               <span style={{ color: "#FF6B35", fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Your Order</span>
               <button onClick={() => setShowOrderEdit(false)} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #ffffff20", background: "transparent", color: "#ffffff60", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>Done ✓</button>
