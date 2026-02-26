@@ -366,6 +366,8 @@ export default function RestockApp() {
 
   // Preloaded sound pool — multiple instances per sound for rapid tapping
   const sounds = useRef({});
+  const drawerScrollRef = useRef(null);
+  const drawerScrollPos = useRef(0);
   useEffect(() => {
     ["click","back","submit","login","add","remove","done"].forEach(k => {
       const POOL = k === "click" ? 8 : 4;
@@ -683,17 +685,9 @@ export default function RestockApp() {
     );
   };
 
-  if (!catLoaded) return (<div style={{ ...st.page, display: "flex", flexDirection: "column", gap: "16px", paddingTop: "60px" }}>
-    <style>{`@keyframes skPulse { 0%,100% { opacity: 0.04; } 50% { opacity: 0.08; } }`}</style>
-    <div style={{ width: "180px", height: "32px", borderRadius: "8px", background: "#ffffff08", animation: "skPulse 1.5s ease-in-out infinite" }} />
-    <div style={{ width: "120px", height: "14px", borderRadius: "6px", background: "#ffffff08", animation: "skPulse 1.5s ease-in-out infinite 0.1s" }} />
-    <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-      {[1,2,3].map(i => <div key={i} style={{ width: "80px", height: "36px", borderRadius: "8px", background: "#ffffff08", animation: `skPulse 1.5s ease-in-out infinite ${i * 0.1}s` }} />)}
-    </div>
-    <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
-      {[1,2,3,4].map(i => <div key={i} style={{ width: "100%", height: "72px", borderRadius: "12px", background: "#ffffff08", animation: `skPulse 1.5s ease-in-out infinite ${i * 0.15}s` }} />)}
-    </div>
-    <div style={{ textAlign: "center", marginTop: "8px" }}><p style={{ color: "#ffffff20", fontSize: "12px" }}>Loading...</p></div>
+  if (!catLoaded) return (<div style={{ ...st.page, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+    <div style={{ fontSize: "40px", marginBottom: "16px" }}>📦</div>
+    <p style={{ color: "#ffffff40", fontSize: "14px" }}>Loading...</p>
   </div>);
 
   // Floating back button — fixed bottom-left
@@ -702,8 +696,6 @@ export default function RestockApp() {
   );
 
   // Order edit drawer
-  const drawerScrollRef = useRef(null);
-  const drawerScrollPos = useRef(0);
   const OrderDrawer = () => {
     const ic = getFilledCount(); const tu = getTotalUnits();
     if (ic === 0) return null;
