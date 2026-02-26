@@ -643,8 +643,6 @@ export default function RestockApp() {
   };
 
   const setOrder = (product, flavor, value) => {
-    sndClick();
-
     setOrderData(prev => {
       const key = `${product}|||${flavor}`;
       if (value === "skip" || prev[key] === value) { const next = { ...prev }; delete next[key]; return next; }
@@ -711,12 +709,12 @@ export default function RestockApp() {
     return (
       <>
         {/* Floating order bar */}
-        <div onClick={() => setShowOrderEdit(!showOrderEdit)} style={{ position: "fixed", bottom: "24px", left: "78px", right: "20px", padding: "14px 18px", borderRadius: "14px", background: "linear-gradient(135deg, #FF6B35, #FF8C42)", color: "#fff", cursor: "pointer", zIndex: 90, boxShadow: "0 4px 24px rgba(255,107,53,0.4)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div style={{ position: "fixed", bottom: "24px", left: "78px", right: "20px", borderRadius: "14px", background: "linear-gradient(135deg, #FF6B35, #FF8C42)", color: "#fff", cursor: "pointer", zIndex: 90, boxShadow: "0 4px 24px rgba(255,107,53,0.4)", display: "flex", alignItems: "center", overflow: "hidden" }}>
+          <div onClick={() => setShowOrderEdit(!showOrderEdit)} style={{ flex: 1, padding: "14px 18px", display: "flex", alignItems: "center", gap: "10px" }}>
             <span style={{ fontSize: "16px" }}>📋</span>
-            <div><div style={{ fontSize: "14px", fontWeight: 700 }}>{ic} item{ic > 1 ? "s" : ""} • ~{tu} units</div></div>
+            <div style={{ fontSize: "14px", fontWeight: 700 }}>{ic} item{ic > 1 ? "s" : ""} • ~{tu} units</div>
           </div>
-          <span style={{ fontSize: "12px", fontWeight: 700, opacity: 0.8 }}>{showOrderEdit ? "Close ▼" : "Edit ▲"}</span>
+          <div onClick={() => setView("employee-confirm")} style={{ padding: "14px 18px", background: "rgba(0,0,0,0.15)", fontSize: "12px", fontWeight: 700, whiteSpace: "nowrap" }}>Review ›</div>
         </div>
         {/* Expanded edit drawer */}
         {showOrderEdit && (
@@ -731,18 +729,18 @@ export default function RestockApp() {
                 {flavors.map(({ flavor, qty, key }) => {
                   const col = getQtyColor(qty);
                   const qNum = qty === "5+" ? 5 : parseInt(qty) || 1;
-                  const decrement = () => { if (qNum <= 1) { sndRemove(); setOrderData(prev => { const next = { ...prev }; delete next[key]; return next; }); } else { sndClick(); setOrderData(prev => ({ ...prev, [key]: String(qNum - 1) })); } };
+                  const decrement = () => { if (qNum <= 1) return; sndClick(); setOrderData(prev => ({ ...prev, [key]: String(qNum - 1) })); };
                   const increment = () => { if (qty === "5+") return; sndClick(); setOrderData(prev => ({ ...prev, [key]: qNum >= 4 ? "5+" : String(qNum + 1) })); };
                   return (
                     <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #ffffff08" }}>
                       <span style={{ color: "#fff", fontSize: "14px", flex: 1 }}>{flavor}</span>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <button onClick={decrement} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.05)", color: "#ffffff60", fontSize: "18px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>−</button>
-                        <span style={{ color: col, fontSize: "16px", fontWeight: 800, minWidth: "28px", textAlign: "center" }}>{qty}</span>
-                        <button onClick={increment} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.05)", color: "#ffffff60", fontSize: "18px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>+</button>
-                        <button onClick={() => { sndRemove(); setOrderData(prev => { const next = { ...prev }; delete next[key]; return next; }); }}
-                          style={{ background: "none", border: "1px solid #E6394630", borderRadius: "6px", color: "#E63946", fontSize: "11px", fontWeight: 700, cursor: "pointer", padding: "4px 8px", marginLeft: "4px" }}>✕</button>
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                        <button onClick={decrement} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", background: qNum <= 1 ? "rgba(255,255,255,0.05)" : "rgba(230,57,70,0.2)", color: qNum <= 1 ? "#ffffff20" : "#E63946", fontSize: "18px", fontWeight: 700, cursor: qNum <= 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>−</button>
+                        <span style={{ color: col, fontSize: "16px", fontWeight: 800, minWidth: "30px", textAlign: "center" }}>{qty}</span>
+                        <button onClick={increment} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", background: qty === "5+" ? "rgba(255,255,255,0.05)" : "rgba(29,185,84,0.2)", color: qty === "5+" ? "#ffffff20" : "#1DB954", fontSize: "18px", fontWeight: 700, cursor: qty === "5+" ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>+</button>
                       </div>
+                      <button onClick={() => { sndRemove(); setOrderData(prev => { const next = { ...prev }; delete next[key]; return next; }); }}
+                        style={{ background: "none", border: "1px solid #E6394630", borderRadius: "6px", color: "#E63946", fontSize: "11px", fontWeight: 700, cursor: "pointer", padding: "4px 8px", marginLeft: "24px" }}>✕</button>
                     </div>
                   );
                 })}
@@ -944,11 +942,6 @@ export default function RestockApp() {
             </div>
             {suggestions.map((sg, i) => (<div key={`${sg.text}-${i}`} style={{ padding: "8px 12px", borderRadius: "8px", background: "#1DB95410", border: "1px solid #1DB95420", color: "#1DB954", fontSize: "12px", fontWeight: 600, marginTop: "6px" }}>✓ Suggested: {sg.text}</div>))}
           </div>
-          {ic > 0 && (
-            <button onClick={() => setView("employee-confirm")} disabled={submitting} style={{ ...( submitting ? st.btnOff : st.btn), marginTop: "20px", background: submitting ? "#ffffff10" : "linear-gradient(135deg, #1DB954, #10B981)", boxShadow: submitting ? "none" : "0 4px 20px rgba(29,185,84,0.3)" }}>
-              {submitting ? "Submitting..." : `✅ Review & Submit (${ic} item${ic > 1 ? "s" : ""} • ~${tu} units)`}
-            </button>
-          )}
           <div style={{ height: "70px" }} />
           <FloatingBack onClick={() => { 
             setView("employee-login"); setSelCategory(null); setEmpSearch(""); 
@@ -973,7 +966,7 @@ export default function RestockApp() {
           const totalModels = models.length;
           return (
             <div key={brand} style={{ marginBottom: "6px" }}>
-              <button onClick={() => { sndClick(); setEmpExpandedBrands(p => ({ ...p, [brandKey]: !isExpanded })); }}
+              <button onClick={() => { setEmpExpandedBrands(p => ({ ...p, [brandKey]: !isExpanded })); }}
                 style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: `1px solid ${isExpanded ? bc + "20" : brandOrdered > 0 ? bc + "15" : "#ffffff08"}`, background: isExpanded ? `${bc}08` : brandOrdered > 0 ? `${bc}05` : "rgba(255,255,255,0.02)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left", transition: "all 0.2s ease" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   <div style={{ width: "3px", height: "20px", borderRadius: "2px", background: bc }}></div>
@@ -1130,18 +1123,18 @@ export default function RestockApp() {
               {flavors.map(({ flavor, qty, key }) => {
                 const col = getQtyColor(qty);
                 const qNum = qty === "5+" ? 5 : parseInt(qty) || 1;
-                const decrement = () => { if (qNum <= 1) { sndRemove(); setOrderData(prev => { const next = { ...prev }; delete next[key]; return next; }); if (Object.keys(orderData).length <= 1) setView("employee-products"); } else { sndClick(); setOrderData(prev => ({ ...prev, [key]: String(qNum - 1) })); } };
+                const decrement = () => { if (qNum <= 1) return; sndClick(); setOrderData(prev => ({ ...prev, [key]: String(qNum - 1) })); };
                 const increment = () => { if (qty === "5+") return; sndClick(); setOrderData(prev => ({ ...prev, [key]: qNum >= 4 ? "5+" : String(qNum + 1) })); };
                 return (
                   <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #ffffff06" }}>
                     <span style={{ color: "#ffffffcc", fontSize: "14px", flex: 1 }}>{flavor}</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <button onClick={decrement} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.05)", color: "#ffffff60", fontSize: "18px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>−</button>
-                      <span style={{ color: col, fontSize: "16px", fontWeight: 800, minWidth: "28px", textAlign: "center" }}>{qty}</span>
-                      <button onClick={increment} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.05)", color: "#ffffff60", fontSize: "18px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>+</button>
-                      <button onClick={() => { sndRemove(); setOrderData(prev => { const next = { ...prev }; delete next[key]; return next; }); if (Object.keys(orderData).length <= 1) setView("employee-products"); }}
-                        style={{ background: "none", border: "1px solid #E6394625", borderRadius: "6px", color: "#E63946", fontSize: "11px", fontWeight: 700, cursor: "pointer", padding: "4px 8px", marginLeft: "4px" }}>✕</button>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <button onClick={decrement} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", background: qNum <= 1 ? "rgba(255,255,255,0.05)" : "rgba(230,57,70,0.2)", color: qNum <= 1 ? "#ffffff20" : "#E63946", fontSize: "18px", fontWeight: 700, cursor: qNum <= 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>−</button>
+                      <span style={{ color: col, fontSize: "16px", fontWeight: 800, minWidth: "30px", textAlign: "center" }}>{qty}</span>
+                      <button onClick={increment} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", background: qty === "5+" ? "rgba(255,255,255,0.05)" : "rgba(29,185,84,0.2)", color: qty === "5+" ? "#ffffff20" : "#1DB954", fontSize: "18px", fontWeight: 700, cursor: qty === "5+" ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>+</button>
                     </div>
+                    <button onClick={() => { sndRemove(); setOrderData(prev => { const next = { ...prev }; delete next[key]; return next; }); if (Object.keys(orderData).length <= 1) setView("employee-products"); }}
+                      style={{ background: "none", border: "1px solid #E6394625", borderRadius: "6px", color: "#E63946", fontSize: "11px", fontWeight: 700, cursor: "pointer", padding: "4px 8px", marginLeft: "24px" }}>✕</button>
                   </div>
                 );
               })}
