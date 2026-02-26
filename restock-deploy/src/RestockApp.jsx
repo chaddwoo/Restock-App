@@ -755,10 +755,9 @@ export default function RestockApp() {
       <div style={{ fontSize: "56px", marginBottom: "8px" }}>📦</div>
       <h1 style={{ color: "#fff", fontSize: "36px", fontWeight: 900, letterSpacing: "-2px", margin: 0 }}>BACKSTOCK</h1>
       <p style={{ color: "#ffffff45", fontSize: "14px", margin: "4px 0 0 0", fontWeight: 500, fontStyle: "italic" }}>Inventory that just works.</p>
-      <div style={{ marginTop: "48px", display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
-        <button onClick={() => setView("employee-login")} style={{ ...st.btn, textAlign: "left", padding: "20px 24px", display: "flex", alignItems: "center", gap: "14px" }}>
-          <span style={{ fontSize: "24px" }}>🏪</span>
-          <div><div style={{ fontSize: "15px", fontWeight: 700 }}>Submit Restock Request</div><div style={{ fontSize: "11px", fontWeight: 500, opacity: 0.7, marginTop: "2px" }}>Employees — request product for your store</div></div>
+      <div style={{ marginTop: "32px", display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
+        <button onClick={() => setView("employee-login")} style={{ ...st.btn, padding: "20px 24px" }}>
+          🏪 Submit Restock Request
         </button>
         <button onClick={() => { setAuthed(false); setPin(""); setMgrView("dashboard"); setMgrWarehouse(null); setMgrPin(null); setOwnerPin(null); setAccessLevel(null); loadPin(); setView("manager-login"); }} style={{ ...st.btn, background: "rgba(255,255,255,0.04)", border: "1px solid #ffffff12", boxShadow: "none", padding: "20px 24px" }}>
           📊 Manager Dashboard
