@@ -730,13 +730,18 @@ export default function RestockApp() {
                 <div style={{ color: "#ffffff40", fontSize: "11px", fontWeight: 700, marginBottom: "4px" }}>{pr}</div>
                 {flavors.map(({ flavor, qty, key }) => {
                   const col = getQtyColor(qty);
+                  const qNum = qty === "5+" ? 5 : parseInt(qty) || 1;
+                  const decrement = () => { if (qNum <= 1) { sndRemove(); setOrderData(prev => { const next = { ...prev }; delete next[key]; return next; }); } else { sndClick(); setOrderData(prev => ({ ...prev, [key]: String(qNum - 1) })); } };
+                  const increment = () => { if (qty === "5+") return; sndClick(); setOrderData(prev => ({ ...prev, [key]: qNum >= 4 ? "5+" : String(qNum + 1) })); };
                   return (
-                    <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #ffffff08" }}>
-                      <span style={{ color: "#fff", fontSize: "13px" }}>{flavor}</span>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <span style={{ color: col, fontSize: "14px", fontWeight: 800 }}>×{qty}</span>
+                    <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #ffffff08" }}>
+                      <span style={{ color: "#fff", fontSize: "14px", flex: 1 }}>{flavor}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <button onClick={decrement} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.05)", color: "#ffffff60", fontSize: "18px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>−</button>
+                        <span style={{ color: col, fontSize: "16px", fontWeight: 800, minWidth: "28px", textAlign: "center" }}>{qty}</span>
+                        <button onClick={increment} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.05)", color: "#ffffff60", fontSize: "18px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>+</button>
                         <button onClick={() => { sndRemove(); setOrderData(prev => { const next = { ...prev }; delete next[key]; return next; }); }}
-                          style={{ background: "none", border: "1px solid #E6394630", borderRadius: "6px", color: "#E63946", fontSize: "10px", fontWeight: 700, cursor: "pointer", padding: "3px 8px" }}>✕</button>
+                          style={{ background: "none", border: "1px solid #E6394630", borderRadius: "6px", color: "#E63946", fontSize: "11px", fontWeight: 700, cursor: "pointer", padding: "4px 8px", marginLeft: "4px" }}>✕</button>
                       </div>
                     </div>
                   );
@@ -1124,13 +1129,18 @@ export default function RestockApp() {
               </div>
               {flavors.map(({ flavor, qty, key }) => {
                 const col = getQtyColor(qty);
+                const qNum = qty === "5+" ? 5 : parseInt(qty) || 1;
+                const decrement = () => { if (qNum <= 1) { sndRemove(); setOrderData(prev => { const next = { ...prev }; delete next[key]; return next; }); if (Object.keys(orderData).length <= 1) setView("employee-products"); } else { sndClick(); setOrderData(prev => ({ ...prev, [key]: String(qNum - 1) })); } };
+                const increment = () => { if (qty === "5+") return; sndClick(); setOrderData(prev => ({ ...prev, [key]: qNum >= 4 ? "5+" : String(qNum + 1) })); };
                 return (
-                  <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid #ffffff06" }}>
-                    <span style={{ color: "#ffffffcc", fontSize: "13px" }}>{flavor}</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ color: col, fontSize: "14px", fontWeight: 800 }}>×{qty}</span>
+                  <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #ffffff06" }}>
+                    <span style={{ color: "#ffffffcc", fontSize: "14px", flex: 1 }}>{flavor}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <button onClick={decrement} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.05)", color: "#ffffff60", fontSize: "18px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>−</button>
+                      <span style={{ color: col, fontSize: "16px", fontWeight: 800, minWidth: "28px", textAlign: "center" }}>{qty}</span>
+                      <button onClick={increment} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.05)", color: "#ffffff60", fontSize: "18px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>+</button>
                       <button onClick={() => { sndRemove(); setOrderData(prev => { const next = { ...prev }; delete next[key]; return next; }); if (Object.keys(orderData).length <= 1) setView("employee-products"); }}
-                        style={{ background: "none", border: "1px solid #E6394625", borderRadius: "6px", color: "#E63946", fontSize: "9px", fontWeight: 700, cursor: "pointer", padding: "3px 7px" }}>✕</button>
+                        style={{ background: "none", border: "1px solid #E6394625", borderRadius: "6px", color: "#E63946", fontSize: "11px", fontWeight: 700, cursor: "pointer", padding: "4px 8px", marginLeft: "4px" }}>✕</button>
                     </div>
                   </div>
                 );
