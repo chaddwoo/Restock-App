@@ -760,9 +760,8 @@ export default function RestockApp() {
           <span style={{ fontSize: "24px" }}>🏪</span>
           <div><div style={{ fontSize: "15px", fontWeight: 700 }}>Submit Restock Request</div><div style={{ fontSize: "11px", fontWeight: 500, opacity: 0.7, marginTop: "2px" }}>Employees — request product for your store</div></div>
         </button>
-        <button onClick={() => { setAuthed(false); setPin(""); setMgrView("dashboard"); setMgrWarehouse(null); setMgrPin(null); setOwnerPin(null); setAccessLevel(null); loadPin(); setView("manager-login"); }} style={{ ...st.btn, background: "rgba(255,255,255,0.04)", border: "1px solid #ffffff12", boxShadow: "none", textAlign: "left", padding: "20px 24px", display: "flex", alignItems: "center", gap: "14px" }}>
-          <span style={{ fontSize: "24px" }}>📊</span>
-          <div><div style={{ fontSize: "15px", fontWeight: 700 }}>Manager Dashboard</div><div style={{ fontSize: "11px", fontWeight: 500, opacity: 0.4, marginTop: "2px" }}>Manage orders & inventory</div></div>
+        <button onClick={() => { setAuthed(false); setPin(""); setMgrView("dashboard"); setMgrWarehouse(null); setMgrPin(null); setOwnerPin(null); setAccessLevel(null); loadPin(); setView("manager-login"); }} style={{ ...st.btn, background: "rgba(255,255,255,0.04)", border: "1px solid #ffffff12", boxShadow: "none", padding: "20px 24px" }}>
+          📊 Manager Dashboard
         </button>
       </div>
       <p style={{ color: "#ffffff12", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v5.0</p>
