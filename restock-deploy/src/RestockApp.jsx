@@ -89,7 +89,7 @@ const LS_KEY = "restock_emp_session";
 const saveSession = (d) => { try { localStorage.setItem(LS_KEY, JSON.stringify(d)); } catch(e){} };
 const loadSession = () => { try { const s = localStorage.getItem(LS_KEY); return s ? JSON.parse(s) : null; } catch(e){ return null; } };
 const clearSession = () => { try { localStorage.removeItem(LS_KEY); } catch(e){} };
-const _saved = (() => { const s = loadSession(); if (!s) return null; const empViews = ["employee-login","employee-products","employee-flavors"]; if (!empViews.includes(s.view)) return null; return s; })();
+const _saved = (() => { const s = loadSession(); if (!s) return null; const empViews = ["employee-login","employee-products","employee-flavors","employee-confirm"]; if (!empViews.includes(s.view)) return null; return s; })();
 
 export default function RestockApp() {
   const [view, setView] = useState(_saved?.view || "splash");
@@ -255,7 +255,7 @@ export default function RestockApp() {
   // Save employee session — debounced to reduce writes
   const saveTimer = useRef(null);
   useEffect(() => {
-    const empViews = ["employee-login", "employee-products", "employee-flavors"];
+    const empViews = ["employee-login", "employee-products", "employee-flavors", "employee-confirm"];
     if (empViews.includes(view)) {
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
@@ -268,7 +268,7 @@ export default function RestockApp() {
   // Warn before unload + flush pending save
   useEffect(() => {
     const handler = (e) => {
-      if (Object.keys(orderData).length > 0 && ["employee-products", "employee-flavors"].includes(view)) {
+      if (Object.keys(orderData).length > 0 && ["employee-products", "employee-flavors", "employee-confirm"].includes(view)) {
         if (saveTimer.current) { clearTimeout(saveTimer.current); saveTimer.current = null; }
         saveSession({ view, empName, storeLoc, empWarehouse, empCode, selProduct, orderData, suggestions, selCategory });
         e.preventDefault(); e.returnValue = "";
@@ -684,7 +684,18 @@ export default function RestockApp() {
     );
   };
 
-  if (!catLoaded) return (<div style={{ ...st.page, display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ color: "#ffffff40", fontSize: "14px" }}>Loading catalog...</p></div>);
+  if (!catLoaded) return (<div style={{ ...st.page, display: "flex", flexDirection: "column", gap: "16px", paddingTop: "60px" }}>
+    <style>{`@keyframes skPulse { 0%,100% { opacity: 0.04; } 50% { opacity: 0.08; } }`}</style>
+    <div style={{ width: "180px", height: "32px", borderRadius: "8px", background: "#ffffff08", animation: "skPulse 1.5s ease-in-out infinite" }} />
+    <div style={{ width: "120px", height: "14px", borderRadius: "6px", background: "#ffffff08", animation: "skPulse 1.5s ease-in-out infinite 0.1s" }} />
+    <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+      {[1,2,3].map(i => <div key={i} style={{ width: "80px", height: "36px", borderRadius: "8px", background: "#ffffff08", animation: `skPulse 1.5s ease-in-out infinite ${i * 0.1}s` }} />)}
+    </div>
+    <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
+      {[1,2,3,4].map(i => <div key={i} style={{ width: "100%", height: "72px", borderRadius: "12px", background: "#ffffff08", animation: `skPulse 1.5s ease-in-out infinite ${i * 0.15}s` }} />)}
+    </div>
+    <div style={{ textAlign: "center", marginTop: "8px" }}><p style={{ color: "#ffffff20", fontSize: "12px" }}>Loading...</p></div>
+  </div>);
 
   // Floating back button — fixed bottom-left
   const FloatingBack = ({ onClick }) => (
@@ -740,16 +751,21 @@ export default function RestockApp() {
 
   // SPLASH
   if (view === "splash") return (
-    <div style={{ ...st.page, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: "12px" }}>
-      <div style={{ fontSize: "56px", marginBottom: "4px" }}>📦</div>
-      <h1 style={{ color: "#fff", fontSize: "38px", fontWeight: 900, letterSpacing: "-2px", margin: 0 }}>BACKSTOCK</h1>
-      <p style={{ color: "#ffffff50", fontSize: "14px", margin: "8px 0 0 0", fontWeight: 500, fontStyle: "italic" }}>Inventory that just works.</p>
-      <p style={{ color: "#ffffff35", fontSize: "12px", margin: "16px 0 0 0", letterSpacing: "4px", textTransform: "uppercase" }}>Tell Us What You Need</p>
+    <div style={{ ...st.page, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: "12px", background: "radial-gradient(ellipse at 50% 20%, #1a1a2e 0%, #0B0B0F 70%)" }}>
+      <div style={{ width: "64px", height: "64px", borderRadius: "16px", background: "linear-gradient(135deg, #FF6B35, #FF8C42)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", boxShadow: "0 8px 32px rgba(255,107,53,0.3)", marginBottom: "8px" }}>📦</div>
+      <h1 style={{ color: "#fff", fontSize: "36px", fontWeight: 900, letterSpacing: "-2px", margin: 0 }}>BACKSTOCK</h1>
+      <p style={{ color: "#ffffff45", fontSize: "14px", margin: "4px 0 0 0", fontWeight: 500, fontStyle: "italic" }}>Inventory that just works.</p>
       <div style={{ marginTop: "48px", display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
-        <button onClick={() => setView("employee-login")} style={st.btn}>🏪 Submit Restock Request</button>
-        <button onClick={() => { setAuthed(false); setPin(""); setMgrView("dashboard"); setMgrWarehouse(null); setMgrPin(null); setOwnerPin(null); setAccessLevel(null); loadPin(); setView("manager-login"); }} style={{ ...st.btn, background: "rgba(255,255,255,0.05)", border: "1px solid #ffffff15", boxShadow: "none" }}>📊 Manager Dashboard</button>
+        <button onClick={() => setView("employee-login")} style={{ ...st.btn, position: "relative", textAlign: "left", padding: "20px 24px", display: "flex", alignItems: "center", gap: "14px" }}>
+          <span style={{ fontSize: "24px" }}>🏪</span>
+          <div><div style={{ fontSize: "15px", fontWeight: 700 }}>Submit Restock Request</div><div style={{ fontSize: "11px", fontWeight: 500, opacity: 0.7, marginTop: "2px" }}>Employees — request product for your store</div></div>
+        </button>
+        <button onClick={() => { setAuthed(false); setPin(""); setMgrView("dashboard"); setMgrWarehouse(null); setMgrPin(null); setOwnerPin(null); setAccessLevel(null); loadPin(); setView("manager-login"); }} style={{ ...st.btn, background: "rgba(255,255,255,0.04)", border: "1px solid #ffffff12", boxShadow: "none", textAlign: "left", padding: "20px 24px", display: "flex", alignItems: "center", gap: "14px" }}>
+          <span style={{ fontSize: "24px" }}>📊</span>
+          <div><div style={{ fontSize: "15px", fontWeight: 700 }}>Manager Dashboard</div><div style={{ fontSize: "11px", fontWeight: 500, opacity: 0.4, marginTop: "2px" }}>Warehouse ops, analytics & catalog</div></div>
+        </button>
       </div>
-      <p style={{ color: "#ffffff18", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v4.0</p>
+      <p style={{ color: "#ffffff12", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v5.0</p>
     </div>
   );
 
@@ -870,8 +886,8 @@ export default function RestockApp() {
           <p style={{ color: "#ffffff50", fontSize: "13px", margin: "0 0 16px 0" }}>{empName} • {storeLoc}</p>
           <div style={{ marginBottom: "20px", position: "sticky", top: 0, zIndex: 80, paddingTop: "8px", paddingBottom: "12px", background: "linear-gradient(180deg, #0B0B0F 85%, transparent)", marginLeft: "-20px", marginRight: "-20px", paddingLeft: "20px", paddingRight: "20px" }}>
             <input type="text" placeholder="🔍  Search products, brands, flavors..." value={empSearch} onChange={e => setEmpSearch(e.target.value)}
-              style={{ ...st.input, fontSize: "14px", padding: "14px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid #ffffff15", borderRadius: "12px" }} />
-            {empSearchTerm && <div style={{ color: "#ffffff30", fontSize: "11px", marginTop: "6px", textAlign: "center" }}>{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</div>}
+              style={{ ...st.input, fontSize: "15px", padding: "16px 20px", background: "rgba(255,255,255,0.07)", border: `1px solid ${empSearch ? "#FF6B3540" : "#ffffff18"}`, borderRadius: "14px", boxShadow: empSearch ? "0 0 20px rgba(255,107,53,0.1)" : "none", transition: "all 0.2s ease" }} />
+            {empSearchTerm ? <div style={{ color: "#ffffff30", fontSize: "11px", marginTop: "6px", textAlign: "center" }}>{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</div> : <div style={{ color: "#ffffff15", fontSize: "11px", marginTop: "6px", textAlign: "center" }}>or browse categories below</div>}
           </div>
           {empSearchTerm ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -926,8 +942,8 @@ export default function RestockApp() {
             {suggestions.map((sg, i) => (<div key={`${sg.text}-${i}`} style={{ padding: "8px 12px", borderRadius: "8px", background: "#1DB95410", border: "1px solid #1DB95420", color: "#1DB954", fontSize: "12px", fontWeight: 600, marginTop: "6px" }}>✓ Suggested: {sg.text}</div>))}
           </div>
           {ic > 0 && (
-            <button onClick={submitOrder} disabled={submitting} style={{ ...( submitting ? st.btnOff : st.btn), marginTop: "20px", background: submitting ? "#ffffff10" : "linear-gradient(135deg, #1DB954, #10B981)", boxShadow: submitting ? "none" : "0 4px 20px rgba(29,185,84,0.3)" }}>
-              {submitting ? "Submitting..." : `✅ Submit Full Order (${ic} item${ic > 1 ? "s" : ""} • ~${tu} units)`}
+            <button onClick={() => setView("employee-confirm")} disabled={submitting} style={{ ...( submitting ? st.btnOff : st.btn), marginTop: "20px", background: submitting ? "#ffffff10" : "linear-gradient(135deg, #1DB954, #10B981)", boxShadow: submitting ? "none" : "0 4px 20px rgba(29,185,84,0.3)" }}>
+              {submitting ? "Submitting..." : `✅ Review & Submit (${ic} item${ic > 1 ? "s" : ""} • ~${tu} units)`}
             </button>
           )}
           <FloatingBack onClick={() => { 
@@ -1072,6 +1088,66 @@ export default function RestockApp() {
             </div>
           );
         })()}
+      </div>
+    );
+  }
+
+  // EMPLOYEE CONFIRM — review before submit
+  if (view === "employee-confirm") {
+    const items = Object.entries(orderData);
+    const tu = getTotalUnits(); const ic = getFilledCount();
+    const grouped = {};
+    items.forEach(([k, q]) => { const [pr, fl] = k.split("|||"); if (!grouped[pr]) grouped[pr] = []; grouped[pr].push({ flavor: fl, qty: q, key: k }); });
+    const sortedProducts = Object.keys(grouped).sort();
+    return (
+      <div style={{ ...st.page, paddingBottom: "120px" }}>
+        <button onClick={() => { sndBack(); setView("employee-products"); }} style={st.back}>← Back to Order</button>
+        <h2 style={{ ...st.h2, marginBottom: "4px" }}>Review Your Order</h2>
+        <p style={st.sub}>{empName} • {storeLoc}</p>
+        <div style={{ padding: "16px", borderRadius: "12px", background: "rgba(255,255,255,0.03)", border: "1px solid #ffffff10", marginBottom: "16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-around", textAlign: "center" }}>
+            <div><div style={{ fontSize: "24px", fontWeight: 900, color: "#fff" }}>{ic}</div><div style={{ fontSize: "10px", color: "#ffffff35", fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: "2px" }}>Items</div></div>
+            <div style={{ width: "1px", background: "#ffffff10" }}></div>
+            <div><div style={{ fontSize: "24px", fontWeight: 900, color: "#fff" }}>~{tu}</div><div style={{ fontSize: "10px", color: "#ffffff35", fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: "2px" }}>Units</div></div>
+            <div style={{ width: "1px", background: "#ffffff10" }}></div>
+            <div><div style={{ fontSize: "24px", fontWeight: 900, color: "#fff" }}>{sortedProducts.length}</div><div style={{ fontSize: "10px", color: "#ffffff35", fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: "2px" }}>Products</div></div>
+          </div>
+        </div>
+        {sortedProducts.map(pr => {
+          const flavors = grouped[pr].sort((a, b) => a.flavor.localeCompare(b.flavor));
+          const bc = getBrandColor(catalogObj[pr]?.brand || "");
+          return (
+            <div key={pr} style={{ marginBottom: "12px", padding: "12px 14px", borderRadius: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid #ffffff08" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                <div style={{ width: "3px", height: "14px", borderRadius: "2px", background: bc }}></div>
+                <span style={{ color: "#ffffff60", fontSize: "12px", fontWeight: 700 }}>{pr}</span>
+                <span style={{ color: "#ffffff25", fontSize: "10px", marginLeft: "auto" }}>{flavors.length} item{flavors.length !== 1 ? "s" : ""}</span>
+              </div>
+              {flavors.map(({ flavor, qty, key }) => {
+                const col = getQtyColor(qty);
+                return (
+                  <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid #ffffff06" }}>
+                    <span style={{ color: "#ffffffcc", fontSize: "13px" }}>{flavor}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ color: col, fontSize: "14px", fontWeight: 800 }}>×{qty}</span>
+                      <button onClick={() => { sndRemove(); setOrderData(prev => { const next = { ...prev }; delete next[key]; return next; }); if (Object.keys(orderData).length <= 1) setView("employee-products"); }}
+                        style={{ background: "none", border: "1px solid #E6394625", borderRadius: "6px", color: "#E63946", fontSize: "9px", fontWeight: 700, cursor: "pointer", padding: "3px 7px" }}>✕</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+        {suggestions.length > 0 && (<div style={{ padding: "10px 14px", borderRadius: "10px", background: "#6C5CE708", border: "1px solid #6C5CE715", marginBottom: "12px" }}><span style={{ color: "#6C5CE7", fontSize: "11px", fontWeight: 700 }}>💡 {suggestions.length} suggestion{suggestions.length > 1 ? "s" : ""} will be sent</span></div>)}
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "16px 20px", background: "linear-gradient(180deg, transparent, #0B0B0F 20%)", zIndex: 90 }}>
+          <div style={{ maxWidth: "480px", margin: "0 auto" }}>
+            <button onClick={submitOrder} disabled={submitting} style={{ ...( submitting ? st.btnOff : st.btn), background: submitting ? "#ffffff10" : "linear-gradient(135deg, #1DB954, #10B981)", boxShadow: submitting ? "none" : "0 4px 20px rgba(29,185,84,0.3)" }}>
+              {submitting ? "Submitting..." : `✅ Confirm & Submit Order`}
+            </button>
+          </div>
+        </div>
+        <FloatingBack onClick={() => setView("employee-products")} />
       </div>
     );
   }
@@ -1576,32 +1652,16 @@ export default function RestockApp() {
       <div style={st.page}>
         <button onClick={() => { sndBack(); setView("manager-warehouse"); setMgrWarehouse(null); }} style={st.back}>← Switch Warehouse</button>
         <h1 style={st.h1}>📊 {mgrWarehouse?.name} Dashboard</h1><p style={st.sub}>{loading ? "Loading..." : `${reports.length} pending order${reports.length !== 1 ? "s" : ""}`}</p>
-        <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+        <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
           <button onClick={loadMgr} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff50", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🔄 Refresh</button>
           {accessLevel === "manager" && <button onClick={() => setMgrView("catalog")} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #6C5CE730", background: "#6C5CE710", color: "#6C5CE7", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🗂️ Catalog</button>}
           {accessLevel === "manager" && <button onClick={() => { setMgrView("analytics"); loadAnalytics(analyticsRange); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #00B4D830", background: "#00B4D810", color: "#00B4D8", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>📈 Analytics</button>}
         </div>
-        {accessLevel === "manager" && <div style={{ padding: "16px", borderRadius: "12px", border: "1px solid #FF6B3530", background: "rgba(255,107,53,0.05)", marginBottom: "20px" }}>
-          {(() => { const wid = mgrWarehouse?.id || 1; const bd = bannerData[wid] || { message: "", active: false }; const bannerText = bd.message; const bannerOn = bd.active; return (<>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: editBanner ? "12px" : "0" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}><span style={{ fontSize: "14px" }}>📢</span><span style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Employee Banner</span></div>
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <button onClick={toggleBanner} style={{ padding: "4px 12px", borderRadius: "20px", border: "none", fontSize: "11px", fontWeight: 700, cursor: "pointer", background: bannerOn ? "#1DB95425" : "#ffffff10", color: bannerOn ? "#1DB954" : "#ffffff30" }}>{bannerOn ? "ON" : "OFF"}</button>
-              <button onClick={() => { setEditBanner(!editBanner); setBannerInput(bannerText); }} style={{ padding: "4px 12px", borderRadius: "20px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>{editBanner ? "Cancel" : "Edit"}</button>
-            </div>
-          </div>
-          {!editBanner && bannerText && <div style={{ color: "#ffffff60", fontSize: "13px", marginTop: "8px", fontStyle: "italic" }}>"{bannerText}"</div>}
-          {editBanner && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <textarea value={bannerInput} onChange={e => setBannerInput(e.target.value)} placeholder="Type message..." rows={2} style={{ ...st.input, fontSize: "13px", padding: "12px 14px", resize: "vertical", minHeight: "60px", fontFamily: "inherit" }} />
-              <button onClick={saveBanner} style={{ padding: "10px 20px", borderRadius: "10px", border: "none", background: bannerInput.trim() ? "#FF6B35" : "#ffffff10", color: bannerInput.trim() ? "#fff" : "#ffffff25", fontSize: "13px", fontWeight: 700, cursor: bannerInput.trim() ? "pointer" : "not-allowed", alignSelf: "flex-end" }}>Save & Broadcast</button>
-            </div>
-          )}
-          </>); })()}
-        </div>}
+
+        {/* PENDING ORDERS — hero section */}
         <div style={{ marginBottom: "8px" }}><span style={{ color: "#ffffff60", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Pending Restock Requests</span></div>
         {reports.length === 0 && !loading && <div style={{ padding: "24px", textAlign: "center", borderRadius: "12px", border: "1px dashed #ffffff12", marginBottom: "20px" }}><p style={{ color: "#ffffff30", fontSize: "14px", margin: 0 }}>No pending orders</p></div>}
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "20px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "24px" }}>
           {reports.map(r => (
             <div key={r.id} style={{ padding: "16px", borderRadius: "12px", border: "1px solid #ffffff0a", background: "rgba(255,255,255,0.025)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ cursor: "pointer", flex: 1 }} onClick={() => setSelReport(r)}>
@@ -1616,19 +1676,47 @@ export default function RestockApp() {
             </div>
           ))}
         </div>
+
+        {/* SETTINGS — visually separated */}
         {accessLevel === "manager" && <>
-        <div style={{ marginBottom: "8px" }}><span style={{ color: "#E63946", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>⏳ Still Waiting ({pending.length})</span></div>
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "12px" }}>
-          {pending.map(s => (<span key={s.id} style={{ padding: "7px 12px", borderRadius: "8px", background: "rgba(230,57,70,0.07)", border: "1px solid #E6394620", fontSize: "12px", fontWeight: 600, color: "#E63946", display: "flex", alignItems: "center", gap: "6px" }}>{s.name}<button onClick={() => removeStore(s.id)} style={{ background: "none", border: "none", color: "#E6394680", cursor: "pointer", fontSize: "10px", padding: "0 2px" }}>✕</button></span>))}
-          {pending.length === 0 && stores.length > 0 && <span style={{ color: "#1DB954", fontSize: "12px", fontWeight: 600 }}>✓ All stores submitted!</span>}
+        <div style={{ borderTop: "1px solid #ffffff08", paddingTop: "20px" }}>
+          {/* Banner */}
+          <div style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid #ffffff08", background: "rgba(255,255,255,0.015)", marginBottom: "12px" }}>
+          {(() => { const wid = mgrWarehouse?.id || 1; const bd = bannerData[wid] || { message: "", active: false }; const bannerText = bd.message; const bannerOn = bd.active; return (<>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: editBanner ? "12px" : "0" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}><span style={{ fontSize: "14px" }}>📢</span><span style={{ color: "#FF6B35", fontSize: "11px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Banner</span></div>
+            <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+              <button onClick={toggleBanner} style={{ padding: "4px 10px", borderRadius: "20px", border: "none", fontSize: "10px", fontWeight: 700, cursor: "pointer", background: bannerOn ? "#1DB95425" : "#ffffff10", color: bannerOn ? "#1DB954" : "#ffffff30" }}>{bannerOn ? "ON" : "OFF"}</button>
+              <button onClick={() => { setEditBanner(!editBanner); setBannerInput(bannerText); }} style={{ padding: "4px 10px", borderRadius: "20px", border: "1px solid #ffffff12", background: "transparent", color: "#ffffff40", fontSize: "10px", fontWeight: 700, cursor: "pointer" }}>{editBanner ? "Cancel" : "Edit"}</button>
+            </div>
+          </div>
+          {!editBanner && bannerText && <div style={{ color: "#ffffff50", fontSize: "12px", marginTop: "6px", fontStyle: "italic" }}>"{bannerText}"</div>}
+          {editBanner && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <textarea value={bannerInput} onChange={e => setBannerInput(e.target.value)} placeholder="Type message..." rows={2} style={{ ...st.input, fontSize: "13px", padding: "12px 14px", resize: "vertical", minHeight: "60px", fontFamily: "inherit" }} />
+              <button onClick={saveBanner} style={{ padding: "10px 20px", borderRadius: "10px", border: "none", background: bannerInput.trim() ? "#FF6B35" : "#ffffff10", color: bannerInput.trim() ? "#fff" : "#ffffff25", fontSize: "13px", fontWeight: 700, cursor: bannerInput.trim() ? "pointer" : "not-allowed", alignSelf: "flex-end" }}>Save & Broadcast</button>
+            </div>
+          )}
+          </>); })()}
+          </div>
+
+          {/* Still Waiting */}
+          <div style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid #ffffff08", background: "rgba(255,255,255,0.015)", marginBottom: "12px" }}>
+          <div style={{ marginBottom: "8px" }}><span style={{ color: "#E63946", fontSize: "11px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>⏳ Still Waiting ({pending.length})</span></div>
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: pending.length > 0 ? "10px" : "0" }}>
+            {pending.map(s => (<span key={s.id} style={{ padding: "6px 10px", borderRadius: "8px", background: "rgba(230,57,70,0.07)", border: "1px solid #E6394620", fontSize: "11px", fontWeight: 600, color: "#E63946", display: "flex", alignItems: "center", gap: "6px" }}>{s.name}<button onClick={() => removeStore(s.id)} style={{ background: "none", border: "none", color: "#E6394680", cursor: "pointer", fontSize: "10px", padding: "0 2px" }}>✕</button></span>))}
+            {pending.length === 0 && stores.length > 0 && <span style={{ color: "#1DB954", fontSize: "11px", fontWeight: 600 }}>✓ All stores submitted!</span>}
+          </div>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <input type="text" placeholder="Add store..." value={newStore} onChange={e => setNewStore(e.target.value)} onKeyDown={e => { if (e.key === "Enter") addStore(); }} style={{ ...st.input, fontSize: "12px", padding: "10px 14px" }} />
+            <button onClick={addStore} style={{ padding: "10px 16px", borderRadius: "10px", border: "none", background: newStore.trim() ? "#E63946" : "#ffffff10", color: newStore.trim() ? "#fff" : "#ffffff25", fontSize: "12px", fontWeight: 700, cursor: newStore.trim() ? "pointer" : "not-allowed", whiteSpace: "nowrap" }}>+ Add</button>
+          </div>
+          </div>
         </div>
-        <div style={{ display: "flex", gap: "8px", marginBottom: "24px" }}>
-          <input type="text" placeholder="Add store..." value={newStore} onChange={e => setNewStore(e.target.value)} onKeyDown={e => { if (e.key === "Enter") addStore(); }} style={{ ...st.input, fontSize: "12px", padding: "10px 14px" }} />
-          <button onClick={addStore} style={{ padding: "10px 16px", borderRadius: "10px", border: "none", background: newStore.trim() ? "#E63946" : "#ffffff10", color: newStore.trim() ? "#fff" : "#ffffff25", fontSize: "12px", fontWeight: 700, cursor: newStore.trim() ? "pointer" : "not-allowed", whiteSpace: "nowrap" }}>+ Add</button>
-        </div>
+
         {allSugs.length > 0 && (
-          <div>
-            <span style={{ color: "#6C5CE7", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>💡 Suggestions ({allSugs.length})</span>
+          <div style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid #6C5CE715", background: "#6C5CE705" }}>
+            <span style={{ color: "#6C5CE7", fontSize: "11px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>💡 Suggestions ({allSugs.length})</span>
             {allSugs.map(sg => (
               <div key={sg.id} style={{ padding: "12px 16px", borderRadius: "10px", background: "#6C5CE708", border: "1px solid #6C5CE715", marginTop: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div><div style={{ color: "#fff", fontSize: "14px", fontWeight: 600 }}>{sg.suggestion_text}</div><div style={{ color: "#ffffff35", fontSize: "11px", marginTop: "2px" }}>from {sg.employee_name} @ {sg.store_location}</div></div>
@@ -1713,7 +1801,7 @@ export default function RestockApp() {
                   const displayQty = isAdjusted ? adjVal : qty;
                   const col = picked ? "#1DB954" : isAdjusted ? "#F59E0B" : getQtyColor(qty);
                   return (
-                    <div key={flavor} style={{ padding: "10px 12px", borderRadius: "8px", background: picked ? "rgba(29,185,84,0.12)" : isAdjusted ? "rgba(245,158,11,0.06)" : "rgba(0,0,0,0.25)", border: picked ? "1px solid #1DB95425" : isAdjusted ? "1px solid #F59E0B20" : "1px solid transparent", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all 0.2s ease" }}>
+                    <div key={flavor} style={{ padding: picked ? "6px 12px" : "10px 12px", borderRadius: "8px", background: picked ? "rgba(29,185,84,0.06)" : isAdjusted ? "rgba(245,158,11,0.06)" : "rgba(0,0,0,0.25)", border: picked ? "1px solid #1DB95415" : isAdjusted ? "1px solid #F59E0B20" : "1px solid transparent", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all 0.2s ease", opacity: picked ? 0.5 : 1, order: picked ? 1 : 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, cursor: "pointer" }} onClick={() => togglePick(key)}>
                         <span style={{ width: "22px", height: "22px", borderRadius: "6px", border: picked ? "2px solid #1DB954" : "2px solid #ffffff20", background: picked ? "#1DB954" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", color: "#fff", flexShrink: 0, transition: "all 0.2s ease" }}>{picked ? "✓" : ""}</span>
                         <span style={{ color: picked ? "#ffffff40" : "#fff", fontSize: "13px", fontWeight: 600, textDecoration: picked ? "line-through" : "none", transition: "all 0.2s ease" }}>{flavor}</span>
