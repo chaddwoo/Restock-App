@@ -309,7 +309,7 @@ export default function RestockApp() {
     } catch (e) { console.error(e); setAnalyticsData([]); }
   }, [mgrWarehouse]);
 
-  useEffect(() => { if (orgId) { loadCatalog(); loadBanner(); loadWarehouses(); } }, [orgId, loadCatalog, loadBanner, loadWarehouses]);
+  useEffect(() => { if (orgId) { loadCatalog(); loadBanner(); loadWarehouses(); loadPin(); } }, [orgId, loadCatalog, loadBanner, loadWarehouses, loadPin]);
   useEffect(() => { if (view === "manager" && authed && mgrWarehouse) loadMgr(); }, [view, authed, mgrWarehouse, loadMgr]);
 
   // Save employee session to localStorage on every relevant change
