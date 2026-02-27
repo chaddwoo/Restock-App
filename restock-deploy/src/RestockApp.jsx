@@ -786,9 +786,9 @@ export default function RestockApp() {
 
   // SPLASH
   const onboardSteps = [
-    { emoji: "📦", title: "Welcome to Backstock", desc: "Your store's restock requests, sent directly to the warehouse. No phone calls, no paper lists.", btn: "Show me how →" },
+    { emoji: "📦", title: "Welcome to Backstock", desc: "Tell us what your store needs — fast, simple, and organized. No phone calls, no paper lists.", btn: "Show me how →" },
     { emoji: "🔍", title: "Find What You Need", desc: "Search by name or browse categories. Tap a product to select how many your store needs.", btn: "Next →" },
-    { emoji: "✅", title: "Review & Submit", desc: "Your order builds at the bottom of the screen. Review it, adjust quantities, then submit. The warehouse gets it instantly.", btn: "Got it ✓" },
+    { emoji: "✅", title: "Review & Submit", desc: "Your order builds at the bottom of the screen. Review it, adjust quantities, then submit. That's it.", btn: "Got it ✓" },
   ];
   const finishOnboarding = () => { setOnboardStep(null); try { localStorage.setItem("backstock_onboarded", "true"); } catch {} };
   if (view === "splash") return (
