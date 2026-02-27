@@ -137,6 +137,9 @@ export default function RestockApp() {
   const [editModelCategory, setEditModelCategory] = useState("");
   const [selCategory, setSelCategory] = useState(_saved?.selCategory || null);
   const [showOrderEdit, setShowOrderEdit] = useState(false);
+  const [onboardStep, setOnboardStep] = useState(() => {
+    try { return localStorage.getItem("backstock_onboarded") ? null : 0; } catch { return 0; }
+  });
   const [pickedItems, setPickedItems] = useState({});
   const [adjustedQtys, setAdjustedQtys] = useState({});
   const [analyticsData, setAnalyticsData] = useState([]);
@@ -782,6 +785,12 @@ export default function RestockApp() {
   };
 
   // SPLASH
+  const onboardSteps = [
+    { emoji: "📦", title: "Welcome to Backstock", desc: "Your store's restock requests, sent directly to the warehouse. No phone calls, no paper lists.", btn: "Show me how →" },
+    { emoji: "🔍", title: "Find What You Need", desc: "Search by name or browse categories. Tap a product to select how many your store needs.", btn: "Next →" },
+    { emoji: "✅", title: "Review & Submit", desc: "Your order builds at the bottom of the screen. Review it, adjust quantities, then submit. The warehouse gets it instantly.", btn: "Got it ✓" },
+  ];
+  const finishOnboarding = () => { setOnboardStep(null); try { localStorage.setItem("backstock_onboarded", "true"); } catch {} };
   if (view === "splash") return (
     <div style={{ ...st.page, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: "12px", background: "radial-gradient(ellipse at 50% 20%, #1a1a2e 0%, #0B0B0F 70%)" }}>
       <div style={{ fontSize: "56px", marginBottom: "8px" }}>📦</div>
@@ -795,7 +804,25 @@ export default function RestockApp() {
           📊 Manager Dashboard
         </button>
       </div>
-      <p style={{ color: "#ffffff12", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v5.0</p>
+      <p style={{ color: "#ffffff12", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v5.1</p>
+      {/* Onboarding overlay */}
+      {onboardStep !== null && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", zIndex: 999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 28px" }}>
+          <button onClick={finishOnboarding} style={{ position: "absolute", top: "20px", right: "20px", background: "none", border: "none", color: "#ffffff30", fontSize: "13px", fontWeight: 600, cursor: "pointer", padding: "8px" }}>Skip</button>
+          <div style={{ fontSize: "64px", marginBottom: "20px" }}>{onboardSteps[onboardStep].emoji}</div>
+          <h2 style={{ color: "#fff", fontSize: "24px", fontWeight: 800, margin: "0 0 12px 0", letterSpacing: "-0.5px" }}>{onboardSteps[onboardStep].title}</h2>
+          <p style={{ color: "#ffffff60", fontSize: "15px", lineHeight: "1.6", margin: "0 0 36px 0", maxWidth: "320px" }}>{onboardSteps[onboardStep].desc}</p>
+          <button onClick={() => { if (onboardStep >= onboardSteps.length - 1) { finishOnboarding(); } else { setOnboardStep(s => s + 1); } }}
+            style={{ padding: "16px 40px", borderRadius: "14px", border: "none", background: "linear-gradient(135deg, #FF6B35, #FF8C42)", color: "#fff", fontSize: "16px", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 20px rgba(255,107,53,0.4)", minWidth: "200px" }}>
+            {onboardSteps[onboardStep].btn}
+          </button>
+          <div style={{ display: "flex", gap: "8px", marginTop: "28px" }}>
+            {onboardSteps.map((_, i) => (
+              <div key={i} style={{ width: i === onboardStep ? "24px" : "8px", height: "8px", borderRadius: "4px", background: i === onboardStep ? "#FF6B35" : i < onboardStep ? "#FF6B3560" : "#ffffff15", transition: "all 0.3s ease" }} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 
