@@ -183,8 +183,13 @@ export default function RestockApp() {
 
   const [mgrPin, setMgrPin] = useState(null);
   const [ownerPin, setOwnerPin] = useState(null);
+  const [execPin, setExecPin] = useState(null);
   const [pinLoading, setPinLoading] = useState(false);
-  const [accessLevel, setAccessLevel] = useState(null); // "manager" or "owner"
+  const [accessLevel, setAccessLevel] = useState(null); // "owner", "manager", or "exec"
+
+  // Cost/margin visible when exec on your org, OR manager on customer org (no exec_pin)
+  const canSeeCostMargin = accessLevel === "exec" || (accessLevel === "manager" && !execPin);
+  const isManagerOrExec = accessLevel === "manager" || accessLevel === "exec";
 
   const activeWid = empWarehouse?.id || mgrWarehouse?.id || null;
   const catalogObj = useMemo(() => {
@@ -268,6 +273,7 @@ export default function RestockApp() {
     if (currentOrg) {
       setMgrPin(currentOrg.manager_pin || null);
       setOwnerPin(currentOrg.owner_pin || null);
+      setExecPin(currentOrg.exec_pin || null);
     }
     setPinLoading(false);
   }, [currentOrg]);
@@ -883,7 +889,7 @@ export default function RestockApp() {
         <button onClick={() => setView("employee-login")} style={{ ...st.btn, padding: "20px 24px" }}>
           🏪 Submit Restock Request
         </button>
-        <button onClick={() => { setAuthed(false); setPin(""); setMgrView("dashboard"); setMgrWarehouse(null); setMgrPin(null); setOwnerPin(null); setAccessLevel(null); loadPin(); setView("manager-login"); }} style={{ ...st.btn, background: "rgba(255,255,255,0.04)", border: "1px solid #ffffff12", boxShadow: "none", padding: "20px 24px" }}>
+        <button onClick={() => { setAuthed(false); setPin(""); setMgrView("dashboard"); setMgrWarehouse(null); setMgrPin(null); setOwnerPin(null); setExecPin(null); setAccessLevel(null); loadPin(); setView("manager-login"); }} style={{ ...st.btn, background: "rgba(255,255,255,0.04)", border: "1px solid #ffffff12", boxShadow: "none", padding: "20px 24px" }}>
           📊 Manager Dashboard
         </button>
       </div>
@@ -912,12 +918,14 @@ export default function RestockApp() {
 
   // MANAGER LOGIN
   if (view === "manager-login") {
+    const isExecPin = execPin && pin === execPin;
     const isMgrPin = mgrPin && pin === mgrPin;
     const isOwnerPin = ownerPin && pin === ownerPin;
-    const pinMatch = isMgrPin || isOwnerPin;
-    const pinWrong = (mgrPin || ownerPin) && pin.length >= 4 && !pinMatch;
+    const pinMatch = isExecPin || isMgrPin || isOwnerPin;
+    const pinWrong = (mgrPin || ownerPin || execPin) && pin.length >= 4 && !pinMatch;
     const handleLogin = () => {
-      if (isMgrPin) { sndLogin(); setAccessLevel("manager"); setAuthed(true); setView("manager-warehouse"); }
+      if (isExecPin) { sndLogin(); setAccessLevel("exec"); setAuthed(true); setView("manager-warehouse"); }
+      else if (isMgrPin) { sndLogin(); setAccessLevel("manager"); setAuthed(true); setView("manager-warehouse"); }
       else if (isOwnerPin) { sndLogin(); setAccessLevel("owner"); setAuthed(true); setView("manager-warehouse"); }
     };
     return (
@@ -1318,7 +1326,7 @@ export default function RestockApp() {
   }
 
   // MANAGER ANALYTICS
-  if (view === "manager" && authed && accessLevel === "manager" && mgrView === "analytics") {
+  if (view === "manager" && authed && isManagerOrExec && mgrView === "analytics") {
     const data = analyticsData;
     const totalOrders = data.length;
     const totalUnits = data.reduce((s, r) => s + (r.total_units || 0), 0);
@@ -1409,6 +1417,99 @@ export default function RestockApp() {
             <div style={{ fontSize: "11px", color: "#6C5CE780", fontWeight: 700, marginTop: "4px" }}>AVG ORDER SIZE</div>
           </div>
         </div>
+
+        {/* Margin analytics — only when cost mode active */}
+        {canSeeCostMargin && (() => {
+          let periodCost = 0; let periodRetail = 0;
+          const storeCosts = {}; const storeRetails = {};
+          const brandCosts = {}; const brandRetails = {}; const brandUnits = {};
+          data.forEach(r => {
+            let orderCost = 0; let orderRetail = 0;
+            Object.entries(r.items || {}).forEach(([key, qty]) => {
+              const [product] = key.split("|||");
+              const q = qty === "5+" ? 5 : parseInt(qty) || 0;
+              const model = catalog.find(c => c.model_name === product);
+              const cp = model?.cost_price || 0;
+              const rp = model?.retail_price || 0;
+              const br = model?.brand || "Unknown";
+              orderCost += cp * q; orderRetail += rp * q;
+              brandCosts[br] = (brandCosts[br] || 0) + cp * q;
+              brandRetails[br] = (brandRetails[br] || 0) + rp * q;
+              brandUnits[br] = (brandUnits[br] || 0) + q;
+            });
+            periodCost += orderCost; periodRetail += orderRetail;
+            storeCosts[r.store_location] = (storeCosts[r.store_location] || 0) + orderCost;
+            storeRetails[r.store_location] = (storeRetails[r.store_location] || 0) + orderRetail;
+          });
+          const periodProfit = periodRetail - periodCost;
+          const periodMargin = periodRetail > 0 ? (periodProfit / periodRetail * 100) : 0;
+          const storeMargins = Object.keys(storeCosts).map(s => ({
+            store: s, cost: storeCosts[s], retail: storeRetails[s],
+            profit: storeRetails[s] - storeCosts[s],
+            margin: storeRetails[s] > 0 ? ((storeRetails[s] - storeCosts[s]) / storeRetails[s] * 100) : 0
+          })).sort((a, b) => b.profit - a.profit);
+          const brandMargins = Object.keys(brandCosts).map(b => ({
+            brand: b, cost: brandCosts[b], retail: brandRetails[b], units: brandUnits[b],
+            profit: brandRetails[b] - brandCosts[b],
+            margin: brandRetails[b] > 0 ? ((brandRetails[b] - brandCosts[b]) / brandRetails[b] * 100) : 0
+          })).sort((a, b) => b.profit - a.profit);
+          return (
+            <>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "24px" }}>
+              <div style={{ padding: "16px", borderRadius: "12px", background: "rgba(230,57,70,0.06)", border: "1px solid #E6394620", textAlign: "center" }}>
+                <div style={{ fontSize: "22px", fontWeight: 900, color: "#E63946" }}>${periodCost.toFixed(0)}</div>
+                <div style={{ fontSize: "10px", color: "#E6394680", fontWeight: 700, marginTop: "4px" }}>TOTAL COST</div>
+              </div>
+              <div style={{ padding: "16px", borderRadius: "12px", background: "rgba(29,185,84,0.06)", border: "1px solid #1DB95420", textAlign: "center" }}>
+                <div style={{ fontSize: "22px", fontWeight: 900, color: "#1DB954" }}>${periodRetail.toFixed(0)}</div>
+                <div style={{ fontSize: "10px", color: "#1DB95480", fontWeight: 700, marginTop: "4px" }}>RETAIL VALUE</div>
+              </div>
+              <div style={{ padding: "16px", borderRadius: "12px", background: periodMargin >= 30 ? "rgba(29,185,84,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${periodMargin >= 30 ? "#1DB95420" : "#F59E0B20"}`, textAlign: "center" }}>
+                <div style={{ fontSize: "22px", fontWeight: 900, color: periodMargin >= 30 ? "#1DB954" : "#F59E0B" }}>{periodMargin.toFixed(1)}%</div>
+                <div style={{ fontSize: "10px", color: "#ffffff50", fontWeight: 700, marginTop: "4px" }}>AVG MARGIN</div>
+              </div>
+            </div>
+            {/* Margin by store */}
+            {storeMargins.length > 0 && (
+              <div style={{ marginBottom: "24px" }}>
+                <span style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>💰 Margin by Store</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "12px" }}>
+                  {storeMargins.map(s => (
+                    <div key={s.store} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.02)" }}>
+                      <span style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>{s.store}</span>
+                      <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                        <span style={{ fontSize: "11px", color: "#E63946", fontWeight: 600 }}>${s.cost.toFixed(0)}</span>
+                        <span style={{ fontSize: "11px", color: "#1DB954", fontWeight: 600 }}>${s.retail.toFixed(0)}</span>
+                        <span style={{ fontSize: "13px", fontWeight: 900, color: s.margin >= 30 ? "#1DB954" : "#F59E0B", minWidth: "48px", textAlign: "right" }}>{s.margin.toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* Margin by brand */}
+            {brandMargins.length > 0 && (
+              <div style={{ marginBottom: "24px" }}>
+                <span style={{ color: "#6C5CE7", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>🏷️ Margin by Brand</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "12px" }}>
+                  {brandMargins.map(b => (
+                    <div key={b.brand} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.02)" }}>
+                      <div>
+                        <span style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>{b.brand}</span>
+                        <span style={{ color: "#ffffff25", fontSize: "11px", marginLeft: "8px" }}>{b.units}u</span>
+                      </div>
+                      <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                        <span style={{ fontSize: "11px", color: "#1DB954", fontWeight: 600 }}>${b.profit.toFixed(0)} profit</span>
+                        <span style={{ fontSize: "13px", fontWeight: 900, color: b.margin >= 30 ? "#1DB954" : "#F59E0B", minWidth: "48px", textAlign: "right" }}>{b.margin.toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            </>
+          );
+        })()}
 
         {/* Top products first */}
         {topProducts.length > 0 && (
@@ -1524,19 +1625,38 @@ export default function RestockApp() {
                       const completedDate = order.completed_at ? new Date(order.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : dateStr;
                       const orderDate = new Date(order.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
                       let rows = "";
+                      const showCost = canSeeCostMargin;
+                      const colSpan = showCost ? "4" : "2";
+                      let grandTotalCost = 0;
+                      let grandTotalRetail = 0;
                       sortedCats.forEach(cat => {
-                        rows += `<tr><td colspan="2" style="padding:12px;font-weight:800;font-size:15px;background:#e8e8e8;border-bottom:2px solid #ddd;text-transform:uppercase;letter-spacing:0.5px;color:#444">${cat}</td></tr>`;
+                        rows += `<tr><td colspan="${colSpan}" style="padding:12px;font-weight:800;font-size:15px;background:#e8e8e8;border-bottom:2px solid #ddd;text-transform:uppercase;letter-spacing:0.5px;color:#444">${cat}</td></tr>`;
                         const sortedProducts = Object.keys(catGrp[cat]).sort();
                         sortedProducts.forEach(product => {
                           const items = catGrp[cat][product].sort((a, b) => a.flavor.localeCompare(b.flavor));
                           const productUnits = items.reduce((s, i) => s + (parseInt(i.qty) || 0), 0);
-                          rows += `<tr><td style="padding:10px 12px;font-weight:700;background:#f5f5f5;border-bottom:1px solid #eee;font-size:13px;">${product}</td><td style="padding:10px 12px;background:#f5f5f5;border-bottom:1px solid #eee;text-align:right;font-size:11px;color:#888;font-weight:600">${items.length} items &bull; ${productUnits}u</td></tr>`;
+                          const model = catalog.find(c => c.model_name === product);
+                          const costP = model?.cost_price || 0;
+                          const retailP = model?.retail_price || 0;
+                          const prodCostTotal = costP * productUnits;
+                          const prodRetailTotal = retailP * productUnits;
+                          grandTotalCost += prodCostTotal;
+                          grandTotalRetail += prodRetailTotal;
+                          rows += `<tr><td style="padding:10px 12px;font-weight:700;background:#f5f5f5;border-bottom:1px solid #eee;font-size:13px;">${product}</td><td style="padding:10px 12px;background:#f5f5f5;border-bottom:1px solid #eee;text-align:right;font-size:11px;color:#888;font-weight:600">${items.length} items &bull; ${productUnits}u</td>${showCost ? `<td style="padding:10px 12px;background:#f5f5f5;border-bottom:1px solid #eee;text-align:right;font-size:11px;color:#c44;font-weight:700">$${prodCostTotal.toFixed(2)}</td><td style="padding:10px 12px;background:#f5f5f5;border-bottom:1px solid #eee;text-align:right;font-size:11px;color:#2a8;font-weight:700">$${prodRetailTotal.toFixed(2)}</td>` : ""}</tr>`;
                           items.forEach(({ flavor, qty }) => {
-                            rows += `<tr><td style="padding:8px 12px 8px 28px;border-bottom:1px solid #f0f0f0;font-size:13px;">${flavor}</td><td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700;font-size:13px;">&times;${qty}</td></tr>`;
+                            const q = parseInt(qty) || 0;
+                            rows += `<tr><td style="padding:8px 12px 8px 28px;border-bottom:1px solid #f0f0f0;font-size:13px;">${flavor}</td><td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700;font-size:13px;">&times;${qty}</td>${showCost ? `<td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;font-size:12px;color:#c44;">$${(costP * q).toFixed(2)}</td><td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;text-align:right;font-size:12px;color:#2a8;">$${(retailP * q).toFixed(2)}</td>` : ""}</tr>`;
                           });
                         });
                       });
-                      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice - ${order.store_location}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:40px;color:#222;max-width:600px;margin:0 auto}@media print{body{padding:20px}}</style></head><body>
+                      if (showCost) {
+                        const grandMargin = grandTotalRetail > 0 ? ((grandTotalRetail - grandTotalCost) / grandTotalRetail * 100).toFixed(1) : "0";
+                        const grandProfit = grandTotalRetail - grandTotalCost;
+                        rows += `<tr><td colspan="2" style="padding:12px;font-weight:900;font-size:14px;background:#333;color:#fff;border-top:3px solid #222">TOTALS</td><td style="padding:12px;background:#333;color:#f88;font-weight:900;text-align:right;border-top:3px solid #222;font-size:14px">$${grandTotalCost.toFixed(2)}</td><td style="padding:12px;background:#333;color:#6d8;font-weight:900;text-align:right;border-top:3px solid #222;font-size:14px">$${grandTotalRetail.toFixed(2)}</td></tr>`;
+                        rows += `<tr><td colspan="2" style="padding:10px 12px;font-weight:700;font-size:13px;background:#f8f8f8">NET PROFIT</td><td colspan="2" style="padding:10px 12px;background:#f8f8f8;text-align:right;font-weight:900;font-size:16px;color:${grandProfit >= 0 ? '#2a8' : '#c44'}">$${grandProfit.toFixed(2)} (${grandMargin}%)</td></tr>`;
+                      }
+                      const costHeaders = showCost ? `<th style="padding:10px 12px;text-align:right;font-size:11px;color:#888;border-bottom:2px solid #ddd">COST</th><th style="padding:10px 12px;text-align:right;font-size:11px;color:#888;border-bottom:2px solid #ddd">RETAIL</th>` : "";
+                      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice - ${order.store_location}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:40px;color:#222;max-width:${showCost ? "750" : "600"}px;margin:0 auto}@media print{body{padding:20px}}</style></head><body>
                         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px">
                           <div><h1 style="font-size:24px;font-weight:800;margin-bottom:4px">Backstock Invoice</h1><p style="color:#888;font-size:13px">${mgrWarehouse?.name || "Warehouse"}</p></div>
                           <div style="text-align:right"><p style="font-size:12px;color:#888">Order #${order.id}</p></div>
@@ -1551,8 +1671,12 @@ export default function RestockApp() {
                           <div><p style="font-size:24px;font-weight:900">${order.total_flavors}</p><p style="font-size:11px;color:#888;font-weight:600">ITEMS</p></div>
                           <div style="width:1px;background:#ddd"></div>
                           <div><p style="font-size:24px;font-weight:900">${order.total_units}</p><p style="font-size:11px;color:#888;font-weight:600">TOTAL UNITS</p></div>
+                          ${showCost ? `<div style="width:1px;background:#ddd"></div>
+                          <div><p style="font-size:24px;font-weight:900;color:#2a8">$${grandTotalRetail.toFixed(2)}</p><p style="font-size:11px;color:#888;font-weight:600">RETAIL VALUE</p></div>
+                          <div style="width:1px;background:#ddd"></div>
+                          <div><p style="font-size:24px;font-weight:900;color:#c44">$${grandTotalCost.toFixed(2)}</p><p style="font-size:11px;color:#888;font-weight:600">COST</p></div>` : ""}
                         </div>
-                        <table style="width:100%;border-collapse:collapse;border:1px solid #eee;border-radius:8px;overflow:hidden">${rows}</table>
+                        <table style="width:100%;border-collapse:collapse;border:1px solid #eee;border-radius:8px;overflow:hidden">${showCost ? `<tr><th style="padding:10px 12px;text-align:left;font-size:11px;color:#888;border-bottom:2px solid #ddd">ITEM</th><th style="padding:10px 12px;text-align:right;font-size:11px;color:#888;border-bottom:2px solid #ddd">QTY</th>${costHeaders}</tr>` : ""}${rows}</table>
                         <p style="text-align:center;color:#bbb;font-size:11px;margin-top:30px">Generated by Backstock &bull; ${new Date().toLocaleDateString()}</p>
                       </body></html>`;
                       const blob = new Blob([html], { type: "text/html" });
@@ -1687,7 +1811,14 @@ export default function RestockApp() {
                       <div><div style={{ fontSize: "13px" }}>{m.model_name}</div><div style={{ fontSize: "10px", color: "#ffffff25", marginTop: "2px" }}>{m.puffs !== "N/A" ? m.puffs + " puffs" : m.brand}</div></div>
                       {isOwnerView
                         ? <span style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff40" }}>{mTotal} flavor{mTotal !== 1 ? "s" : ""}</span>
-                        : <span style={{ fontSize: "12px", fontWeight: 700, color: mTracked < mTotal ? "#F59E0B" : mTotalStock > 0 ? "#1DB954" : "#E63946" }}>{mTotalStock} in stock ›</span>
+                        : <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            {canSeeCostMargin && m.cost_price > 0 && m.retail_price > 0 && (
+                              <span style={{ fontSize: "10px", fontWeight: 800, color: ((m.retail_price - m.cost_price) / m.retail_price * 100) >= 30 ? "#1DB954" : "#F59E0B", padding: "2px 6px", borderRadius: "4px", background: ((m.retail_price - m.cost_price) / m.retail_price * 100) >= 30 ? "#1DB95415" : "#F59E0B15" }}>
+                                {Math.round((m.retail_price - m.cost_price) / m.retail_price * 100)}%
+                              </span>
+                            )}
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: mTracked < mTotal ? "#F59E0B" : mTotalStock > 0 ? "#1DB954" : "#E63946" }}>{mTotalStock} in stock ›</span>
+                          </div>
                       }
                     </button>
                     );
@@ -1709,7 +1840,7 @@ export default function RestockApp() {
   }
 
   // MANAGER EDIT MODEL (manager only, not owner)
-  if (view === "manager" && authed && accessLevel === "manager" && mgrView === "editModel" && editModel) {
+  if (view === "manager" && authed && isManagerOrExec && mgrView === "editModel" && editModel) {
     const m = catalog.find(c => c.id === editModel.id) || editModel;
     const bc = getBrandColor(m.brand);
     const whVis = m.warehouse_visibility || {};
@@ -1786,6 +1917,47 @@ export default function RestockApp() {
               style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid #00B4D830", background: "#00B4D810", color: "#00B4D8", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>Set All</button>
           </div>
         </div>
+        {/* Cost & Retail Pricing — manager only, hidden unless cost mode active */}
+        {canSeeCostMargin && (
+        <div style={{ display: "flex", gap: "10px", marginBottom: "16px", padding: "14px 16px", borderRadius: "10px", background: "rgba(255,107,53,0.04)", border: "1px solid rgba(255,107,53,0.1)" }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: "10px", color: "#FF6B35", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: "6px", display: "block" }}>Cost Price</label>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <span style={{ color: "#ffffff30", fontSize: "14px", fontWeight: 700 }}>$</span>
+              <input type="number" inputMode="decimal" step="0.01" value={m.cost_price ?? ""} placeholder="0.00"
+                onChange={e => {
+                  const val = e.target.value === "" ? null : parseFloat(e.target.value);
+                  setCatalog(p => p.map(c => c.id === m.id ? { ...c, cost_price: val } : c));
+                  clearTimeout(window._costTimer); window._costTimer = setTimeout(() => { orgSb.patch("catalog", { cost_price: val }, `id=eq.${m.id}`); }, 800);
+                }}
+                onFocus={e => e.target.select()}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.04)", color: "#FF6B35", fontSize: "16px", fontWeight: 800, outline: "none" }} />
+            </div>
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: "10px", color: "#1DB954", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: "6px", display: "block" }}>Retail Price</label>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <span style={{ color: "#ffffff30", fontSize: "14px", fontWeight: 700 }}>$</span>
+              <input type="number" inputMode="decimal" step="0.01" value={m.retail_price ?? ""} placeholder="0.00"
+                onChange={e => {
+                  const val = e.target.value === "" ? null : parseFloat(e.target.value);
+                  setCatalog(p => p.map(c => c.id === m.id ? { ...c, retail_price: val } : c));
+                  clearTimeout(window._retailTimer); window._retailTimer = setTimeout(() => { orgSb.patch("catalog", { retail_price: val }, `id=eq.${m.id}`); }, 800);
+                }}
+                onFocus={e => e.target.select()}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.04)", color: "#1DB954", fontSize: "16px", fontWeight: 800, outline: "none" }} />
+            </div>
+          </div>
+          {m.cost_price > 0 && m.retail_price > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minWidth: "60px" }}>
+              <span style={{ fontSize: "10px", color: "#ffffff30", fontWeight: 700, textTransform: "uppercase", marginBottom: "4px" }}>Margin</span>
+              <span style={{ fontSize: "18px", fontWeight: 900, color: ((m.retail_price - m.cost_price) / m.retail_price * 100) >= 30 ? "#1DB954" : "#F59E0B" }}>
+                {Math.round((m.retail_price - m.cost_price) / m.retail_price * 100)}%
+              </span>
+            </div>
+          )}
+        </div>
+        )}
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           {(m.flavors || []).map(f => {
             const isHidden = hiddenForThis.includes(f);
@@ -1833,8 +2005,8 @@ export default function RestockApp() {
         <h1 style={st.h1}>📊 {mgrWarehouse?.name} Dashboard</h1><p style={st.sub}>{loading ? "Loading..." : `${reports.length} pending order${reports.length !== 1 ? "s" : ""}`}</p>
         <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
           <button onClick={loadMgr} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff50", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🔄 Refresh</button>
-          {(accessLevel === "manager" || accessLevel === "owner") && <button onClick={() => setMgrView("catalog")} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #6C5CE730", background: "#6C5CE710", color: "#6C5CE7", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🗂️ Catalog</button>}
-          {accessLevel === "manager" && <button onClick={() => { setMgrView("analytics"); loadAnalytics(analyticsRange); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #00B4D830", background: "#00B4D810", color: "#00B4D8", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>📈 Analytics</button>}
+          {(isManagerOrExec || accessLevel === "owner") && <button onClick={() => setMgrView("catalog")} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #6C5CE730", background: "#6C5CE710", color: "#6C5CE7", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🗂️ Catalog</button>}
+          {isManagerOrExec && <button onClick={() => { setMgrView("analytics"); loadAnalytics(analyticsRange); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #00B4D830", background: "#00B4D810", color: "#00B4D8", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>📈 Analytics</button>}
         </div>
 
         {/* PENDING ORDERS — hero section */}
@@ -1857,10 +2029,9 @@ export default function RestockApp() {
         </div>
 
         {/* SETTINGS — visually separated */}
-        {accessLevel === "manager" && <>
+        {isManagerOrExec && <>
         <div style={{ borderTop: "1px solid #ffffff08", paddingTop: "20px" }}>
           {/* Banner */}
-          <div style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid #ffffff08", background: "rgba(255,255,255,0.015)", marginBottom: "12px" }}>
           {(() => { const wid = mgrWarehouse?.id || 1; const bd = bannerData[wid] || { message: "", active: false }; const bannerText = bd.message; const bannerOn = bd.active; return (<>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: editBanner ? "12px" : "0" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}><span style={{ fontSize: "14px" }}>📢</span><span style={{ color: "#FF6B35", fontSize: "11px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Banner</span></div>
