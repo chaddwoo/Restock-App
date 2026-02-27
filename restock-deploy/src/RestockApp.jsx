@@ -1599,6 +1599,32 @@ export default function RestockApp() {
             </div>
           </div>
         )}
+        {/* Master warehouse visibility toggle */}
+        {(() => {
+          const allFlavors = m.flavors || [];
+          const isModelHidden = allFlavors.length > 0 && allFlavors.every(f => hiddenForThis.includes(f));
+          const toggleModel = async () => {
+            const whVis = { ...(m.warehouse_visibility || {}) };
+            const wid = String(mgrWarehouse.id);
+            if (isModelHidden) {
+              whVis[wid] = [];
+            } else {
+              whVis[wid] = [...allFlavors];
+            }
+            try { await sb.patch("catalog", { warehouse_visibility: whVis }, `id=eq.${m.id}`); setCatalog(p => p.map(c => c.id === m.id ? { ...c, warehouse_visibility: whVis } : c)); } catch (e) { console.error(e); }
+          };
+          return (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderRadius: "10px", background: isModelHidden ? "rgba(230,57,70,0.08)" : "rgba(29,185,84,0.08)", border: `1px solid ${isModelHidden ? "#E6394620" : "#1DB95420"}`, marginBottom: "16px" }}>
+              <div>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: isModelHidden ? "#E63946" : "#1DB954" }}>{isModelHidden ? "Hidden from " : "Visible at "}{mgrWarehouse?.name}</div>
+                <div style={{ fontSize: "10px", color: "#ffffff30", marginTop: "2px" }}>{isModelHidden ? "Employees can't see this product" : "All tracked flavors shown to employees"}</div>
+              </div>
+              <button onClick={toggleModel} style={{ width: "52px", height: "28px", borderRadius: "14px", border: "none", background: isModelHidden ? "#ffffff15" : "#1DB954", cursor: "pointer", position: "relative", transition: "background 0.2s ease", padding: 0 }}>
+                <div style={{ width: "22px", height: "22px", borderRadius: "11px", background: "#fff", position: "absolute", top: "3px", left: isModelHidden ? "3px" : "27px", transition: "left 0.2s ease", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
+              </button>
+            </div>
+          );
+        })()}
         <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
           <input type="text" placeholder="Add new item..." value={newFlavor} onChange={e => setNewFlavor(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && newFlavor.trim()) { addFlavorToModel(m.id, newFlavor); setNewFlavor(""); } }}
