@@ -54,9 +54,7 @@ const DEFAULT_CATALOG = [
 
 const QTY_OPTIONS = ["skip", "1", "2", "3", "4", "5+"];
 
-// Warehouses
-const WAREHOUSES = [{ code: "1515", name: "M&W", id: 1 },{ code: "3300", name: "W", id: 2 },{ code: "9630", name: "M", id: 3 }];
-const getWarehouseByCode = (code) => WAREHOUSES.find(w => w.code === code);
+// Warehouses loaded from DB per-org (see loadWarehouses)
 
 // Improved quantity colors — calm to urgent gradient
 const getQtyColor = (v) => {
@@ -86,13 +84,51 @@ const fmtTime = (d) => new Date(d).toLocaleTimeString("en-US", { hour: "numeric"
 
 // Employee session persistence
 const LS_KEY = "restock_emp_session";
+const LS_ORG_KEY = "backstock_org";
 const saveSession = (d) => { try { localStorage.setItem(LS_KEY, JSON.stringify(d)); } catch(e){} };
 const loadSession = () => { try { const s = localStorage.getItem(LS_KEY); return s ? JSON.parse(s) : null; } catch(e){ return null; } };
 const clearSession = () => { try { localStorage.removeItem(LS_KEY); } catch(e){} };
+const loadSavedOrg = () => { try { const s = localStorage.getItem(LS_ORG_KEY); return s ? JSON.parse(s) : null; } catch(e){ return null; } };
+const saveOrg = (o) => { try { localStorage.setItem(LS_ORG_KEY, JSON.stringify(o)); } catch(e){} };
+const clearOrg = () => { try { localStorage.removeItem(LS_ORG_KEY); } catch(e){} };
 const _saved = (() => { const s = loadSession(); if (!s) return null; const empViews = ["employee-login","employee-products","employee-flavors","employee-confirm"]; if (!empViews.includes(s.view)) return null; return s; })();
+const _savedOrg = loadSavedOrg();
 
 export default function RestockApp() {
-  const [view, setView] = useState(_saved?.view || "splash");
+  // Org state
+  const [currentOrg, setCurrentOrg] = useState(_savedOrg);
+  const [orgCode, setOrgCode] = useState("");
+  const [orgError, setOrgError] = useState("");
+  const [orgLoading, setOrgLoading] = useState(false);
+  const [warehouses, setWarehouses] = useState([]);
+
+  const orgId = currentOrg?.id || null;
+
+  // Org-scoped database helper — injects org_id into every query
+  const orgSb = useMemo(() => ({
+    get(table, opts = {}) {
+      if (!orgId) return Promise.resolve([]);
+      const filter = opts.filter ? `${opts.filter}&org_id=eq.${orgId}` : `org_id=eq.${orgId}`;
+      return sb.get(table, { ...opts, filter });
+    },
+    post(table, data) {
+      if (!orgId) return Promise.resolve(null);
+      return sb.post(table, { ...data, org_id: orgId });
+    },
+    patch(table, data, filter) {
+      if (!orgId) return Promise.resolve(null);
+      return sb.patch(table, data, `${filter}&org_id=eq.${orgId}`);
+    },
+    del(table, filter) {
+      if (!orgId) return Promise.resolve(false);
+      return sb.del(table, `${filter}&org_id=eq.${orgId}`);
+    },
+    rpc: sb.rpc,
+  }), [orgId]);
+
+  const getWarehouseByCode = (code) => warehouses.find(w => w.code === code);
+
+  const [view, setView] = useState(_saved?.view || (_savedOrg ? "splash" : "org-entry"));
   const [empName, setEmpName] = useState(_saved?.empName || "");
   const [storeLoc, setStoreLoc] = useState(_saved?.storeLoc || "");
   const [empWarehouse, setEmpWarehouse] = useState(_saved?.empWarehouse || null);
@@ -193,66 +229,76 @@ export default function RestockApp() {
   }, [catalogObj]);
 
   const loadCatalog = useCallback(async () => {
+    if (!orgId) return;
     try {
-      const data = await sb.get("catalog", { order: "brand.asc,model_name.asc" });
+      const data = await orgSb.get("catalog", { order: "brand.asc,model_name.asc" });
       if (data && Array.isArray(data) && data.length > 0) {
         setCatalog(data);
       } else {
-        await Promise.all(DEFAULT_CATALOG.map(item => sb.post("catalog", item)));
-        const seeded = await sb.get("catalog", { order: "brand.asc,model_name.asc" });
+        await Promise.all(DEFAULT_CATALOG.map(item => orgSb.post("catalog", item)));
+        const seeded = await orgSb.get("catalog", { order: "brand.asc,model_name.asc" });
         setCatalog(seeded || []);
       }
       setCatLoaded(true);
     } catch (e) { console.error(e); setCatLoaded(true); }
-  }, []);
+  }, [orgId, orgSb]);
+
+  const loadWarehouses = useCallback(async () => {
+    if (!orgId) return;
+    try {
+      const data = await sb.get("warehouses", { order: "name.asc", filter: `org_id=eq.${orgId}` });
+      if (data && Array.isArray(data)) setWarehouses(data);
+    } catch (e) { console.error(e); }
+  }, [orgId]);
 
   const loadBanner = useCallback(async () => {
+    if (!orgId) return;
     try {
-      const d = await sb.get("banner", { order: "id.asc" });
+      const d = await orgSb.get("banner", { order: "id.asc" });
       if (d && d.length > 0) {
         const map = {};
         d.forEach(b => { map[b.warehouse_id || 1] = { message: b.message || "", active: b.active, id: b.id }; });
         setBannerData(map);
       }
     } catch (e) { console.error(e); }
-  }, []);
+  }, [orgId, orgSb]);
 
   const loadPin = useCallback(async () => {
     setPinLoading(true);
-    try {
-      const d = await sb.get("settings", { limit: 1 });
-      if (d && d[0]) { setMgrPin(d[0].manager_pin); setOwnerPin(d[0].owner_pin || null); }
-    } catch (e) { console.error(e); }
+    if (currentOrg) {
+      setMgrPin(currentOrg.manager_pin || null);
+      setOwnerPin(currentOrg.owner_pin || null);
+    }
     setPinLoading(false);
-  }, []);
+  }, [currentOrg]);
 
   const loadMgr = useCallback(async () => {
-    if (!mgrWarehouse) return;
+    if (!mgrWarehouse || !orgId) return;
     setLoading(true);
     try {
       const [subs, sugs, sl] = await Promise.all([
-        sb.get("submissions", { order: "created_at.desc", filter: `status=eq.pending&warehouse_id=eq.${mgrWarehouse.id}` }),
-        sb.get("suggestions", { order: "created_at.desc", filter: `status=eq.pending&warehouse_id=eq.${mgrWarehouse.id}` }),
-        sb.get("stores", { order: "name.asc", filter: `warehouse_id=eq.${mgrWarehouse.id}` }),
+        orgSb.get("submissions", { order: "created_at.desc", filter: `status=eq.pending&warehouse_id=eq.${mgrWarehouse.id}` }),
+        orgSb.get("suggestions", { order: "created_at.desc", filter: `status=eq.pending&warehouse_id=eq.${mgrWarehouse.id}` }),
+        orgSb.get("stores", { order: "name.asc", filter: `warehouse_id=eq.${mgrWarehouse.id}` }),
       ]);
       setReports(subs || []); setAllSugs(sugs || []); setStores(sl || []);
     } catch (e) { console.error(e); }
     setLoading(false);
-  }, [mgrWarehouse]);
+  }, [mgrWarehouse, orgId, orgSb]);
 
   const loadAnalytics = useCallback(async (range) => {
-    if (!mgrWarehouse) return;
+    if (!mgrWarehouse || !orgId) return;
     const days = range === "30d" ? 30 : range === "14d" ? 14 : 7;
     const since = new Date();
     since.setDate(since.getDate() - days);
     const sinceStr = since.toISOString();
     try {
-      const data = await sb.get("submissions", { order: "created_at.desc", filter: `warehouse_id=eq.${mgrWarehouse.id}&status=eq.completed&created_at=gte.${sinceStr}`, limit: 500 });
+      const data = await orgSb.get("submissions", { order: "created_at.desc", filter: `warehouse_id=eq.${mgrWarehouse.id}&status=eq.completed&created_at=gte.${sinceStr}`, limit: 500 });
       setAnalyticsData(data || []);
     } catch (e) { console.error(e); setAnalyticsData([]); }
   }, [mgrWarehouse]);
 
-  useEffect(() => { loadCatalog(); loadBanner(); }, [loadCatalog, loadBanner]);
+  useEffect(() => { if (orgId) { loadCatalog(); loadBanner(); loadWarehouses(); } }, [orgId, loadCatalog, loadBanner, loadWarehouses]);
   useEffect(() => { if (view === "manager" && authed && mgrWarehouse) loadMgr(); }, [view, authed, mgrWarehouse, loadMgr]);
 
   // Save employee session to localStorage on every relevant change
@@ -336,8 +382,8 @@ export default function RestockApp() {
       
       // Save submission with adjusted data and deduction map for restore
       if (adjItems.length > 0) {
-        await sb.post("submissions", { employee_name: empName.trim(), store_location: storeLoc.trim(), items: adjustedOrder, total_flavors: adjItems.length, total_units: adjTu, warehouse_id: empWarehouse.id, status: "pending" });
-        if (suggestions.length > 0) await Promise.all(suggestions.map(sg => sb.post("suggestions", { suggestion_text: sg.text, employee_name: sg.from, store_location: sg.store, warehouse_id: empWarehouse.id })));
+        await orgSb.post("submissions", { employee_name: empName.trim(), store_location: storeLoc.trim(), items: adjustedOrder, total_flavors: adjItems.length, total_units: adjTu, warehouse_id: empWarehouse.id, status: "pending" });
+        if (suggestions.length > 0) await Promise.all(suggestions.map(sg => orgSb.post("suggestions", { suggestion_text: sg.text, employee_name: sg.from, store_location: sg.store, warehouse_id: empWarehouse.id })));
       }
       
       // Update local catalog stock instead of full reload (stock already deducted server-side)
@@ -447,7 +493,7 @@ export default function RestockApp() {
       const adjEntries = Object.entries(finalItems);
       let adjTu = 0; adjEntries.forEach(([, v]) => { adjTu += v === "5+" ? 5 : parseInt(v) || 0; });
       
-      await sb.patch("submissions", { 
+      await orgSb.patch("submissions", { 
         status: "completed", 
         completed_at: new Date().toISOString(),
         items: finalItems,
@@ -463,7 +509,7 @@ export default function RestockApp() {
   const cancelSubmission = async (report) => {
     try {
       // Delete the submission first (most important action)
-      const deleted = await sb.del("submissions", `id=eq.${report.id}`);
+      const deleted = await orgSb.del("submissions", `id=eq.${report.id}`);
       if (!deleted) { console.error("Failed to delete submission"); return; }
       
       // Remove from UI immediately
@@ -509,7 +555,7 @@ export default function RestockApp() {
     const wid = mgrWarehouse.id;
     const bd = bannerData[wid];
     if (bd) {
-      try { await sb.patch("banner", { message: bannerInput, active: true, updated_at: new Date().toISOString() }, `id=eq.${bd.id}`); setBannerData(p => ({ ...p, [wid]: { ...p[wid], message: bannerInput, active: true } })); setEditBanner(false); } catch (e) { console.error(e); }
+      try { await orgSb.patch("banner", { message: bannerInput, active: true, updated_at: new Date().toISOString() }, `id=eq.${bd.id}`); setBannerData(p => ({ ...p, [wid]: { ...p[wid], message: bannerInput, active: true } })); setEditBanner(false); } catch (e) { console.error(e); }
     }
   };
   const toggleBanner = async () => {
@@ -517,13 +563,13 @@ export default function RestockApp() {
     const wid = mgrWarehouse.id;
     const bd = bannerData[wid];
     if (bd) {
-      try { await sb.patch("banner", { active: !bd.active, updated_at: new Date().toISOString() }, `id=eq.${bd.id}`); setBannerData(p => ({ ...p, [wid]: { ...p[wid], active: !bd.active } })); } catch (e) { console.error(e); }
+      try { await orgSb.patch("banner", { active: !bd.active, updated_at: new Date().toISOString() }, `id=eq.${bd.id}`); setBannerData(p => ({ ...p, [wid]: { ...p[wid], active: !bd.active } })); } catch (e) { console.error(e); }
     }
   };
-  const dismissSug = async (id) => { try { await sb.patch("suggestions", { status: "dismissed" }, `id=eq.${id}`); sndRemove(); setAllSugs(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
-  const approveSug = async (id) => { try { await sb.patch("suggestions", { status: "approved" }, `id=eq.${id}`); sndAdd(); setAllSugs(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
-  const addStore = async () => { if (!newStore.trim() || !mgrWarehouse) return; try { await sb.post("stores", { name: newStore.trim(), warehouse_id: mgrWarehouse.id }); sndAdd(); setNewStore(""); loadMgr(); } catch (e) { console.error(e); } };
-  const removeStore = async (id) => { try { await sb.del("stores", `id=eq.${id}`); sndRemove(); setStores(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
+  const dismissSug = async (id) => { try { await orgSb.patch("suggestions", { status: "dismissed" }, `id=eq.${id}`); sndRemove(); setAllSugs(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
+  const approveSug = async (id) => { try { await orgSb.patch("suggestions", { status: "approved" }, `id=eq.${id}`); sndAdd(); setAllSugs(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
+  const addStore = async () => { if (!newStore.trim() || !mgrWarehouse) return; try { await orgSb.post("stores", { name: newStore.trim(), warehouse_id: mgrWarehouse.id }); sndAdd(); setNewStore(""); loadMgr(); } catch (e) { console.error(e); } };
+  const removeStore = async (id) => { try { await orgSb.del("stores", `id=eq.${id}`); sndRemove(); setStores(p => p.filter(s => s.id !== id)); } catch (e) { console.error(e); } };
 
   const addFlavorToModel = async (modelId, flavor) => {
     const model = catalog.find(c => c.id === modelId); if (!model || !flavor.trim()) return;
@@ -532,7 +578,7 @@ export default function RestockApp() {
     // Auto-hide from other warehouses
     const whVis = { ...(model.warehouse_visibility || {}) };
     if (mgrWarehouse) {
-      WAREHOUSES.forEach(w => {
+      warehouses.forEach(w => {
         if (w.id !== mgrWarehouse.id) {
           whVis[String(w.id)] = [...(whVis[String(w.id)] || []), f];
         }
@@ -544,7 +590,7 @@ export default function RestockApp() {
       const wid = String(mgrWarehouse.id);
       sl[wid] = { ...(sl[wid] || {}), [f]: 0 };
     }
-    try { await sb.patch("catalog", { flavors: updated, warehouse_visibility: whVis, stock_levels: sl }, `id=eq.${modelId}`); sndAdd(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated, warehouse_visibility: whVis, stock_levels: sl } : c)); } catch (e) { console.error(e); }
+    try { await orgSb.patch("catalog", { flavors: updated, warehouse_visibility: whVis, stock_levels: sl }, `id=eq.${modelId}`); sndAdd(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated, warehouse_visibility: whVis, stock_levels: sl } : c)); } catch (e) { console.error(e); }
   };
   const removeFlavorFromModel = async (modelId, flavor) => {
     const model = catalog.find(c => c.id === modelId); if (!model) return;
@@ -559,10 +605,10 @@ export default function RestockApp() {
       if (sl[wid]) { const ws = { ...sl[wid] }; delete ws[flavor]; sl[wid] = ws; }
     }
     // Only fully delete flavor from master list if hidden in ALL warehouses
-    const allWarehouses = WAREHOUSES.map(w => String(w.id));
+    const allWarehouses = warehouses.map(w => String(w.id));
     const hiddenEverywhere = allWarehouses.every(wid => { const h = whVis[wid] || []; return h.includes("__ALL__") || h.includes(flavor); });
     const updated = hiddenEverywhere ? (model.flavors || []).filter(f => f !== flavor) : (model.flavors || []);
-    try { await sb.patch("catalog", { flavors: updated, warehouse_visibility: whVis, stock_levels: sl }, `id=eq.${modelId}`); sndRemove(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated, warehouse_visibility: whVis, stock_levels: sl } : c)); } catch (e) { console.error(e); }
+    try { await orgSb.patch("catalog", { flavors: updated, warehouse_visibility: whVis, stock_levels: sl }, `id=eq.${modelId}`); sndRemove(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated, warehouse_visibility: whVis, stock_levels: sl } : c)); } catch (e) { console.error(e); }
   };
   // Stock update — instant local state, save after short delay, auto-flush on navigation
   const stockTimers = useRef({});
@@ -571,7 +617,7 @@ export default function RestockApp() {
   const saveStockNow = (modelId) => {
     const model = catalogRef.current.find(c => c.id === modelId);
     if (model) {
-      sb.patch("catalog", { stock_levels: model.stock_levels || {} }, `id=eq.${modelId}`).catch(e => console.error(e));
+      orgSb.patch("catalog", { stock_levels: model.stock_levels || {} }, `id=eq.${modelId}`).catch(e => console.error(e));
     }
   };
   const flushStock = () => {
@@ -621,7 +667,7 @@ export default function RestockApp() {
     const ws = {};
     (model.flavors || []).forEach(f => { ws[f] = Math.max(0, parseInt(count) || 0); });
     sl[wid] = ws;
-    try { await sb.patch("catalog", { stock_levels: sl }, `id=eq.${modelId}`); setCatalog(p => p.map(c => c.id === modelId ? { ...c, stock_levels: sl } : c)); } catch (e) { console.error(e); }
+    try { await orgSb.patch("catalog", { stock_levels: sl }, `id=eq.${modelId}`); setCatalog(p => p.map(c => c.id === modelId ? { ...c, stock_levels: sl } : c)); } catch (e) { console.error(e); }
   };
   const toggleFlavorVisibility = async (modelId, flavor) => {
     if (!mgrWarehouse) return;
@@ -631,17 +677,17 @@ export default function RestockApp() {
     const hidden = whVis[wid] || [];
     const isHidden = hidden.includes(flavor);
     whVis[wid] = isHidden ? hidden.filter(f => f !== flavor) : [...hidden, flavor];
-    try { await sb.patch("catalog", { warehouse_visibility: whVis }, `id=eq.${modelId}`); setCatalog(p => p.map(c => c.id === modelId ? { ...c, warehouse_visibility: whVis } : c)); } catch (e) { console.error(e); }
+    try { await orgSb.patch("catalog", { warehouse_visibility: whVis }, `id=eq.${modelId}`); setCatalog(p => p.map(c => c.id === modelId ? { ...c, warehouse_visibility: whVis } : c)); } catch (e) { console.error(e); }
   };
   const addModel = async () => {
     if (!newModelName.trim() || !newModelBrand.trim()) return;
     // Hide from other warehouses entirely using __ALL__ marker
     const whVis = {};
     if (mgrWarehouse) {
-      WAREHOUSES.forEach(w => { if (w.id !== mgrWarehouse.id) whVis[String(w.id)] = ["__ALL__"]; });
+      warehouses.forEach(w => { if (w.id !== mgrWarehouse.id) whVis[String(w.id)] = ["__ALL__"]; });
     }
     try {
-      const res = await sb.post("catalog", { model_name: newModelName.trim(), brand: newModelBrand.trim(), puffs: newModelPuffs.trim() || "N/A", category: newModelCategory.trim() || "Vapes", flavors: [], warehouse_visibility: whVis });
+      const res = await orgSb.post("catalog", { model_name: newModelName.trim(), brand: newModelBrand.trim(), puffs: newModelPuffs.trim() || "N/A", category: newModelCategory.trim() || "Vapes", flavors: [], warehouse_visibility: whVis });
       if (res && res[0]) { sndAdd(); setCatalog(p => [...p, res[0]].sort((a, b) => (a.category || "").localeCompare(b.category || "") || a.brand.localeCompare(b.brand) || a.model_name.localeCompare(b.model_name))); }
       setNewModelName(""); setNewModelBrand(""); setNewModelPuffs(""); setNewModelCategory("Vapes"); setShowAddModel(false);
     } catch (e) { console.error(e); }
@@ -657,15 +703,15 @@ export default function RestockApp() {
         const sl = { ...(model.stock_levels || {}) };
         delete sl[String(mgrWarehouse.id)];
         // Check if hidden from ALL warehouses — if so, truly delete from DB
-        const allWarehouses = WAREHOUSES.map(w => String(w.id));
+        const allWarehouses = warehouses.map(w => String(w.id));
         const hiddenEverywhere = allWarehouses.every(wid => (whVis[wid] || []).includes("__ALL__"));
         if (hiddenEverywhere) {
-          await sb.del("catalog", `id=eq.${id}`); sndRemove(); setCatalog(p => p.filter(c => c.id !== id));
+          await orgSb.del("catalog", `id=eq.${id}`); sndRemove(); setCatalog(p => p.filter(c => c.id !== id));
         } else {
-          await sb.patch("catalog", { warehouse_visibility: whVis, stock_levels: sl }, `id=eq.${id}`); sndRemove(); setCatalog(p => p.map(c => c.id === id ? { ...c, warehouse_visibility: whVis, stock_levels: sl } : c));
+          await orgSb.patch("catalog", { warehouse_visibility: whVis, stock_levels: sl }, `id=eq.${id}`); sndRemove(); setCatalog(p => p.map(c => c.id === id ? { ...c, warehouse_visibility: whVis, stock_levels: sl } : c));
         }
       } else {
-        await sb.del("catalog", `id=eq.${id}`); sndRemove(); setCatalog(p => p.filter(c => c.id !== id));
+        await orgSb.del("catalog", `id=eq.${id}`); sndRemove(); setCatalog(p => p.filter(c => c.id !== id));
       }
       setEditModel(null); setMgrView("catalog");
     } catch (e) { console.error(e); }
@@ -673,7 +719,7 @@ export default function RestockApp() {
   const updateModelInfo = async (id) => {
     if (!editModelName.trim() || !editModelBrand.trim()) return;
     try {
-      await sb.patch("catalog", { model_name: editModelName.trim(), brand: editModelBrand.trim(), puffs: editModelPuffs.trim() || "N/A", category: editModelCategory.trim() || "Vapes" }, `id=eq.${id}`);
+      await orgSb.patch("catalog", { model_name: editModelName.trim(), brand: editModelBrand.trim(), puffs: editModelPuffs.trim() || "N/A", category: editModelCategory.trim() || "Vapes" }, `id=eq.${id}`);
       setCatalog(p => p.map(c => c.id === id ? { ...c, model_name: editModelName.trim(), brand: editModelBrand.trim(), puffs: editModelPuffs.trim() || "N/A", category: editModelCategory.trim() || "Vapes" } : c));
       setEditingModelInfo(false);
     } catch (e) { console.error(e); }
@@ -720,7 +766,7 @@ export default function RestockApp() {
     );
   };
 
-  if (!catLoaded) return (<div style={{ ...st.page, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
+  if (!catLoaded && view !== "splash" && view !== "org-entry" && view !== "manager-login" && view !== "manager-warehouse") return (<div style={{ ...st.page, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
     <div style={{ fontSize: "40px", marginBottom: "16px" }}>📦</div>
     <p style={{ color: "#ffffff40", fontSize: "14px" }}>Loading...</p>
   </div>);
@@ -784,6 +830,43 @@ export default function RestockApp() {
     );
   };
 
+  // ORG ENTRY
+  if (view === "org-entry") {
+    const handleOrgLookup = async () => {
+      if (!orgCode.trim()) return;
+      setOrgLoading(true); setOrgError("");
+      try {
+        const data = await sb.get("orgs", { filter: `short_code=eq.${orgCode.trim().toLowerCase()}&active=eq.true`, limit: 1 });
+        if (data && data[0]) {
+          setCurrentOrg(data[0]); saveOrg(data[0]); setView("splash"); setOrgCode("");
+        } else {
+          setOrgError("Organization not found. Check your code and try again.");
+        }
+      } catch (e) { console.error(e); setOrgError("Connection error. Please try again."); }
+      setOrgLoading(false);
+    };
+    return (
+      <div style={{ ...st.page, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: "12px", background: "radial-gradient(ellipse at 50% 20%, #1a1a2e 0%, #0B0B0F 70%)", minHeight: "100vh" }}>
+        <div style={{ fontSize: "56px", marginBottom: "8px" }}>📦</div>
+        <h1 style={{ color: "#fff", fontSize: "36px", fontWeight: 900, letterSpacing: "-2px", margin: 0 }}>BACKSTOCK</h1>
+        <p style={{ color: "#ffffff45", fontSize: "14px", margin: "4px 0 0 0", fontWeight: 500, fontStyle: "italic" }}>Inventory that just works.</p>
+        <div style={{ marginTop: "32px", width: "100%", maxWidth: "320px" }}>
+          <label style={{ ...st.label, textAlign: "left", display: "block", marginBottom: "8px" }}>Organization Code</label>
+          <input type="text" placeholder="Enter your code" value={orgCode}
+            onChange={e => { setOrgCode(e.target.value); setOrgError(""); }}
+            onKeyDown={e => { if (e.key === "Enter") handleOrgLookup(); }}
+            style={{ ...st.input, fontSize: "16px", padding: "16px 18px", textAlign: "center", letterSpacing: "1px" }} />
+          {orgError && <p style={{ color: "#E63946", fontSize: "12px", marginTop: "8px" }}>{orgError}</p>}
+          <button onClick={handleOrgLookup} disabled={orgLoading || !orgCode.trim()}
+            style={{ ...(orgCode.trim() ? st.btn : st.btnOff), marginTop: "16px", opacity: orgLoading ? 0.5 : 1 }}>
+            {orgLoading ? "Looking up..." : "Continue →"}
+          </button>
+        </div>
+        <p style={{ color: "#ffffff12", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v6.0</p>
+      </div>
+    );
+  }
+
   // SPLASH
   const onboardSteps = [
     { emoji: "📦", title: "Welcome to Backstock", desc: "Tell us what your store needs — fast, simple, and organized. No phone calls, no paper lists.", btn: "Show me how →" },
@@ -804,7 +887,9 @@ export default function RestockApp() {
           📊 Manager Dashboard
         </button>
       </div>
-      <p style={{ color: "#ffffff12", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v5.1</p>
+      <p style={{ color: "#ffffff12", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v6.0</p>
+      <button onClick={() => { clearOrg(); setCurrentOrg(null); setWarehouses([]); setCatalog([]); setCatLoaded(false); setView("org-entry"); }}
+        style={{ background: "none", border: "none", color: "#ffffff15", fontSize: "11px", cursor: "pointer", marginTop: "8px" }}>Switch organization</button>
       {/* Onboarding overlay */}
       {onboardStep !== null && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", zIndex: 999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 28px" }}>
@@ -855,7 +940,7 @@ export default function RestockApp() {
       <button onClick={() => { sndBack(); setView("manager-login"); setAuthed(false); setPin(""); }} style={st.back}>← Back</button>
       <h1 style={st.h1}>📊 Select Warehouse</h1><p style={st.sub}>Which warehouse are you managing?</p>
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-        {WAREHOUSES.map(w => (
+        {warehouses.map(w => (
           <button key={w.id} onClick={() => { sndLogin(); setMgrWarehouse(w); setView("manager"); }}
             style={{ padding: "22px 20px", borderRadius: "14px", border: "1px solid #6C5CE730", background: "rgba(108,92,231,0.06)", color: "#fff", fontSize: "18px", fontWeight: 800, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>{w.name}</span>
@@ -1479,7 +1564,7 @@ export default function RestockApp() {
                       setTimeout(() => URL.revokeObjectURL(url), 5000);
                     }}
                       style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>📄 Invoice</button>
-                    <button onClick={async () => { if (window.confirm(`Delete ${order.employee_name}'s completed order?`)) { try { await sb.del("submissions", `id=eq.${order.id}`); sndRemove(); setAnalyticsData(p => p.filter(o => o.id !== order.id)); } catch (e) { console.error(e); } } }}
+                    <button onClick={async () => { if (window.confirm(`Delete ${order.employee_name}'s completed order?`)) { try { await orgSb.del("submissions", `id=eq.${order.id}`); sndRemove(); setAnalyticsData(p => p.filter(o => o.id !== order.id)); } catch (e) { console.error(e); } } }}
                       style={{ padding: "8px 8px", borderRadius: "8px", border: "1px solid #E6394625", background: "transparent", color: "#E6394680", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>✕</button>
                     </div>
                   </div>
@@ -1670,7 +1755,7 @@ export default function RestockApp() {
             } else {
               whVis[wid] = ["__ALL__"];
             }
-            try { await sb.patch("catalog", { warehouse_visibility: whVis }, `id=eq.${m.id}`); setCatalog(p => p.map(c => c.id === m.id ? { ...c, warehouse_visibility: whVis } : c)); } catch (e) { console.error(e); }
+            try { await orgSb.patch("catalog", { warehouse_visibility: whVis }, `id=eq.${m.id}`); setCatalog(p => p.map(c => c.id === m.id ? { ...c, warehouse_visibility: whVis } : c)); } catch (e) { console.error(e); }
           };
           return (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderRadius: "10px", background: isModelHidden ? "rgba(230,57,70,0.08)" : "rgba(29,185,84,0.08)", border: `1px solid ${isModelHidden ? "#E6394620" : "#1DB95420"}`, marginBottom: "16px" }}>
