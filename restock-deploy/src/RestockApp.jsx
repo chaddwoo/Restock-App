@@ -271,17 +271,20 @@ export default function RestockApp() {
   const loadPin = useCallback(async () => {
     setPinLoading(true);
     try {
-      // Always fetch fresh org data to pick up new PINs
-      const freshOrg = await sb.get("orgs", { filter: `id=eq.${orgId}`, limit: 1 });
-      if (freshOrg && freshOrg[0]) {
-        setMgrPin(freshOrg[0].manager_pin || null);
-        setOwnerPin(freshOrg[0].owner_pin || null);
-        setExecPin(freshOrg[0].exec_pin || null);
-        setCurrentOrg(freshOrg[0]); saveOrg(freshOrg[0]);
+      // Fetch fresh org data by short_code (known to work through RLS)
+      const code = currentOrg?.short_code;
+      if (code) {
+        const freshOrg = await sb.get("orgs", { filter: `short_code=eq.${code}`, limit: 1 });
+        if (freshOrg && freshOrg[0]) {
+          setMgrPin(freshOrg[0].manager_pin || null);
+          setOwnerPin(freshOrg[0].owner_pin || null);
+          setExecPin(freshOrg[0].exec_pin || null);
+          setCurrentOrg(freshOrg[0]); saveOrg(freshOrg[0]);
+        }
       }
     } catch (e) { console.error(e); }
     setPinLoading(false);
-  }, [orgId]);
+  }, [currentOrg?.short_code]);
 
   const loadMgr = useCallback(async () => {
     if (!mgrWarehouse || !orgId) return;
@@ -2037,6 +2040,7 @@ export default function RestockApp() {
         {isManagerOrExec && <>
         <div style={{ borderTop: "1px solid #ffffff08", paddingTop: "20px" }}>
           {/* Banner */}
+          <div style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid #ffffff08", background: "rgba(255,255,255,0.015)", marginBottom: "12px" }}>
           {(() => { const wid = mgrWarehouse?.id || 1; const bd = bannerData[wid] || { message: "", active: false }; const bannerText = bd.message; const bannerOn = bd.active; return (<>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: editBanner ? "12px" : "0" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}><span style={{ fontSize: "14px" }}>📢</span><span style={{ color: "#FF6B35", fontSize: "11px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Banner</span></div>
