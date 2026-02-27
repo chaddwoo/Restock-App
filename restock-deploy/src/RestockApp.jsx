@@ -153,12 +153,13 @@ export default function RestockApp() {
     catalog.forEach(c => {
       const whVis = c.warehouse_visibility || {};
       const hiddenForWarehouse = (activeWid && whVis[String(activeWid)]) ? whVis[String(activeWid)] : [];
+      const modelHidden = hiddenForWarehouse.includes("__ALL__");
       const stockLevels = c.stock_levels || {};
       const warehouseStock = (activeWid && stockLevels[String(activeWid)]) ? stockLevels[String(activeWid)] : {};
       // For employees: flavor must not be hidden AND must have stock > 0
       // For managers: show all flavors (they manage stock counts)
       const isEmployee = !!empWarehouse;
-      const activeFlavors = (c.flavors || []).filter(f => {
+      const activeFlavors = modelHidden ? [] : (c.flavors || []).filter(f => {
         if (hiddenForWarehouse.includes(f)) return false;
         if (isEmployee) {
           const stock = warehouseStock[f];
@@ -556,7 +557,7 @@ export default function RestockApp() {
     }
     // Only fully delete flavor from master list if hidden in ALL warehouses
     const allWarehouses = WAREHOUSES.map(w => String(w.id));
-    const hiddenEverywhere = allWarehouses.every(wid => (whVis[wid] || []).includes(flavor));
+    const hiddenEverywhere = allWarehouses.every(wid => { const h = whVis[wid] || []; return h.includes("__ALL__") || h.includes(flavor); });
     const updated = hiddenEverywhere ? (model.flavors || []).filter(f => f !== flavor) : (model.flavors || []);
     try { await sb.patch("catalog", { flavors: updated, warehouse_visibility: whVis, stock_levels: sl }, `id=eq.${modelId}`); sndRemove(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated, warehouse_visibility: whVis, stock_levels: sl } : c)); } catch (e) { console.error(e); }
   };
@@ -631,10 +632,10 @@ export default function RestockApp() {
   };
   const addModel = async () => {
     if (!newModelName.trim() || !newModelBrand.trim()) return;
-    // Initialize visibility so other warehouses don't auto-see future flavors
+    // Hide from other warehouses entirely using __ALL__ marker
     const whVis = {};
     if (mgrWarehouse) {
-      WAREHOUSES.forEach(w => { if (w.id !== mgrWarehouse.id) whVis[String(w.id)] = []; });
+      WAREHOUSES.forEach(w => { if (w.id !== mgrWarehouse.id) whVis[String(w.id)] = ["__ALL__"]; });
     }
     try {
       const res = await sb.post("catalog", { model_name: newModelName.trim(), brand: newModelBrand.trim(), puffs: newModelPuffs.trim() || "N/A", category: newModelCategory.trim() || "Vapes", flavors: [], warehouse_visibility: whVis });
@@ -646,19 +647,15 @@ export default function RestockApp() {
     const model = catalog.find(c => c.id === id); if (!model) return;
     try {
       const whVis = { ...(model.warehouse_visibility || {}) };
-      const allFlavors = model.flavors || [];
       if (mgrWarehouse) {
-        // Hide all flavors from this warehouse
-        whVis[String(mgrWarehouse.id)] = [...allFlavors];
+        // Mark entire model hidden from this warehouse
+        whVis[String(mgrWarehouse.id)] = ["__ALL__"];
         // Also clear stock for this warehouse
         const sl = { ...(model.stock_levels || {}) };
         delete sl[String(mgrWarehouse.id)];
-        // Check if hidden from ALL warehouses — if so, truly delete
+        // Check if hidden from ALL warehouses — if so, truly delete from DB
         const allWarehouses = WAREHOUSES.map(w => String(w.id));
-        const hiddenEverywhere = allWarehouses.every(wid => {
-          const hidden = whVis[wid] || [];
-          return allFlavors.length > 0 && allFlavors.every(f => hidden.includes(f));
-        });
+        const hiddenEverywhere = allWarehouses.every(wid => (whVis[wid] || []).includes("__ALL__"));
         if (hiddenEverywhere) {
           await sb.del("catalog", `id=eq.${id}`); sndRemove(); setCatalog(p => p.filter(c => c.id !== id));
         } else {
@@ -1483,9 +1480,10 @@ export default function RestockApp() {
     ) : catalog).filter(c => {
       // Hide models where ALL flavors are hidden from this warehouse
       if (!wid) return true;
+      const hidden = (c.warehouse_visibility || {})[wid] || [];
+      if (hidden.includes("__ALL__")) return false;
       const allFlavors = c.flavors || [];
       if (allFlavors.length === 0) return true;
-      const hidden = (c.warehouse_visibility || {})[wid] || [];
       return !allFlavors.every(f => hidden.includes(f));
     });
     const catBrands = {};
@@ -1636,15 +1634,14 @@ export default function RestockApp() {
         )}
         {/* Master warehouse visibility toggle */}
         {(() => {
-          const allFlavors = m.flavors || [];
-          const isModelHidden = allFlavors.length > 0 && allFlavors.every(f => hiddenForThis.includes(f));
+          const isModelHidden = hiddenForThis.includes("__ALL__");
           const toggleModel = async () => {
             const whVis = { ...(m.warehouse_visibility || {}) };
             const wid = String(mgrWarehouse.id);
             if (isModelHidden) {
               whVis[wid] = [];
             } else {
-              whVis[wid] = [...allFlavors];
+              whVis[wid] = ["__ALL__"];
             }
             try { await sb.patch("catalog", { warehouse_visibility: whVis }, `id=eq.${m.id}`); setCatalog(p => p.map(c => c.id === m.id ? { ...c, warehouse_visibility: whVis } : c)); } catch (e) { console.error(e); }
           };
