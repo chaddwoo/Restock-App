@@ -887,9 +887,8 @@ export default function RestockApp() {
           📊 Manager Dashboard
         </button>
       </div>
-      <p style={{ color: "#ffffff12", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v6.0</p>
       <button onClick={() => { clearOrg(); setCurrentOrg(null); setWarehouses([]); setCatalog([]); setCatLoaded(false); setView("org-entry"); }}
-        style={{ background: "none", border: "none", color: "#ffffff15", fontSize: "11px", cursor: "pointer", marginTop: "8px" }}>Switch organization</button>
+        style={{ background: "none", border: "none", color: "#ffffff12", fontSize: "11px", cursor: "pointer", marginTop: "60px", letterSpacing: "1px" }}>v6.0</button>
       {/* Onboarding overlay */}
       {onboardStep !== null && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", zIndex: 999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 28px" }}>
