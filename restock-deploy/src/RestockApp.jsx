@@ -270,13 +270,18 @@ export default function RestockApp() {
 
   const loadPin = useCallback(async () => {
     setPinLoading(true);
-    if (currentOrg) {
-      setMgrPin(currentOrg.manager_pin || null);
-      setOwnerPin(currentOrg.owner_pin || null);
-      setExecPin(currentOrg.exec_pin || null);
-    }
+    try {
+      // Always fetch fresh org data to pick up new PINs
+      const freshOrg = await sb.get("orgs", { filter: `id=eq.${orgId}`, limit: 1 });
+      if (freshOrg && freshOrg[0]) {
+        setMgrPin(freshOrg[0].manager_pin || null);
+        setOwnerPin(freshOrg[0].owner_pin || null);
+        setExecPin(freshOrg[0].exec_pin || null);
+        setCurrentOrg(freshOrg[0]); saveOrg(freshOrg[0]);
+      }
+    } catch (e) { console.error(e); }
     setPinLoading(false);
-  }, [currentOrg]);
+  }, [orgId]);
 
   const loadMgr = useCallback(async () => {
     if (!mgrWarehouse || !orgId) return;
