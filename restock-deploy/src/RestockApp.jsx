@@ -544,12 +544,20 @@ export default function RestockApp() {
   };
   const removeFlavorFromModel = async (modelId, flavor) => {
     const model = catalog.find(c => c.id === modelId); if (!model) return;
-    const updated = (model.flavors || []).filter(f => f !== flavor);
     const whVis = { ...(model.warehouse_visibility || {}) };
-    Object.keys(whVis).forEach(k => { whVis[k] = (whVis[k] || []).filter(f => f !== flavor); });
-    // Also remove from stock_levels
     const sl = { ...(model.stock_levels || {}) };
-    Object.keys(sl).forEach(k => { const ws = { ...(sl[k] || {}) }; delete ws[flavor]; sl[k] = ws; });
+    if (mgrWarehouse) {
+      const wid = String(mgrWarehouse.id);
+      // Add to hidden list for this warehouse
+      const hidden = whVis[wid] || [];
+      if (!hidden.includes(flavor)) { whVis[wid] = [...hidden, flavor]; }
+      // Remove stock for this warehouse only
+      if (sl[wid]) { const ws = { ...sl[wid] }; delete ws[flavor]; sl[wid] = ws; }
+    }
+    // Only fully delete flavor from master list if hidden in ALL warehouses
+    const allWarehouses = WAREHOUSES.map(w => String(w.id));
+    const hiddenEverywhere = allWarehouses.every(wid => (whVis[wid] || []).includes(flavor));
+    const updated = hiddenEverywhere ? (model.flavors || []).filter(f => f !== flavor) : (model.flavors || []);
     try { await sb.patch("catalog", { flavors: updated, warehouse_visibility: whVis, stock_levels: sl }, `id=eq.${modelId}`); sndRemove(); setCatalog(p => p.map(c => c.id === modelId ? { ...c, flavors: updated, warehouse_visibility: whVis, stock_levels: sl } : c)); } catch (e) { console.error(e); }
   };
   // Stock update — instant local state, save after short delay, auto-flush on navigation
@@ -1743,7 +1751,7 @@ export default function RestockApp() {
     const adjustQty = (itemKey, newVal) => {
       const origQty = r.items[itemKey];
       const origNum = origQty === "5+" ? 5 : parseInt(origQty) || 0;
-      const newNum = Math.max(0, Math.min(origNum, parseInt(newVal) || 0));
+      const newNum = Math.max(0, parseInt(newVal) || 0);
       if (newNum === origNum) {
         setAdjustedQtys(p => { const n = { ...p }; delete n[itemKey]; return n; });
       } else {
