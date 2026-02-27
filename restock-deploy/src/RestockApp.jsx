@@ -642,7 +642,34 @@ export default function RestockApp() {
       setNewModelName(""); setNewModelBrand(""); setNewModelPuffs(""); setNewModelCategory("Vapes"); setShowAddModel(false);
     } catch (e) { console.error(e); }
   };
-  const deleteModel = async (id) => { try { await sb.del("catalog", `id=eq.${id}`); sndRemove(); setCatalog(p => p.filter(c => c.id !== id)); setEditModel(null); setMgrView("catalog"); } catch (e) { console.error(e); } };
+  const deleteModel = async (id) => {
+    const model = catalog.find(c => c.id === id); if (!model) return;
+    try {
+      const whVis = { ...(model.warehouse_visibility || {}) };
+      const allFlavors = model.flavors || [];
+      if (mgrWarehouse) {
+        // Hide all flavors from this warehouse
+        whVis[String(mgrWarehouse.id)] = [...allFlavors];
+        // Also clear stock for this warehouse
+        const sl = { ...(model.stock_levels || {}) };
+        delete sl[String(mgrWarehouse.id)];
+        // Check if hidden from ALL warehouses — if so, truly delete
+        const allWarehouses = WAREHOUSES.map(w => String(w.id));
+        const hiddenEverywhere = allWarehouses.every(wid => {
+          const hidden = whVis[wid] || [];
+          return allFlavors.length > 0 && allFlavors.every(f => hidden.includes(f));
+        });
+        if (hiddenEverywhere) {
+          await sb.del("catalog", `id=eq.${id}`); sndRemove(); setCatalog(p => p.filter(c => c.id !== id));
+        } else {
+          await sb.patch("catalog", { warehouse_visibility: whVis, stock_levels: sl }, `id=eq.${id}`); sndRemove(); setCatalog(p => p.map(c => c.id === id ? { ...c, warehouse_visibility: whVis, stock_levels: sl } : c));
+        }
+      } else {
+        await sb.del("catalog", `id=eq.${id}`); sndRemove(); setCatalog(p => p.filter(c => c.id !== id));
+      }
+      setEditModel(null); setMgrView("catalog");
+    } catch (e) { console.error(e); }
+  };
   const updateModelInfo = async (id) => {
     if (!editModelName.trim() || !editModelBrand.trim()) return;
     try {
@@ -1447,12 +1474,20 @@ export default function RestockApp() {
   // MANAGER CATALOG
   if (view === "manager" && authed && mgrView === "catalog") {
     const searchTerm = catalogSearch.toLowerCase().trim();
-    const filteredCatalog = searchTerm ? catalog.filter(c => 
+    const wid = mgrWarehouse ? String(mgrWarehouse.id) : null;
+    const filteredCatalog = (searchTerm ? catalog.filter(c => 
       c.model_name.toLowerCase().includes(searchTerm) || 
       c.brand.toLowerCase().includes(searchTerm) || 
       (c.category || "").toLowerCase().includes(searchTerm) ||
       (c.flavors || []).some(f => f.toLowerCase().includes(searchTerm))
-    ) : catalog;
+    ) : catalog).filter(c => {
+      // Hide models where ALL flavors are hidden from this warehouse
+      if (!wid) return true;
+      const allFlavors = c.flavors || [];
+      if (allFlavors.length === 0) return true;
+      const hidden = (c.warehouse_visibility || {})[wid] || [];
+      return !allFlavors.every(f => hidden.includes(f));
+    });
     const catBrands = {};
     filteredCatalog.forEach(c => { const cat = c.category || "Vapes"; if (!catBrands[cat]) catBrands[cat] = {}; if (!catBrands[cat][c.brand]) catBrands[cat][c.brand] = []; catBrands[cat][c.brand].push(c); });
     return (
@@ -1668,8 +1703,8 @@ export default function RestockApp() {
         </div>
         <div style={{ marginTop: "40px", padding: "16px", borderRadius: "12px", border: "1px solid #E6394630", background: "rgba(230,57,70,0.05)" }}>
           <p style={{ color: "#E63946", fontSize: "12px", fontWeight: 700, margin: "0 0 10px 0" }}>DANGER ZONE</p>
-          <button onClick={() => { if (window.confirm(`Delete ${m.model_name} and all its items?`)) deleteModel(m.id); }}
-            style={{ padding: "10px 18px", borderRadius: "8px", background: "#E63946", color: "#fff", border: "none", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Delete Entire Model</button>
+          <button onClick={() => { if (window.confirm(`Remove ${m.model_name} from ${mgrWarehouse?.name || "this warehouse"}? Other warehouses won't be affected.`)) deleteModel(m.id); }}
+            style={{ padding: "10px 18px", borderRadius: "8px", background: "#E63946", color: "#fff", border: "none", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Remove from {mgrWarehouse?.name || "Warehouse"}</button>
         </div>
         <div style={{ height: "70px" }} />
         <FloatingBack onClick={() => { flushStock(); setMgrView("catalog"); setEditModel(null); setEditingModelInfo(false); }} />
