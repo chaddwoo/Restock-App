@@ -1318,7 +1318,7 @@ export default function RestockApp() {
   }
 
   // MANAGER ANALYTICS
-  if (view === "manager" && authed && mgrView === "analytics") {
+  if (view === "manager" && authed && accessLevel === "manager" && mgrView === "analytics") {
     const data = analyticsData;
     const totalOrders = data.length;
     const totalUnits = data.reduce((s, r) => s + (r.total_units || 0), 0);
@@ -1581,6 +1581,7 @@ export default function RestockApp() {
 
   // MANAGER CATALOG
   if (view === "manager" && authed && mgrView === "catalog") {
+    const isOwnerView = accessLevel === "owner";
     const searchTerm = catalogSearch.toLowerCase().trim();
     const wid = mgrWarehouse ? String(mgrWarehouse.id) : null;
     const filteredCatalog = (searchTerm ? catalog.filter(c => 
@@ -1602,8 +1603,8 @@ export default function RestockApp() {
     return (
       <div style={st.page}>
         <button onClick={() => { sndBack(); setCatalogSearch(""); setMgrView("dashboard"); setEditModel(null); }} style={st.back}>← Back to Dashboard</button>
-        <h1 style={st.h1}>🗂️ Manage Catalog</h1><p style={st.sub}>Managing for {mgrWarehouse?.name} • set stock counts per item</p>
-        {!showAddModel ? (
+        <h1 style={st.h1}>🗂️ {isOwnerView ? "View" : "Manage"} Catalog</h1><p style={st.sub}>{isOwnerView ? `Browsing ${mgrWarehouse?.name} catalog` : `Managing for ${mgrWarehouse?.name} • set stock counts per item`}</p>
+        {!isOwnerView && (!showAddModel ? (
           <button onClick={() => setShowAddModel(true)} style={{ padding: "10px 18px", borderRadius: "8px", background: "#1DB95420", color: "#1DB954", border: "1px solid #1DB95430", fontSize: "13px", fontWeight: 700, cursor: "pointer", marginBottom: "20px" }}>+ Add New Model / Product</button>
         ) : (
           <div style={{ padding: "16px", borderRadius: "12px", border: "1px solid #1DB95430", background: "#1DB95408", marginBottom: "20px" }}>
@@ -1618,7 +1619,7 @@ export default function RestockApp() {
               </div>
             </div>
           </div>
-        )}
+        ))}
         <div style={{ marginBottom: "20px", position: "sticky", top: 0, zIndex: 80, paddingTop: "8px", paddingBottom: "12px", background: "linear-gradient(180deg, #0B0B0F 85%, transparent)", marginLeft: "-20px", marginRight: "-20px", paddingLeft: "20px", paddingRight: "20px" }}>
           <input type="text" placeholder="🔍  Search models, brands, flavors..." value={catalogSearch} onChange={e => setCatalogSearch(e.target.value)}
             style={{ ...st.input, fontSize: "14px", padding: "14px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid #ffffff15", borderRadius: "12px" }} />
@@ -1642,7 +1643,7 @@ export default function RestockApp() {
                 <div style={{ color: "#ffffff30", fontSize: "11px", marginTop: "3px" }}>{catBrandCount} brand{catBrandCount !== 1 ? "s" : ""} • {catModelCount} model{catModelCount !== 1 ? "s" : ""}</div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <span style={{ color: catTotalStock > 0 ? "#1DB95480" : "#E6394680", fontSize: "12px", fontWeight: 700 }}>{catTotalStock}u</span>
+                {!isOwnerView && <span style={{ color: catTotalStock > 0 ? "#1DB95480" : "#E6394680", fontSize: "12px", fontWeight: 700 }}>{catTotalStock}u</span>}
                 <span style={{ color: "#ffffff25", fontSize: "18px", transition: "transform 0.2s ease", transform: catExpanded ? "rotate(90deg)" : "rotate(0deg)" }}>›</span>
               </div>
             </button>
@@ -1668,7 +1669,7 @@ export default function RestockApp() {
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ color: brandTotalStock > 0 ? "#1DB954" : "#E63946", fontSize: "12px", fontWeight: 700 }}>{brandTotalStock}u</span>
+                      {!isOwnerView && <span style={{ color: brandTotalStock > 0 ? "#1DB954" : "#E63946", fontSize: "12px", fontWeight: 700 }}>{brandTotalStock}u</span>}
                       <span style={{ color: "#ffffff20", fontSize: "14px", transition: "transform 0.2s ease", transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)" }}>›</span>
                     </div>
                   </button>
@@ -1681,10 +1682,13 @@ export default function RestockApp() {
                     const mTracked = Object.keys(mws).length;
                     const mTotal = (m.flavors || []).length;
                     return (
-                    <button key={m.id} onClick={() => { setEditModel(m); setMgrView("editModel"); setNewFlavor(""); setEditingModelInfo(false); }}
-                      style={{ width: "100%", padding: "12px 14px", borderRadius: "10px", border: "1px solid #ffffff06", background: "rgba(255,255,255,0.02)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px", transition: "background 0.15s ease" }}>
+                    <button key={m.id} onClick={() => { if (!isOwnerView) { setEditModel(m); setMgrView("editModel"); setNewFlavor(""); setEditingModelInfo(false); } }}
+                      style={{ width: "100%", padding: "12px 14px", borderRadius: "10px", border: "1px solid #ffffff06", background: "rgba(255,255,255,0.02)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: isOwnerView ? "default" : "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px", transition: "background 0.15s ease" }}>
                       <div><div style={{ fontSize: "13px" }}>{m.model_name}</div><div style={{ fontSize: "10px", color: "#ffffff25", marginTop: "2px" }}>{m.puffs !== "N/A" ? m.puffs + " puffs" : m.brand}</div></div>
-                      <span style={{ fontSize: "12px", fontWeight: 700, color: mTracked < mTotal ? "#F59E0B" : mTotalStock > 0 ? "#1DB954" : "#E63946" }}>{mTotalStock} in stock ›</span>
+                      {isOwnerView
+                        ? <span style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff40" }}>{mTotal} flavor{mTotal !== 1 ? "s" : ""}</span>
+                        : <span style={{ fontSize: "12px", fontWeight: 700, color: mTracked < mTotal ? "#F59E0B" : mTotalStock > 0 ? "#1DB954" : "#E63946" }}>{mTotalStock} in stock ›</span>
+                      }
                     </button>
                     );
                   })}
@@ -1704,8 +1708,8 @@ export default function RestockApp() {
     );
   }
 
-  // MANAGER EDIT MODEL
-  if (view === "manager" && authed && mgrView === "editModel" && editModel) {
+  // MANAGER EDIT MODEL (manager only, not owner)
+  if (view === "manager" && authed && accessLevel === "manager" && mgrView === "editModel" && editModel) {
     const m = catalog.find(c => c.id === editModel.id) || editModel;
     const bc = getBrandColor(m.brand);
     const whVis = m.warehouse_visibility || {};
@@ -1829,7 +1833,7 @@ export default function RestockApp() {
         <h1 style={st.h1}>📊 {mgrWarehouse?.name} Dashboard</h1><p style={st.sub}>{loading ? "Loading..." : `${reports.length} pending order${reports.length !== 1 ? "s" : ""}`}</p>
         <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
           <button onClick={loadMgr} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff50", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🔄 Refresh</button>
-          {accessLevel === "manager" && <button onClick={() => setMgrView("catalog")} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #6C5CE730", background: "#6C5CE710", color: "#6C5CE7", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🗂️ Catalog</button>}
+          {(accessLevel === "manager" || accessLevel === "owner") && <button onClick={() => setMgrView("catalog")} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #6C5CE730", background: "#6C5CE710", color: "#6C5CE7", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🗂️ Catalog</button>}
           {accessLevel === "manager" && <button onClick={() => { setMgrView("analytics"); loadAnalytics(analyticsRange); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #00B4D830", background: "#00B4D810", color: "#00B4D8", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>📈 Analytics</button>}
         </div>
 
