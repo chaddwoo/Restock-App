@@ -2062,22 +2062,49 @@ export default function RestockApp() {
           <>
           <div style={{ marginBottom: "16px" }}>
             <label style={{ ...st.label, marginBottom: "8px", display: "block" }}>Select Product</label>
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px", maxHeight: "340px", overflowY: "auto" }}>
-              {availableModels.map(m => {
-                const mws = wid ? ((m.stock_levels || {})[wid] || {}) : {};
-                const mStock = Object.values(mws).reduce((s, v) => s + (parseInt(v) || 0), 0);
-                return (
-                  <button key={m.id} onClick={() => { setReceiveModel(m); setReceiveQtys({}); setReceiveNotes(""); }}
-                    style={{ width: "100%", padding: "14px 16px", borderRadius: "10px", border: "1px solid #ffffff08", background: "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div>
-                      <div style={{ fontSize: "13px" }}>{m.model_name}</div>
-                      <div style={{ fontSize: "10px", color: "#ffffff25", marginTop: "2px" }}>{m.brand} • {(m.flavors || []).length} flavors</div>
+            {(() => {
+              const catBrands = {};
+              availableModels.forEach(m => {
+                const cat = m.category || "Other";
+                const br = m.brand || "Unknown";
+                if (!catBrands[cat]) catBrands[cat] = {};
+                if (!catBrands[cat][br]) catBrands[cat][br] = [];
+                catBrands[cat][br].push(m);
+              });
+              const sortedCats = Object.keys(catBrands).sort();
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "400px", overflowY: "auto" }}>
+                  {sortedCats.map(cat => (
+                    <div key={cat}>
+                      <div style={{ padding: "10px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", marginBottom: "4px" }}>
+                        <span style={{ color: "#ffffff50", fontSize: "11px", fontWeight: 800, letterSpacing: "0.5px", textTransform: "uppercase" }}>{cat}</span>
+                      </div>
+                      {Object.keys(catBrands[cat]).sort().map(brand => (
+                        <div key={brand} style={{ paddingLeft: "8px" }}>
+                          <div style={{ padding: "6px 10px", marginBottom: "2px" }}>
+                            <span style={{ color: "#ffffff30", fontSize: "10px", fontWeight: 700, letterSpacing: "0.3px" }}>{brand}</span>
+                          </div>
+                          {catBrands[cat][brand].map(m => {
+                            const mws = wid ? ((m.stock_levels || {})[wid] || {}) : {};
+                            const mStock = Object.values(mws).reduce((s, v) => s + (parseInt(v) || 0), 0);
+                            return (
+                              <button key={m.id} onClick={() => { setReceiveModel(m); setReceiveQtys({}); setReceiveNotes(""); }}
+                                style={{ width: "100%", padding: "12px 14px", borderRadius: "10px", border: "1px solid #ffffff06", background: "rgba(255,255,255,0.02)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3px" }}>
+                                <div>
+                                  <div style={{ fontSize: "13px" }}>{m.model_name}</div>
+                                  <div style={{ fontSize: "10px", color: "#ffffff25", marginTop: "2px" }}>{(m.flavors || []).length} flavors</div>
+                                </div>
+                                <span style={{ fontSize: "12px", fontWeight: 700, color: mStock > 0 ? "#1DB954" : "#ffffff25" }}>{mStock}u now</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ))}
                     </div>
-                    <span style={{ fontSize: "12px", fontWeight: 700, color: mStock > 0 ? "#1DB954" : "#ffffff25" }}>{mStock}u now</span>
-                  </button>
-                );
-              })}
-            </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Recent shipments */}
@@ -2164,7 +2191,7 @@ export default function RestockApp() {
           )}
 
           <button onClick={handleReceive} disabled={receiveTotal === 0}
-            style={{ ...(receiveTotal > 0 ? st.btn : st.btnOff), background: receiveTotal > 0 ? "#1DB954" : undefined }}>
+            style={{ width: "100%", padding: "18px 24px", borderRadius: "14px", border: "none", fontSize: "16px", fontWeight: 800, cursor: receiveTotal > 0 ? "pointer" : "not-allowed", textAlign: "center", background: receiveTotal > 0 ? "#1DB954" : "#ffffff10", color: receiveTotal > 0 ? "#fff" : "#ffffff25", boxShadow: receiveTotal > 0 ? "0 4px 20px rgba(29,185,84,0.3)" : "none" }}>
             Receive Shipment →
           </button>
           </>
