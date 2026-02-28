@@ -1472,7 +1472,7 @@ export default function RestockApp() {
           })).sort((a, b) => b.profit - a.profit);
           return (
             <>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "24px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
               <div style={{ padding: "16px", borderRadius: "12px", background: "rgba(230,57,70,0.06)", border: "1px solid #E6394620", textAlign: "center" }}>
                 <div style={{ fontSize: "22px", fontWeight: 900, color: "#E63946" }}>${periodCost.toFixed(0)}</div>
                 <div style={{ fontSize: "10px", color: "#E6394680", fontWeight: 700, marginTop: "4px" }}>TOTAL COST</div>
@@ -1481,23 +1481,28 @@ export default function RestockApp() {
                 <div style={{ fontSize: "22px", fontWeight: 900, color: "#1DB954" }}>${periodRetail.toFixed(0)}</div>
                 <div style={{ fontSize: "10px", color: "#1DB95480", fontWeight: 700, marginTop: "4px" }}>RETAIL VALUE</div>
               </div>
-              <div style={{ padding: "16px", borderRadius: "12px", background: periodMargin >= 30 ? "rgba(29,185,84,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${periodMargin >= 30 ? "#1DB95420" : "#F59E0B20"}`, textAlign: "center" }}>
-                <div style={{ fontSize: "22px", fontWeight: 900, color: periodMargin >= 30 ? "#1DB954" : "#F59E0B" }}>{periodMargin.toFixed(1)}%</div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "24px" }}>
+              <div style={{ padding: "20px 16px", borderRadius: "12px", background: periodProfit >= 0 ? "rgba(29,185,84,0.08)" : "rgba(230,57,70,0.08)", border: `1px solid ${periodProfit >= 0 ? "#1DB95425" : "#E6394625"}`, textAlign: "center" }}>
+                <div style={{ fontSize: "28px", fontWeight: 900, color: periodProfit >= 0 ? "#1DB954" : "#E63946" }}>${periodProfit.toFixed(0)}</div>
+                <div style={{ fontSize: "10px", color: periodProfit >= 0 ? "#1DB95480" : "#E6394680", fontWeight: 700, marginTop: "4px" }}>GROSS PROFIT</div>
+              </div>
+              <div style={{ padding: "20px 16px", borderRadius: "12px", background: periodMargin >= 30 ? "rgba(29,185,84,0.08)" : "rgba(245,158,11,0.08)", border: `1px solid ${periodMargin >= 30 ? "#1DB95425" : "#F59E0B25"}`, textAlign: "center" }}>
+                <div style={{ fontSize: "28px", fontWeight: 900, color: periodMargin >= 30 ? "#1DB954" : "#F59E0B" }}>{periodMargin.toFixed(1)}%</div>
                 <div style={{ fontSize: "10px", color: "#ffffff50", fontWeight: 700, marginTop: "4px" }}>AVG MARGIN</div>
               </div>
             </div>
             {/* Margin by store */}
             {storeMargins.length > 0 && (
               <div style={{ marginBottom: "24px" }}>
-                <span style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>💰 Margin by Store</span>
+                <span style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>💰 Profit by Store</span>
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "12px" }}>
                   {storeMargins.map(s => (
                     <div key={s.store} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.02)" }}>
-                      <span style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>{s.store}</span>
-                      <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                        <span style={{ fontSize: "11px", color: "#E63946", fontWeight: 600 }}>${s.cost.toFixed(0)}</span>
-                        <span style={{ fontSize: "11px", color: "#1DB954", fontWeight: 600 }}>${s.retail.toFixed(0)}</span>
-                        <span style={{ fontSize: "13px", fontWeight: 900, color: s.margin >= 30 ? "#1DB954" : "#F59E0B", minWidth: "48px", textAlign: "right" }}>{s.margin.toFixed(1)}%</span>
+                      <span style={{ color: "#fff", fontSize: "13px", fontWeight: 600, flex: 1 }}>{s.store}</span>
+                      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                        <span style={{ fontSize: "12px", color: s.profit >= 0 ? "#1DB954" : "#E63946", fontWeight: 800 }}>${s.profit.toFixed(0)}</span>
+                        <span style={{ fontSize: "11px", fontWeight: 700, color: s.margin >= 30 ? "#1DB954" : "#F59E0B", minWidth: "44px", textAlign: "right" }}>{s.margin.toFixed(1)}%</span>
                       </div>
                     </div>
                   ))}
