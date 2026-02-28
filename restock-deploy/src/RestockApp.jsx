@@ -183,6 +183,9 @@ export default function RestockApp() {
   const [receiveModel, setReceiveModel] = useState(null);
   const [receiveQtys, setReceiveQtys] = useState({});
   const [receiveNotes, setReceiveNotes] = useState("");
+  const [receiveSearch, setReceiveSearch] = useState("");
+  const [receiveExpCats, setReceiveExpCats] = useState({});
+  const [receiveExpBrands, setReceiveExpBrands] = useState({});
   const [recentShipments, setRecentShipments] = useState([]);
 
   const [mgrPin, setMgrPin] = useState(null);
@@ -2061,10 +2064,27 @@ export default function RestockApp() {
         {!receiveModel ? (
           <>
           <div style={{ marginBottom: "16px" }}>
-            <label style={{ ...st.label, marginBottom: "8px", display: "block" }}>Select Product</label>
+            {/* Search bar */}
+            <div style={{ position: "sticky", top: 0, zIndex: 10, background: "#0B0B0F", paddingBottom: "12px" }}>
+              <input type="text" placeholder="🔍 Search products..." value={receiveSearch} onChange={e => setReceiveSearch(e.target.value)}
+                style={{ ...st.input, fontSize: "14px", padding: "14px 16px", background: "rgba(29,185,84,0.06)", border: "1px solid #1DB95425", color: "#fff" }} />
+              {receiveSearch && (
+                <div style={{ fontSize: "11px", color: "#1DB95480", marginTop: "6px", fontWeight: 600 }}>
+                  {availableModels.filter(m => m.model_name.toLowerCase().includes(receiveSearch.toLowerCase()) || (m.brand || "").toLowerCase().includes(receiveSearch.toLowerCase()) || (m.category || "").toLowerCase().includes(receiveSearch.toLowerCase())).length} results
+                </div>
+              )}
+            </div>
             {(() => {
+              const q = receiveSearch.toLowerCase().trim();
+              const isSearching = q.length > 0;
+              const filtered = q ? availableModels.filter(m => 
+                m.model_name.toLowerCase().includes(q) || 
+                (m.brand || "").toLowerCase().includes(q) || 
+                (m.category || "").toLowerCase().includes(q) ||
+                (m.flavors || []).some(f => f.toLowerCase().includes(q))
+              ) : availableModels;
               const catBrands = {};
-              availableModels.forEach(m => {
+              filtered.forEach(m => {
                 const cat = m.category || "Other";
                 const br = m.brand || "Unknown";
                 if (!catBrands[cat]) catBrands[cat] = {};
@@ -2073,35 +2093,64 @@ export default function RestockApp() {
               });
               const sortedCats = Object.keys(catBrands).sort();
               return (
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "400px", overflowY: "auto" }}>
-                  {sortedCats.map(cat => (
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  {sortedCats.map(cat => {
+                    const catOpen = isSearching || receiveExpCats[cat];
+                    const catModels = Object.values(catBrands[cat]).flat();
+                    const catStock = catModels.reduce((s, m) => { const mws = wid ? ((m.stock_levels || {})[wid] || {}) : {}; return s + Object.values(mws).reduce((a, v) => a + (parseInt(v) || 0), 0); }, 0);
+                    return (
                     <div key={cat}>
-                      <div style={{ padding: "10px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", marginBottom: "4px" }}>
-                        <span style={{ color: "#ffffff50", fontSize: "11px", fontWeight: 800, letterSpacing: "0.5px", textTransform: "uppercase" }}>{cat}</span>
-                      </div>
-                      {Object.keys(catBrands[cat]).sort().map(brand => (
-                        <div key={brand} style={{ paddingLeft: "8px" }}>
-                          <div style={{ padding: "6px 10px", marginBottom: "2px" }}>
-                            <span style={{ color: "#ffffff30", fontSize: "10px", fontWeight: 700, letterSpacing: "0.3px" }}>{brand}</span>
-                          </div>
-                          {catBrands[cat][brand].map(m => {
+                      <button onClick={() => { if (!isSearching) setReceiveExpCats(p => ({ ...p, [cat]: !p[cat] })); }}
+                        style={{ width: "100%", padding: "12px 14px", borderRadius: "10px", background: "rgba(29,185,84,0.06)", border: "1px solid #1DB95418", marginBottom: "4px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ color: "#1DB954", fontSize: "13px", transition: "transform 0.2s", transform: catOpen ? "rotate(90deg)" : "rotate(0deg)", display: "inline-block" }}>›</span>
+                          <span style={{ color: "#1DB954", fontSize: "12px", fontWeight: 800, letterSpacing: "0.5px", textTransform: "uppercase" }}>{cat}</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ color: "#ffffff20", fontSize: "10px", fontWeight: 600 }}>{catModels.length} products</span>
+                          <span style={{ color: catStock > 0 ? "#1DB95460" : "#ffffff15", fontSize: "10px", fontWeight: 700 }}>{catStock}u</span>
+                        </div>
+                      </button>
+                      {catOpen && Object.keys(catBrands[cat]).sort().map(brand => {
+                        const bColor = getBrandColor(brand);
+                        const brandKey = `${cat}||${brand}`;
+                        const brandOpen = isSearching || receiveExpBrands[brandKey];
+                        const brandModels = catBrands[cat][brand];
+                        const brandStock = brandModels.reduce((s, m) => { const mws = wid ? ((m.stock_levels || {})[wid] || {}) : {}; return s + Object.values(mws).reduce((a, v) => a + (parseInt(v) || 0), 0); }, 0);
+                        return (
+                        <div key={brand} style={{ paddingLeft: "12px" }}>
+                          <button onClick={() => { if (!isSearching) setReceiveExpBrands(p => ({ ...p, [brandKey]: !p[brandKey] })); }}
+                            style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", background: `${bColor}08`, border: `1px solid ${bColor}12`, marginBottom: "3px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left", borderLeft: `3px solid ${bColor}40` }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <span style={{ color: bColor, fontSize: "12px", transition: "transform 0.2s", transform: brandOpen ? "rotate(90deg)" : "rotate(0deg)", display: "inline-block" }}>›</span>
+                              <span style={{ color: bColor, fontSize: "12px", fontWeight: 700 }}>{brand}</span>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <span style={{ color: "#ffffff20", fontSize: "10px" }}>{brandModels.length}</span>
+                              <span style={{ color: brandStock > 0 ? "#1DB95460" : "#ffffff15", fontSize: "10px", fontWeight: 700 }}>{brandStock}u</span>
+                            </div>
+                          </button>
+                          {brandOpen && brandModels.map(m => {
                             const mws = wid ? ((m.stock_levels || {})[wid] || {}) : {};
                             const mStock = Object.values(mws).reduce((s, v) => s + (parseInt(v) || 0), 0);
                             return (
-                              <button key={m.id} onClick={() => { setReceiveModel(m); setReceiveQtys({}); setReceiveNotes(""); }}
-                                style={{ width: "100%", padding: "12px 14px", borderRadius: "10px", border: "1px solid #ffffff06", background: "rgba(255,255,255,0.02)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3px" }}>
+                              <button key={m.id} onClick={() => { setReceiveModel(m); setReceiveQtys({}); setReceiveNotes(""); setReceiveSearch(""); setReceiveExpCats({}); setReceiveExpBrands({}); }}
+                                style={{ width: "100%", padding: "11px 14px", borderRadius: "8px", border: `1px solid ${bColor}10`, background: `${bColor}05`, color: "#fff", fontSize: "13px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px", marginLeft: "12px", maxWidth: "calc(100% - 12px)" }}>
                                 <div>
-                                  <div style={{ fontSize: "13px" }}>{m.model_name}</div>
-                                  <div style={{ fontSize: "10px", color: "#ffffff25", marginTop: "2px" }}>{(m.flavors || []).length} flavors</div>
+                                  <span>{m.model_name}</span>
+                                  <span style={{ color: "#ffffff20", fontSize: "10px", marginLeft: "6px" }}>{(m.flavors || []).length}fl</span>
                                 </div>
-                                <span style={{ fontSize: "12px", fontWeight: 700, color: mStock > 0 ? "#1DB954" : "#ffffff25" }}>{mStock}u now</span>
+                                <span style={{ fontSize: "12px", fontWeight: 700, color: mStock > 0 ? "#1DB954" : "#ffffff20" }}>{mStock}u</span>
                               </button>
                             );
                           })}
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
-                  ))}
+                    );
+                  })}
+                  {sortedCats.length === 0 && <div style={{ padding: "24px", textAlign: "center", color: "#ffffff25", fontSize: "13px" }}>No products match "{receiveSearch}"</div>}
                 </div>
               );
             })()}
