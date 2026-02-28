@@ -180,6 +180,10 @@ export default function RestockApp() {
   const [adjustedQtys, setAdjustedQtys] = useState({});
   const [analyticsData, setAnalyticsData] = useState([]);
   const [analyticsRange, setAnalyticsRange] = useState("7d");
+  const [receiveModel, setReceiveModel] = useState(null);
+  const [receiveQtys, setReceiveQtys] = useState({});
+  const [receiveNotes, setReceiveNotes] = useState("");
+  const [recentShipments, setRecentShipments] = useState([]);
 
   const [mgrPin, setMgrPin] = useState(null);
   const [ownerPin, setOwnerPin] = useState(null);
@@ -2004,6 +2008,174 @@ export default function RestockApp() {
     );
   }
 
+  // RECEIVE STOCK
+  if (view === "manager" && authed && isManagerOrExec && mgrView === "receive") {
+    const wid = mgrWarehouse ? String(mgrWarehouse.id) : null;
+    const availableModels = catalog.filter(c => {
+      if (!wid) return true;
+      const hidden = (c.warehouse_visibility || {})[wid] || [];
+      return !hidden.includes("__ALL__");
+    }).sort((a, b) => a.model_name.localeCompare(b.model_name));
+
+    const receiveTotal = Object.values(receiveQtys).reduce((s, v) => s + (parseInt(v) || 0), 0);
+
+    const handleReceive = async () => {
+      if (!receiveModel || receiveTotal === 0) return;
+      const m = catalog.find(c => c.id === receiveModel.id) || receiveModel;
+      const sl = { ...(m.stock_levels || {}) };
+      const ws = { ...(sl[wid] || {}) };
+      const items = {};
+      Object.entries(receiveQtys).forEach(([flavor, qty]) => {
+        const q = parseInt(qty) || 0;
+        if (q > 0) {
+          ws[flavor] = (parseInt(ws[flavor]) || 0) + q;
+          items[flavor] = q;
+        }
+      });
+      sl[wid] = ws;
+      try {
+        await orgSb.patch("catalog", { stock_levels: sl }, `id=eq.${m.id}`);
+        await orgSb.post("shipments", {
+          warehouse_id: mgrWarehouse.id,
+          model_id: m.id,
+          model_name: m.model_name,
+          items,
+          total_units: receiveTotal,
+          received_by: accessLevel,
+          notes: receiveNotes.trim() || null,
+        });
+        setCatalog(p => p.map(c => c.id === m.id ? { ...c, stock_levels: sl } : c));
+        sndAdd();
+        setReceiveModel(null); setReceiveQtys({}); setReceiveNotes("");
+        // Refresh shipment history
+        orgSb.get("shipments", { order: "created_at.desc", filter: `warehouse_id=eq.${mgrWarehouse.id}`, limit: 20 }).then(d => setRecentShipments(d || []));
+      } catch (e) { console.error(e); alert("Error receiving stock. Check connection."); }
+    };
+
+    return (
+      <div style={st.page}>
+        <button onClick={() => { sndBack(); setMgrView("dashboard"); setReceiveModel(null); setReceiveQtys({}); }} style={st.back}>← Back to Dashboard</button>
+        <h1 style={st.h1}>📥 Receive Stock</h1>
+        <p style={st.sub}>Log incoming inventory for {mgrWarehouse?.name}</p>
+
+        {!receiveModel ? (
+          <>
+          <div style={{ marginBottom: "16px" }}>
+            <label style={{ ...st.label, marginBottom: "8px", display: "block" }}>Select Product</label>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", maxHeight: "340px", overflowY: "auto" }}>
+              {availableModels.map(m => {
+                const mws = wid ? ((m.stock_levels || {})[wid] || {}) : {};
+                const mStock = Object.values(mws).reduce((s, v) => s + (parseInt(v) || 0), 0);
+                return (
+                  <button key={m.id} onClick={() => { setReceiveModel(m); setReceiveQtys({}); setReceiveNotes(""); }}
+                    style={{ width: "100%", padding: "14px 16px", borderRadius: "10px", border: "1px solid #ffffff08", background: "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontSize: "13px" }}>{m.model_name}</div>
+                      <div style={{ fontSize: "10px", color: "#ffffff25", marginTop: "2px" }}>{m.brand} • {(m.flavors || []).length} flavors</div>
+                    </div>
+                    <span style={{ fontSize: "12px", fontWeight: 700, color: mStock > 0 ? "#1DB954" : "#ffffff25" }}>{mStock}u now</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Recent shipments */}
+          {recentShipments.length > 0 && (
+            <div style={{ marginTop: "24px", borderTop: "1px solid #ffffff08", paddingTop: "16px" }}>
+              <span style={{ color: "#ffffff40", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>📋 Recent Receives</span>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "12px" }}>
+                {recentShipments.map(s => (
+                  <div key={s.id} style={{ padding: "12px 14px", borderRadius: "10px", background: "rgba(29,185,84,0.04)", border: "1px solid #1DB95415" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{s.model_name}</span>
+                        <span style={{ color: "#1DB954", fontSize: "12px", fontWeight: 700, marginLeft: "8px" }}>+{s.total_units}u</span>
+                      </div>
+                      <span style={{ color: "#ffffff25", fontSize: "11px" }}>{timeAgo(s.created_at)}</span>
+                    </div>
+                    {s.notes && <div style={{ color: "#ffffff30", fontSize: "11px", marginTop: "4px", fontStyle: "italic" }}>{s.notes}</div>}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "6px" }}>
+                      {Object.entries(s.items || {}).map(([f, q]) => (
+                        <span key={f} style={{ padding: "2px 8px", borderRadius: "4px", background: "#1DB95410", color: "#1DB95490", fontSize: "10px", fontWeight: 600 }}>{f} +{q}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          </>
+        ) : (
+          <>
+          <div style={{ padding: "14px 16px", borderRadius: "12px", background: "rgba(29,185,84,0.06)", border: "1px solid #1DB95420", marginBottom: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div style={{ fontSize: "15px", fontWeight: 800, color: "#fff" }}>{receiveModel.model_name}</div>
+              <div style={{ fontSize: "11px", color: "#ffffff30", marginTop: "2px" }}>{receiveModel.brand} • {(receiveModel.flavors || []).length} flavors</div>
+            </div>
+            <button onClick={() => { setReceiveModel(null); setReceiveQtys({}); }} style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff40", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>Change</button>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+            <span style={{ color: "#ffffff30", fontSize: "12px", fontWeight: 600 }}>Enter quantities received</span>
+            <button onClick={() => {
+              const val = prompt("Set all flavors to this receive quantity:");
+              if (val !== null) {
+                const q = parseInt(val) || 0;
+                const bulk = {};
+                (receiveModel.flavors || []).forEach(f => { if (q > 0) bulk[f] = String(q); });
+                setReceiveQtys(bulk);
+              }
+            }} style={{ padding: "4px 12px", borderRadius: "6px", border: "1px solid #1DB95430", background: "#1DB95410", color: "#1DB954", fontSize: "10px", fontWeight: 700, cursor: "pointer" }}>Set All</button>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px", maxHeight: "400px", overflowY: "auto", marginBottom: "16px" }}>
+            {(receiveModel.flavors || []).map(f => {
+              const currentStock = wid ? (parseInt(((receiveModel.stock_levels || {})[wid] || {})[f]) || 0) : 0;
+              const addQty = parseInt(receiveQtys[f]) || 0;
+              return (
+                <div key={f} style={{ padding: "10px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.025)", border: "1px solid #ffffff08", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>{f}</span>
+                    <span style={{ color: "#ffffff20", fontSize: "11px", marginLeft: "8px" }}>{currentStock} now{addQty > 0 ? ` → ${currentStock + addQty}` : ""}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                    <span style={{ color: "#1DB954", fontSize: "13px", fontWeight: 700 }}>+</span>
+                    <input type="number" inputMode="numeric" value={receiveQtys[f] || ""} placeholder="0"
+                      onChange={e => setReceiveQtys(p => ({ ...p, [f]: e.target.value }))}
+                      onFocus={e => e.target.select()}
+                      style={{ width: "56px", padding: "6px 8px", borderRadius: "6px", border: "1px solid #1DB95430", background: "#1DB95408", color: "#1DB954", fontSize: "14px", fontWeight: 800, textAlign: "center", outline: "none" }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{ marginBottom: "16px" }}>
+            <input type="text" placeholder="Notes (optional — e.g. 'Tuesday shipment from dist')" value={receiveNotes} onChange={e => setReceiveNotes(e.target.value)}
+              style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
+          </div>
+
+          {receiveTotal > 0 && (
+            <div style={{ padding: "14px 16px", borderRadius: "12px", background: "rgba(29,185,84,0.08)", border: "1px solid #1DB95425", marginBottom: "16px", textAlign: "center" }}>
+              <span style={{ color: "#1DB954", fontSize: "22px", fontWeight: 900 }}>+{receiveTotal}</span>
+              <span style={{ color: "#1DB95480", fontSize: "12px", fontWeight: 600, marginLeft: "8px" }}>units to receive</span>
+            </div>
+          )}
+
+          <button onClick={handleReceive} disabled={receiveTotal === 0}
+            style={{ ...(receiveTotal > 0 ? st.btn : st.btnOff), background: receiveTotal > 0 ? "#1DB954" : undefined }}>
+            Receive Shipment →
+          </button>
+          </>
+        )}
+
+        <div style={{ height: "70px" }} />
+        <FloatingBack onClick={() => { setMgrView("dashboard"); setReceiveModel(null); setReceiveQtys({}); }} />
+      </div>
+    );
+  }
+
   // MANAGER DASHBOARD
   if (view === "manager" && authed && mgrView === "dashboard" && !selReport) {
     const pending = getPending();
@@ -2015,6 +2187,7 @@ export default function RestockApp() {
           <button onClick={loadMgr} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff50", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🔄 Refresh</button>
           {(isManagerOrExec || accessLevel === "owner") && <button onClick={() => setMgrView("catalog")} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #6C5CE730", background: "#6C5CE710", color: "#6C5CE7", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🗂️ Catalog</button>}
           {isManagerOrExec && <button onClick={() => { setMgrView("analytics"); loadAnalytics(analyticsRange); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #00B4D830", background: "#00B4D810", color: "#00B4D8", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>📈 Analytics</button>}
+          {isManagerOrExec && <button onClick={() => { setReceiveModel(null); setReceiveQtys({}); setReceiveNotes(""); setMgrView("receive"); orgSb.get("shipments", { order: "created_at.desc", filter: `warehouse_id=eq.${mgrWarehouse.id}`, limit: 20 }).then(d => setRecentShipments(d || [])); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #1DB95430", background: "#1DB95410", color: "#1DB954", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>📥 Receive</button>}
         </div>
 
         {/* PENDING ORDERS — hero section */}
