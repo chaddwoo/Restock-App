@@ -701,7 +701,8 @@ export default function RestockApp() {
     try { await orgSb.patch("catalog", { warehouse_visibility: whVis }, `id=eq.${modelId}`); setCatalog(p => p.map(c => c.id === modelId ? { ...c, warehouse_visibility: whVis } : c)); } catch (e) { console.error(e); }
   };
   const addModel = async () => {
-    if (!newModelName.trim() || !newModelBrand.trim()) return;
+    if (!newModelName.trim()) { alert("Product name is required."); return; }
+    if (!newModelBrand.trim()) { alert("Brand is required."); return; }
     // Hide from other warehouses entirely using __ALL__ marker
     const whVis = {};
     if (mgrWarehouse) {
@@ -710,8 +711,9 @@ export default function RestockApp() {
     try {
       const res = await orgSb.post("catalog", { model_name: newModelName.trim(), brand: newModelBrand.trim(), puffs: newModelPuffs.trim() || "N/A", category: newModelCategory.trim() || "Vapes", flavors: [], warehouse_visibility: whVis });
       if (res && res[0]) { sndAdd(); setCatalog(p => [...p, res[0]].sort((a, b) => (a.category || "").localeCompare(b.category || "") || a.brand.localeCompare(b.brand) || a.model_name.localeCompare(b.model_name))); }
+      else { alert("Failed to save. Check your connection and try again."); return; }
       setNewModelName(""); setNewModelBrand(""); setNewModelPuffs(""); setNewModelCategory("Vapes"); setShowAddModel(false);
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); alert("Error saving product. Check your connection."); }
   };
   const deleteModel = async (id) => {
     const model = catalog.find(c => c.id === id); if (!model) return;
@@ -1752,9 +1754,11 @@ export default function RestockApp() {
               <input type="text" placeholder="Brand (e.g. Geek Bar, RAW, etc)" value={newModelBrand} onChange={e => setNewModelBrand(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
               <input type="text" placeholder="Category (e.g. Vapes, Accessories, CBD)" value={newModelCategory} onChange={e => setNewModelCategory(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
               <input type="text" placeholder="Puff count (leave blank if not a vape)" value={newModelPuffs} onChange={e => setNewModelPuffs(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button onClick={addModel} style={{ padding: "10px 18px", borderRadius: "8px", background: "#1DB954", color: "#fff", border: "none", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Save</button>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <button onClick={addModel} disabled={!newModelName.trim() || !newModelBrand.trim()}
+                  style={{ padding: "10px 18px", borderRadius: "8px", background: newModelName.trim() && newModelBrand.trim() ? "#1DB954" : "#ffffff10", color: newModelName.trim() && newModelBrand.trim() ? "#fff" : "#ffffff25", border: "none", fontSize: "13px", fontWeight: 700, cursor: newModelName.trim() && newModelBrand.trim() ? "pointer" : "not-allowed" }}>Save</button>
                 <button onClick={() => { setShowAddModel(false); setNewModelName(""); setNewModelBrand(""); setNewModelPuffs(""); setNewModelCategory("Vapes"); }} style={{ padding: "10px 18px", borderRadius: "8px", background: "transparent", color: "#ffffff40", border: "1px solid #ffffff15", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
+                {(!newModelName.trim() || !newModelBrand.trim()) && (newModelName || newModelBrand) && <span style={{ color: "#F59E0B", fontSize: "11px", fontWeight: 600 }}>Name & brand required</span>}
               </div>
             </div>
           </div>
