@@ -82,54 +82,45 @@
   .btn-sm { padding: 10px 22px; font-size: 14px; }
 
   /* ─── HERO ─── */
-  .hero { padding: 140px 0 56px; text-align: center; position: relative; }
+  .hero { padding: 140px 0 48px; text-align: center; position: relative; }
   .hero::before {
     content: ''; position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
     width: 600px; height: 500px; border-radius: 50%;
     background: radial-gradient(circle, rgba(255,140,66,0.06) 0%, transparent 70%);
     pointer-events: none;
   }
-  .hero-eyebrow { margin-bottom: 24px; }
+  .hero-eyebrow { margin-bottom: 22px; }
   .hero h1 {
-    font-family: 'Outfit', sans-serif; font-size: clamp(40px, 5.5vw, 68px);
+    font-family: 'Outfit', sans-serif; font-size: clamp(38px, 5.5vw, 66px);
     font-weight: 800; line-height: 1.06; letter-spacing: -2.5px;
-    max-width: 780px; margin: 0 auto 24px;
+    max-width: 800px; margin: 0 auto 22px;
   }
   .hero h1 .highlight {
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   }
   .hero-sub {
-    font-size: 18px; color: var(--text-secondary); max-width: 540px;
-    margin: 0 auto 20px; line-height: 1.7;
+    font-size: 18px; color: var(--text-secondary); max-width: 580px;
+    margin: 0 auto 16px; line-height: 1.7;
   }
   .hero-sub-bold {
-    font-size: 15px; color: var(--text-secondary); max-width: 480px;
-    margin: 0 auto 36px; line-height: 1.7;
+    font-size: 15px; color: var(--text-secondary); max-width: 520px;
+    margin: 0 auto 32px; line-height: 1.7;
   }
   .hero-sub-bold strong { color: var(--text); }
   .hero-ctas { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
-  .hero-micro {
-    margin-top: 16px; font-size: 13px; color: var(--text-secondary);
-  }
+  .hero-micro { margin-top: 14px; font-size: 13px; color: var(--text-secondary); }
   .hero-micro strong { color: var(--accent); }
 
   /* ─── TRUST BAR ─── */
-  .trust-bar {
-    padding: 36px 0 0; text-align: center;
-  }
-  .trust-items {
-    display: flex; align-items: center; justify-content: center; gap: 40px; flex-wrap: wrap;
-  }
-  .trust-item {
-    display: flex; align-items: center; gap: 10px;
-    font-size: 14px; color: var(--text-secondary);
-  }
-  .trust-icon { font-size: 18px; }
+  .trust-bar { padding: 32px 0 0; text-align: center; }
+  .trust-items { display: flex; align-items: center; justify-content: center; gap: 36px; flex-wrap: wrap; }
+  .trust-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
+  .trust-icon { font-size: 16px; }
   .trust-item strong { color: var(--text); font-weight: 600; }
 
   /* ─── DASHBOARD PREVIEW ─── */
-  .preview-section { padding: 50px 0 40px; }
+  .preview-section { padding: 44px 0 36px; }
   .preview-window {
     max-width: 960px; margin: 0 auto;
     background: var(--bg-card); border: 1px solid var(--border);
@@ -142,18 +133,17 @@
   .preview-dot:nth-child(2) { background: var(--warning); }
   .preview-dot:nth-child(3) { background: var(--success); }
   .preview-url { margin-left: 12px; font-size: 12px; color: var(--text-secondary); font-family: 'Space Mono', monospace; }
-  .preview-body { padding: 24px; }
-  .preview-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
-  .preview-stat { background: var(--surface); border-radius: var(--radius-sm); padding: 16px; border: 1px solid var(--border); }
-  .preview-stat-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-bottom: 6px; }
-  .preview-stat-value { font-family: 'Space Mono', monospace; font-size: 24px; font-weight: 700; }
+  .preview-body { padding: 22px; }
+  .preview-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  .preview-stat { background: var(--surface); border-radius: var(--radius-sm); padding: 14px; border: 1px solid var(--border); }
+  .preview-stat-label { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-bottom: 4px; }
+  .preview-stat-value { font-family: 'Space Mono', monospace; font-size: 22px; font-weight: 700; }
   .preview-stat-value.orange { color: var(--accent); }
   .preview-stat-value.yellow { color: var(--warning); }
   .preview-stat-value.red { color: var(--danger); }
   .preview-stat-value.green { color: var(--success); }
-
   .preview-table { width: 100%; background: var(--surface); border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); }
-  .preview-table-row { display: grid; grid-template-columns: 2fr 1.2fr 0.8fr 0.8fr 0.8fr; padding: 12px 18px; border-bottom: 1px solid var(--border); font-size: 13px; align-items: center; }
+  .preview-table-row { display: grid; grid-template-columns: 2fr 1.2fr 0.8fr 0.8fr 0.8fr; padding: 11px 16px; border-bottom: 1px solid var(--border); font-size: 12px; align-items: center; }
   .preview-table-row:last-child { border-bottom: none; }
   .preview-table-head { font-weight: 600; color: var(--text-secondary); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; background: rgba(255,255,255,0.02); }
   .pill { display: inline-flex; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; }
@@ -163,75 +153,75 @@
   .pill.pending { background: var(--accent-glow); color: var(--accent); }
 
   /* ─── SECTION HEADERS ─── */
-  .section-header { text-align: center; max-width: 620px; margin: 0 auto 40px; }
-  .section-header .badge { margin-bottom: 18px; }
+  .section-header { text-align: center; max-width: 640px; margin: 0 auto 36px; }
+  .section-header .badge { margin-bottom: 16px; }
   .section-header h2 {
-    font-family: 'Outfit', sans-serif; font-size: clamp(30px, 4vw, 44px);
-    font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 14px;
+    font-family: 'Outfit', sans-serif; font-size: clamp(28px, 4vw, 42px);
+    font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 12px;
   }
   .section-header p { color: var(--text-secondary); font-size: 16px; line-height: 1.7; }
 
   /* ─── PROBLEM SECTION ─── */
-  .problem-section { padding: 60px 0 50px; }
+  .problem-section { padding: 52px 0 44px; }
   .problem-quote {
-    max-width: 700px; margin: 0 auto 40px; text-align: center;
-    font-size: 22px; font-style: italic; color: var(--text-secondary); line-height: 1.6;
-    font-family: 'DM Sans', sans-serif;
+    max-width: 720px; margin: 0 auto 36px; text-align: center;
+    font-size: 20px; font-style: italic; color: var(--text-secondary); line-height: 1.6;
   }
   .problem-quote em { color: var(--text); font-style: italic; }
-  .problem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .problem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
   .problem-card {
     background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 30px 26px; transition: all 0.3s;
+    padding: 28px 24px; transition: all 0.3s;
   }
   .problem-card:hover { border-color: var(--border-hover); transform: translateY(-3px); }
-  .problem-icon { font-size: 28px; margin-bottom: 16px; display: block; }
-  .problem-card h3 { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 18px; margin-bottom: 8px; letter-spacing: -0.3px; }
+  .problem-icon { font-size: 26px; margin-bottom: 14px; display: block; }
+  .problem-card h3 { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 17px; margin-bottom: 8px; letter-spacing: -0.3px; }
   .problem-card p { color: var(--text-secondary); font-size: 14px; line-height: 1.65; }
 
   /* ─── HOW IT WORKS ─── */
-  .how-section { padding: 60px 0; }
+  .how-section { padding: 52px 0; }
   .steps-timeline { max-width: 680px; margin: 0 auto; position: relative; }
   .steps-timeline::before {
     content: ''; position: absolute; left: 27px; top: 0; bottom: 0; width: 2px;
-    background: linear-gradient(to bottom, var(--accent), rgba(255,140,66,0.1));
+    background: linear-gradient(to bottom, var(--accent), rgba(255,140,66,0.08));
   }
   .step {
-    display: flex; gap: 24px; margin-bottom: 28px; position: relative;
+    display: flex; gap: 22px; margin-bottom: 24px; position: relative;
     animation: step-in 0.5s ease backwards;
   }
   .step:last-child { margin-bottom: 0; }
-  .step:nth-child(2) { animation-delay: 0.1s; }
-  .step:nth-child(3) { animation-delay: 0.2s; }
-  .step:nth-child(4) { animation-delay: 0.3s; }
-  @keyframes step-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .step:nth-child(2) { animation-delay: 0.08s; }
+  .step:nth-child(3) { animation-delay: 0.16s; }
+  .step:nth-child(4) { animation-delay: 0.24s; }
+  .step:nth-child(5) { animation-delay: 0.32s; }
+  @keyframes step-in { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
   .step-num {
-    width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0;
+    width: 54px; height: 54px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Space Mono', monospace; font-weight: 700; font-size: 16px;
+    font-family: 'Space Mono', monospace; font-weight: 700; font-size: 15px;
     background: var(--bg-card); border: 2px solid var(--accent);
     color: var(--accent); z-index: 1;
   }
-  .step-content { padding-top: 6px; }
-  .step-content h3 { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 17px; margin-bottom: 4px; }
+  .step-content { padding-top: 5px; }
+  .step-content h3 { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 3px; }
   .step-content p { color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
 
   /* ─── FEATURES ─── */
-  .features-section { padding: 60px 0; }
+  .features-section { padding: 52px 0; }
   .feature-row {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center;
-    margin-bottom: 56px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 52px; align-items: center;
+    margin-bottom: 52px;
   }
   .feature-row:last-child { margin-bottom: 0; }
   .feature-row.reverse .feature-text { order: 2; }
   .feature-row.reverse .feature-visual { order: 1; }
-  .feature-text .badge { margin-bottom: 16px; }
+  .feature-text .badge { margin-bottom: 14px; }
   .feature-text h3 {
-    font-family: 'Outfit', sans-serif; font-size: 32px; font-weight: 800;
-    letter-spacing: -1px; line-height: 1.15; margin-bottom: 12px;
+    font-family: 'Outfit', sans-serif; font-size: 30px; font-weight: 800;
+    letter-spacing: -1px; line-height: 1.15; margin-bottom: 10px;
   }
-  .feature-text p { color: var(--text-secondary); font-size: 15px; line-height: 1.7; margin-bottom: 20px; }
-  .feature-checklist { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .feature-text p { color: var(--text-secondary); font-size: 15px; line-height: 1.7; margin-bottom: 18px; }
+  .feature-checklist { list-style: none; display: flex; flex-direction: column; gap: 9px; }
   .feature-checklist li {
     display: flex; align-items: center; gap: 10px;
     font-size: 14px; color: var(--text-secondary);
@@ -243,134 +233,242 @@
   }
   .feature-visual {
     background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 28px; min-height: 300px; display: flex; flex-direction: column; justify-content: center;
+    padding: 24px; min-height: 280px; display: flex; flex-direction: column; justify-content: center;
   }
 
   /* Feature Visual: Order Flow */
-  .order-flow { display: flex; flex-direction: column; gap: 10px; }
+  .order-flow { display: flex; flex-direction: column; gap: 8px; }
   .order-item {
     display: flex; align-items: center; justify-content: space-between;
     background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px 18px; font-size: 13px;
+    padding: 12px 16px; font-size: 13px;
     animation: order-in 0.5s ease backwards;
   }
   .order-item:nth-child(1) { animation-delay: 0.05s; }
-  .order-item:nth-child(2) { animation-delay: 0.15s; }
-  .order-item:nth-child(3) { animation-delay: 0.25s; }
-  .order-item:nth-child(4) { animation-delay: 0.35s; }
-  @keyframes order-in { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
-  .order-item-left { display: flex; align-items: center; gap: 12px; }
+  .order-item:nth-child(2) { animation-delay: 0.12s; }
+  .order-item:nth-child(3) { animation-delay: 0.19s; }
+  .order-item:nth-child(4) { animation-delay: 0.26s; }
+  @keyframes order-in { from { opacity:0; transform:translateX(-14px); } to { opacity:1; transform:translateX(0); } }
+  .order-item-left { display: flex; align-items: center; gap: 10px; }
   .order-item-left strong { color: var(--text); }
   .order-item-qty {
-    font-family: 'Space Mono', monospace; font-weight: 700; font-size: 14px;
+    font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px;
     color: var(--accent); background: var(--accent-glow);
-    padding: 4px 12px; border-radius: 6px;
+    padding: 3px 10px; border-radius: 6px;
   }
-  .order-meta {
+  .order-confirm {
+    margin-top: 4px; padding: 12px 16px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
     display: flex; align-items: center; justify-content: space-between;
-    margin-top: 6px; padding: 10px 18px;
-    font-size: 12px; color: var(--text-secondary);
-    border-top: 1px solid var(--border);
+    animation: order-in 0.5s ease backwards; animation-delay: 0.33s;
   }
-  .order-meta .pill { font-size: 11px; }
+  .order-confirm-left { font-size: 12px; color: var(--text-secondary); }
+  .order-confirm-left strong { color: var(--text); }
+  .order-confirm-btn {
+    background: var(--accent); color: var(--bg); border: none; border-radius: 8px;
+    padding: 8px 20px; font-weight: 700; font-size: 12px; font-family: 'DM Sans', sans-serif;
+    letter-spacing: 0.3px;
+  }
 
-  /* Feature Visual: Location Grid */
-  .loc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .loc-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px;
-    animation: loc-in 0.5s ease backwards;
+  /* Feature Visual: Pick Tracker */
+  .pick-flow { display: flex; flex-direction: column; gap: 8px; }
+  .pick-item {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; font-size: 13px;
+    animation: order-in 0.4s ease backwards;
   }
-  .loc-card:nth-child(2) { animation-delay: 0.1s; }
-  .loc-card:nth-child(3) { animation-delay: 0.2s; }
-  .loc-card:nth-child(4) { animation-delay: 0.3s; }
-  @keyframes loc-in { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
-  .loc-name { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
-  .loc-detail { font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; }
-  .loc-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.06); overflow: hidden; }
-  .loc-bar-fill { height: 100%; border-radius: 2px; }
-  .loc-bar-fill.high { background: var(--success); width: 94%; }
-  .loc-bar-fill.mid { background: var(--warning); width: 58%; }
-  .loc-bar-fill.low { background: var(--danger); width: 24%; }
-  .loc-bar-fill.good { background: var(--success); width: 81%; }
+  .pick-item:nth-child(1) { animation-delay: 0.05s; }
+  .pick-item:nth-child(2) { animation-delay: 0.1s; }
+  .pick-item:nth-child(3) { animation-delay: 0.15s; }
+  .pick-item:nth-child(4) { animation-delay: 0.2s; }
+  .pick-check {
+    width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+  }
+  .pick-check.done { background: var(--success); color: var(--bg); }
+  .pick-check.open { background: transparent; border: 2px solid rgba(255,255,255,0.15); }
+  .pick-item-name { flex: 1; }
+  .pick-item-name strong { color: var(--text); }
+  .pick-item-name.checked { text-decoration: line-through; opacity: 0.5; }
+  .pick-qty { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--text-secondary); }
+  .pick-progress { margin-top: 4px; }
+  .pick-progress-bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,0.06); overflow: hidden; margin-bottom: 6px; }
+  .pick-progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--accent-light)); width: 50%; transition: width 1s ease; }
+  .pick-progress-label { font-size: 11px; color: var(--text-secondary); display: flex; justify-content: space-between; }
 
   /* Feature Visual: Analytics */
-  .analytics-vis { display: flex; flex-direction: column; gap: 16px; }
-  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 140px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .analytics-vis { display: flex; flex-direction: column; gap: 14px; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 7px; height: 120px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
   .bar-chart-col { flex: 1; display: flex; flex-direction: column; align-items: center; }
-  .bar-chart-bar { width: 100%; border-radius: 5px 5px 0 0; animation: bar-grow 0.8s ease backwards; }
+  .bar-chart-bar { width: 100%; border-radius: 4px 4px 0 0; animation: bar-grow 0.8s ease backwards; }
   @keyframes bar-grow { from { height: 0 !important; } }
   .bar-chart-bar.a { background: linear-gradient(to top, rgba(255,140,66,0.25), var(--accent)); }
   .bar-chart-bar.b { background: linear-gradient(to top, rgba(255,140,66,0.1), rgba(255,140,66,0.45)); }
-  .bar-chart-labels { display: flex; gap: 8px; }
+  .bar-chart-labels { display: flex; gap: 7px; }
   .bar-chart-labels span { flex: 1; text-align: center; font-size: 10px; color: var(--text-secondary); font-family: 'Space Mono', monospace; }
-  .analytics-row { display: flex; gap: 10px; }
-  .analytics-stat { flex: 1; background: var(--surface); border-radius: var(--radius-sm); padding: 14px; border: 1px solid var(--border); }
-  .analytics-stat-label { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
-  .analytics-stat-val { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; color: var(--accent); }
+  .analytics-row { display: flex; gap: 8px; }
+  .analytics-stat { flex: 1; background: var(--surface); border-radius: var(--radius-sm); padding: 12px; border: 1px solid var(--border); }
+  .analytics-stat-label { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+  .analytics-stat-val { font-family: 'Space Mono', monospace; font-size: 17px; font-weight: 700; color: var(--accent); }
 
   /* ─── DIFFERENTIATORS ─── */
-  .diff-section { padding: 60px 0; }
-  .diff-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; max-width: 820px; margin: 0 auto; }
+  .diff-section { padding: 52px 0; }
+  .diff-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; max-width: 820px; margin: 0 auto; }
   .diff-card {
     background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 28px 24px; transition: all 0.3s;
+    padding: 26px 22px; transition: all 0.3s;
   }
   .diff-card:hover { border-color: var(--border-hover); }
-  .diff-card h3 { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 17px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
-  .diff-card p { color: var(--text-secondary); font-size: 14px; line-height: 1.65; }
+  .diff-card h3 { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 7px; display: flex; align-items: center; gap: 8px; }
+  .diff-card p { color: var(--text-secondary); font-size: 13px; line-height: 1.65; }
 
-  /* ─── WHO IT'S FOR ─── */
-  .audience-section { padding: 50px 0; background: var(--bg-card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-  .audience-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; text-align: center; }
-  .audience-item {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 24px 16px; transition: all 0.3s;
+  /* ─── FIT QUIZ ─── */
+  .quiz-section { padding: 52px 0; background: var(--bg-card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .quiz-box {
+    max-width: 580px; margin: 0 auto; text-align: center;
   }
-  .audience-item:hover { border-color: rgba(255,140,66,0.25); }
-  .audience-icon { font-size: 28px; margin-bottom: 10px; display: block; }
-  .audience-label { font-size: 13px; font-weight: 600; line-height: 1.4; }
+  .quiz-step { display: none; animation: quiz-in 0.4s ease; }
+  .quiz-step.active { display: block; }
+  @keyframes quiz-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .quiz-question {
+    font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 700;
+    letter-spacing: -0.5px; margin-bottom: 24px; line-height: 1.3;
+  }
+  .quiz-options { display: flex; flex-direction: column; gap: 10px; max-width: 420px; margin: 0 auto; }
+  .quiz-option {
+    background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 16px 20px; font-size: 15px; font-weight: 500; color: var(--text);
+    cursor: pointer; transition: all 0.25s ease; text-align: left;
+    display: flex; align-items: center; gap: 12px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .quiz-option:hover { border-color: rgba(255,140,66,0.4); background: var(--bg-card-hover); transform: translateY(-2px); }
+  .quiz-option:active { transform: translateY(0); }
+  .quiz-option-icon { font-size: 20px; flex-shrink: 0; }
+  .quiz-progress { display: flex; gap: 8px; justify-content: center; margin-bottom: 28px; }
+  .quiz-dot {
+    width: 32px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.08);
+    transition: background 0.3s;
+  }
+  .quiz-dot.filled { background: var(--accent); }
+  .quiz-dot.current { background: rgba(255,140,66,0.4); }
 
-  /* ─── SOCIAL PROOF ─── */
-  .proof-section { padding: 60px 0; }
-  .proof-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  .proof-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
-  .proof-stars { color: var(--accent); font-size: 14px; margin-bottom: 14px; letter-spacing: 2px; }
-  .proof-quote { font-size: 14px; line-height: 1.7; color: var(--text-secondary); margin-bottom: 18px; font-style: italic; }
-  .proof-author { display: flex; align-items: center; gap: 10px; }
-  .proof-avatar {
-    width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 13px; color: var(--text);
+  /* Quiz Result */
+  .quiz-result { text-align: center; }
+  .quiz-result-icon { font-size: 48px; margin-bottom: 16px; display: block; }
+  .quiz-result h3 {
+    font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800;
+    letter-spacing: -0.8px; margin-bottom: 10px; line-height: 1.2;
   }
-  .proof-name { font-weight: 600; font-size: 13px; }
-  .proof-role { font-size: 11px; color: var(--text-secondary); }
-
-  /* ─── PRICING ─── */
-  .pricing-section { padding: 60px 0; }
-  .pricing-box {
-    max-width: 620px; margin: 0 auto;
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
-    padding: 44px 40px; text-align: center; position: relative;
-    box-shadow: 0 0 80px -30px var(--accent-glow);
+  .quiz-result p { color: var(--text-secondary); font-size: 15px; line-height: 1.7; margin-bottom: 24px; max-width: 400px; margin-left: auto; margin-right: auto; }
+  .quiz-result .btn { margin: 0 auto; }
+  .quiz-result-tags {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+    margin-bottom: 20px;
   }
-  .pricing-box::before {
-    content: 'SIMPLE PRICING'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
-    background: var(--accent); color: var(--bg); font-size: 11px; font-weight: 700;
-    letter-spacing: 1.5px; padding: 5px 18px; border-radius: 100px;
+  .quiz-result-tag {
+    background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(255,140,66,0.2);
+    border-radius: 100px; padding: 5px 14px; font-size: 12px; font-weight: 600;
     font-family: 'Space Mono', monospace;
   }
-  .pricing-range {
-    font-family: 'Outfit', sans-serif; font-size: 56px; font-weight: 800;
-    letter-spacing: -2px; margin: 16px 0 4px;
+  .quiz-restart {
+    margin-top: 16px; font-size: 13px; color: var(--text-secondary);
+    cursor: pointer; background: none; border: none; font-family: 'DM Sans', sans-serif;
+    text-decoration: underline; text-underline-offset: 3px;
   }
-  .pricing-range .per { font-size: 18px; font-weight: 500; color: var(--text-secondary); letter-spacing: 0; }
-  .pricing-desc { color: var(--text-secondary); font-size: 15px; margin-bottom: 24px; }
-  .pricing-includes { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; text-align: left; margin-bottom: 28px; }
-  .pricing-includes li { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); }
-  .pricing-includes li::before { content: '✓'; color: var(--accent); font-weight: 700; font-size: 13px; flex-shrink: 0; }
-  .pricing-fine { font-size: 13px; color: var(--text-secondary); margin-top: 20px; }
+  .quiz-restart:hover { color: var(--text); }
+
+  /* ─── ROI MATH ─── */
+  .roi-section { padding: 52px 0; }
+  .roi-box {
+    max-width: 760px; margin: 0 auto;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
+    padding: 40px 36px; position: relative; overflow: hidden;
+  }
+  .roi-box::before {
+    content: ''; position: absolute; top: -60px; right: -60px;
+    width: 200px; height: 200px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,140,66,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .roi-box h2 {
+    font-family: 'Outfit', sans-serif; font-size: 28px; font-weight: 800;
+    letter-spacing: -1px; margin-bottom: 24px; text-align: center;
+  }
+  .roi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .roi-stat { text-align: center; }
+  .roi-stat-value {
+    font-family: 'Space Mono', monospace; font-size: 32px; font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .roi-stat-value.red { color: var(--danger); }
+  .roi-stat-value.orange { color: var(--accent); }
+  .roi-stat-value.green { color: var(--success); }
+  .roi-stat-label { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+  .roi-bottom {
+    text-align: center; padding-top: 20px; border-top: 1px solid var(--border);
+  }
+  .roi-bottom p { color: var(--text-secondary); font-size: 15px; line-height: 1.7; }
+  .roi-bottom strong { color: var(--text); }
+  .roi-highlight {
+    display: inline-block; margin-top: 12px;
+    font-family: 'Space Mono', monospace; font-size: 20px; font-weight: 700;
+    color: var(--accent);
+  }
+
+  /* ─── PRICING ─── */
+  .pricing-section { padding: 56px 0; }
+  .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 780px; margin: 0 auto; }
+  .pricing-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px;
+    padding: 36px 30px; display: flex; flex-direction: column; transition: all 0.3s;
+  }
+  .pricing-card:hover { transform: translateY(-3px); }
+  .pricing-card.featured {
+    border-color: var(--accent); position: relative;
+    box-shadow: 0 0 60px -20px var(--accent-glow);
+  }
+  .pricing-card.featured::before {
+    content: 'MOST POPULAR'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: var(--bg); font-size: 10px; font-weight: 700;
+    letter-spacing: 1.5px; padding: 4px 16px; border-radius: 100px;
+    font-family: 'Space Mono', monospace;
+  }
+  .pricing-tier { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 22px; margin-bottom: 4px; letter-spacing: -0.5px; }
+  .pricing-desc { color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
+  .pricing-price { display: flex; align-items: baseline; gap: 4px; margin-bottom: 6px; }
+  .pricing-amount { font-family: 'Outfit', sans-serif; font-size: 44px; font-weight: 800; letter-spacing: -2px; }
+  .pricing-period { color: var(--text-secondary); font-size: 14px; }
+  .pricing-sub { color: var(--text-secondary); font-size: 12px; margin-bottom: 24px; }
+  .pricing-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; flex: 1; }
+  .pricing-features li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+  .pricing-features li::before { content: '✓'; color: var(--accent); font-weight: 700; font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+  .pricing-card .btn { width: 100%; justify-content: center; }
+  .pricing-fine { text-align: center; font-size: 13px; color: var(--text-secondary); margin-top: 16px; max-width: 780px; margin-left: auto; margin-right: auto; }
+
+  /* ─── COMING SOON ─── */
+  .roadmap-section { padding: 44px 0; }
+  .roadmap-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; max-width: 820px; margin: 0 auto; }
+  .roadmap-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 24px 20px; text-align: center; transition: all 0.3s;
+  }
+  .roadmap-card:hover { border-color: var(--border-hover); }
+  .roadmap-icon { font-size: 28px; margin-bottom: 10px; display: block; }
+  .roadmap-card h3 { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 15px; margin-bottom: 6px; }
+  .roadmap-card p { color: var(--text-secondary); font-size: 12px; line-height: 1.6; }
+  .coming-badge {
+    display: inline-block; margin-top: 10px;
+    font-size: 10px; font-weight: 700; color: var(--accent);
+    font-family: 'Space Mono', monospace; letter-spacing: 1px;
+    text-transform: uppercase; background: var(--accent-glow);
+    padding: 3px 10px; border-radius: 100px;
+  }
 
   /* ─── FINAL CTA ─── */
-  .cta-section { padding: 70px 0 50px; text-align: center; position: relative; }
+  .cta-section { padding: 60px 0 44px; text-align: center; position: relative; }
   .cta-section::before {
     content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
     width: 500px; height: 400px; border-radius: 50%;
@@ -378,59 +476,114 @@
     pointer-events: none;
   }
   .cta-section h2 {
-    font-family: 'Outfit', sans-serif; font-size: clamp(32px, 4.5vw, 48px);
-    font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 14px;
+    font-family: 'Outfit', sans-serif; font-size: clamp(30px, 4.5vw, 46px);
+    font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 12px;
   }
-  .cta-section p { color: var(--text-secondary); font-size: 17px; max-width: 480px; margin: 0 auto 32px; }
+  .cta-section p { color: var(--text-secondary); font-size: 16px; max-width: 480px; margin: 0 auto 28px; line-height: 1.7; }
   .cta-steps {
-    display: flex; align-items: center; justify-content: center; gap: 32px;
-    margin-top: 24px; flex-wrap: wrap;
+    display: flex; align-items: center; justify-content: center; gap: 28px;
+    margin-top: 20px; flex-wrap: wrap;
   }
-  .cta-step { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-secondary); }
+  .cta-step { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
   .cta-step-num {
-    width: 28px; height: 28px; border-radius: 50%; background: var(--accent-glow); color: var(--accent);
-    font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700;
+    width: 26px; height: 26px; border-radius: 50%; background: var(--accent-glow); color: var(--accent);
+    font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
   }
 
+  /* ─── CONTACT FORM ─── */
+  .cta-form {
+    max-width: 440px; margin: 0 auto; text-align: left;
+  }
+  .form-row { margin-bottom: 14px; }
+  .form-row-half { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .form-label {
+    display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .form-input {
+    width: 100%; padding: 14px 16px; border-radius: 10px;
+    background: var(--surface); border: 1.5px solid var(--border);
+    color: var(--text); font-size: 15px; font-family: 'DM Sans', sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  .form-input::placeholder { color: rgba(255,255,255,0.2); }
+  .form-input:focus {
+    border-color: rgba(255,140,66,0.5);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .form-select {
+    width: 100%; padding: 14px 16px; border-radius: 10px;
+    background: var(--surface); border: 1.5px solid var(--border);
+    color: var(--text); font-size: 15px; font-family: 'DM Sans', sans-serif;
+    transition: border-color 0.2s; outline: none;
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238A8A8A' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 16px center;
+  }
+  .form-select:focus {
+    border-color: rgba(255,140,66,0.5);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .form-submit {
+    width: 100%; padding: 16px; border-radius: 100px; border: none;
+    background: var(--accent); color: var(--bg); font-size: 16px;
+    font-weight: 700; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all 0.3s;
+    box-shadow: 0 4px 20px rgba(255,140,66,0.25);
+    margin-top: 6px;
+  }
+  .form-submit:hover {
+    background: var(--accent-dark); transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(255,140,66,0.35);
+  }
+  .form-fine { text-align: center; font-size: 12px; color: var(--text-secondary); margin-top: 12px; }
+  .form-success {
+    text-align: center; display: none;
+  }
+  .form-success-icon { font-size: 48px; margin-bottom: 14px; display: block; }
+  .form-success h3 {
+    font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 800;
+    letter-spacing: -0.5px; margin-bottom: 8px;
+  }
+  .form-success p { color: var(--text-secondary); font-size: 15px; }
+
   /* ─── FOOTER ─── */
-  footer { padding: 40px 0; border-top: 1px solid var(--border); }
+  footer { padding: 36px 0; border-top: 1px solid var(--border); }
   footer .container { display: flex; align-items: center; justify-content: space-between; }
-  footer p { color: var(--text-secondary); font-size: 13px; }
-  footer a { color: var(--text-secondary); text-decoration: none; font-size: 13px; }
+  footer p { color: var(--text-secondary); font-size: 12px; }
+  footer a { color: var(--text-secondary); text-decoration: none; font-size: 12px; }
   footer a:hover { color: var(--text); }
-  .footer-links { display: flex; gap: 24px; }
+  .footer-links { display: flex; gap: 20px; }
 
   /* ─── RESPONSIVE ─── */
   @media (max-width: 900px) {
     .preview-grid { grid-template-columns: repeat(2, 1fr); }
-    .preview-table-row { grid-template-columns: 1.5fr 1fr 0.6fr 0.6fr; }
-    .preview-table-row span:nth-child(5) { display: none; }
+    .preview-table-row { grid-template-columns: 1.5fr 1fr 0.8fr; }
+    .preview-table-row span:nth-child(4), .preview-table-row span:nth-child(5) { display: none; }
     .audience-grid { grid-template-columns: repeat(3, 1fr); }
+    .roi-grid { grid-template-columns: 1fr; gap: 20px; }
   }
   @media (max-width: 768px) {
-    .problem-grid, .proof-grid, .diff-grid { grid-template-columns: 1fr; }
+    .problem-grid, .diff-grid, .pricing-grid, .roadmap-grid { grid-template-columns: 1fr; }
     .feature-row, .feature-row.reverse .feature-text, .feature-row.reverse .feature-visual { grid-template-columns: 1fr; }
-    .feature-row { gap: 32px; }
+    .feature-row { gap: 28px; }
     .feature-row.reverse .feature-text { order: 1; }
     .feature-row.reverse .feature-visual { order: 2; }
     .preview-grid { grid-template-columns: 1fr; }
     .preview-table-row { grid-template-columns: 1fr 1fr; }
-    .preview-table-row span:nth-child(3),
-    .preview-table-row span:nth-child(4),
-    .preview-table-row span:nth-child(5) { display: none; }
+    .preview-table-row span:nth-child(3), .preview-table-row span:nth-child(4), .preview-table-row span:nth-child(5) { display: none; }
     .nav-links a:not(.btn) { display: none; }
-    .loc-grid { grid-template-columns: 1fr; }
-    .trust-items { gap: 20px; }
-    .audience-grid { grid-template-columns: repeat(2, 1fr); }
-    .pricing-includes { grid-template-columns: 1fr; }
-    .pricing-box { padding: 36px 24px; }
-    footer .container { flex-direction: column; gap: 12px; text-align: center; }
-    .cta-steps { flex-direction: column; gap: 16px; }
+    .trust-items { gap: 16px; }
+    .roi-box { padding: 28px 20px; }
+    footer .container { flex-direction: column; gap: 10px; text-align: center; }
+    .cta-steps { flex-direction: column; gap: 12px; }
+    .form-row-half { grid-template-columns: 1fr; }
   }
 
   /* ─── SCROLL ANIMATIONS ─── */
-  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.6s ease, transform 0.6s ease; }
   .reveal.visible { opacity: 1; transform: translateY(0); }
 </style>
 </head>
@@ -452,15 +605,16 @@
 <!-- ══════════════════════════════ HERO ══════════════════════════════ -->
 <section class="hero">
   <div class="container">
-    <div class="hero-eyebrow"><span class="badge">Built by a Retail Operator</span></div>
-    <h1>Your stores need product.<br>Your warehouse is <span class="highlight">guessing.</span></h1>
-    <p class="hero-sub">Backstock replaces the group texts, phone calls, and scribbled lists with a dead-simple restock system your team will actually use.</p>
-    <p class="hero-sub-bold">Employee taps what they need → warehouse gets the order instantly → stock updates automatically. <strong>Takes under 2 minutes.</strong></p>
+    <div class="hero-eyebrow"><span class="badge">Built Inside a Real Retail Operation</span></div>
+    <h1>Your warehouse has the product. Your shelves are <span class="highlight">still empty.</span></h1>
+    <p class="hero-sub">Phone calls that get misheard. Group texts that get buried. Notes app lists that never sync. Somehow, the simplest part of your business — getting product from the warehouse to the shelf — is the thing that breaks every day.</p>
+    <p class="hero-sub-bold"><strong>Backstock fixes the process.</strong> Your employees tap what they need. Your warehouse gets a perfect pick list instantly. Stock updates automatically. Under 2 minutes, from any phone.</p>
     <div class="hero-ctas">
       <a href="#cta" class="btn btn-primary">Book a Live Demo <span>→</span></a>
       <a href="#how" class="btn btn-ghost">See How It Works</a>
     </div>
     <p class="hero-micro"><strong>No app download.</strong> Works in any browser. Live in 24 hours.</p>
+    <p style="margin-top:10px; font-size:13px; color:var(--text-secondary); max-width:420px; margin-left:auto; margin-right:auto; border-top:1px solid var(--border); padding-top:12px;">Built for retailers who warehouse their own product and restock their own stores.</p>
   </div>
 </section>
 
@@ -471,7 +625,8 @@
       <div class="trust-item"><span class="trust-icon">📱</span> Works on <strong>any phone</strong></div>
       <div class="trust-item"><span class="trust-icon">⚡</span> Live in <strong>24 hours</strong></div>
       <div class="trust-item"><span class="trust-icon">🚫</span> <strong>No contracts</strong>, cancel anytime</div>
-      <div class="trust-item"><span class="trust-icon">👤</span> <strong>Unlimited</strong> employees</div>
+      <div class="trust-item"><span class="trust-icon">👥</span> <strong>Unlimited</strong> employees &amp; orders</div>
+      <div class="trust-item"><span class="trust-icon">🔒</span> <strong>Isolated</strong> multi-tenant data</div>
     </div>
   </div>
 </section>
@@ -510,13 +665,13 @@
             <span>Order</span><span>Store</span><span>Items</span><span>Status</span><span>Submitted</span>
           </div>
           <div class="preview-table-row">
-            <span><strong>Marcus — #1047</strong></span><span style="color:var(--text-secondary)">Store #3 El Cajon</span><span>14</span><span><span class="pill pending">Picking</span></span><span style="color:var(--text-secondary)">2 min ago</span>
+            <span><strong>Marcus — #1047</strong></span><span style="color:var(--text-secondary)">Store #3 — Eastside</span><span>14</span><span><span class="pill pending">Picking</span></span><span style="color:var(--text-secondary)">2 min ago</span>
           </div>
           <div class="preview-table-row">
-            <span><strong>Jessica — #1046</strong></span><span style="color:var(--text-secondary)">Store #1 Pacific Beach</span><span>8</span><span><span class="pill stocked">Complete</span></span><span style="color:var(--text-secondary)">14 min ago</span>
+            <span><strong>Jessica — #1046</strong></span><span style="color:var(--text-secondary)">Store #1 — Downtown</span><span>8</span><span><span class="pill stocked">Complete</span></span><span style="color:var(--text-secondary)">14 min ago</span>
           </div>
           <div class="preview-table-row">
-            <span><strong>David — #1045</strong></span><span style="color:var(--text-secondary)">Store #2 Hillcrest</span><span>22</span><span><span class="pill stocked">Complete</span></span><span style="color:var(--text-secondary)">48 min ago</span>
+            <span><strong>David — #1045</strong></span><span style="color:var(--text-secondary)">Store #2 — Midtown</span><span>22</span><span><span class="pill stocked">Complete</span></span><span style="color:var(--text-secondary)">48 min ago</span>
           </div>
         </div>
       </div>
@@ -531,22 +686,22 @@
       <span class="badge">Sound Familiar?</span>
       <h2>You're not running out of product. You're running out of visibility.</h2>
     </div>
-    <p class="problem-quote reveal">"Hey can someone send me 10 boxes of the mint? Actually make it 12. Wait, which mint? The Zyn or the—<em>never mind, I'll just call.</em>"</p>
+    <p class="problem-quote reveal">"Hey can you send 10 cases of the — actually make it 12. Wait, which one? The large or the — <em>hold on, I got another store calling. Let me call you back.</em>"</p>
     <div class="problem-grid">
       <div class="problem-card reveal">
-        <span class="problem-icon">💬</span>
-        <h3>Group texts aren't a system</h3>
-        <p>Orders get buried in a thread of 47 unread messages. Your warehouse pulls what they think was requested. Half the order shows up wrong.</p>
+        <span class="problem-icon">📞</span>
+        <h3>The restock process is held together by duct tape</h3>
+        <p>Phone calls, group chats, someone driving store to store with a clipboard. However your operation handles it, the result is the same — orders get lost, quantities get wrong, and nobody trusts the numbers.</p>
       </div>
       <div class="problem-card reveal">
-        <span class="problem-icon">🔥</span>
-        <h3>Shelves go empty — nobody knows</h3>
-        <p>Your best sellers run out at Store #3 while Store #1 has a surplus. You don't find out until a customer walks out and doesn't come back.</p>
+        <span class="problem-icon">📱</span>
+        <h3>Group texts and Notes app lists</h3>
+        <p>Screenshots of empty shelves. Lists in someone's Notes app that never sync. Texts buried under 47 unread messages. Your warehouse pulls what they think was requested — and half of it is wrong.</p>
       </div>
       <div class="problem-card reveal">
-        <span class="problem-icon">🧮</span>
-        <h3>Stock counts are a fantasy</h3>
-        <p>Your spreadsheet says you have 40 units. Your shelf says 12. Nobody updated the numbers because nobody has time and the process doesn't work.</p>
+        <span class="problem-icon">🚶</span>
+        <h3>Customers walk in and walk out</h3>
+        <p>At $3,500/day per store, even a 2% stockout rate costs you thousands every month. Not because you don't have product — because the process between your warehouse and your shelves is broken.</p>
       </div>
     </div>
   </div>
@@ -557,35 +712,42 @@
   <div class="container">
     <div class="section-header reveal">
       <span class="badge">90 Seconds</span>
-      <h2>From "we need product" to "it's on the way." Here's how.</h2>
+      <h2>From "we need product" to "it's on the way."</h2>
     </div>
     <div class="steps-timeline reveal">
       <div class="step">
         <div class="step-num">01</div>
         <div class="step-content">
-          <h3>Employee opens backstockapp.com on their phone</h3>
-          <p>No app download. No login credentials to forget. They enter their name, store code, and they're in.</p>
+          <h3>Your org gets a private code — enter it once, never again</h3>
+          <p>Saves to the phone automatically. No passwords, no app downloads, no IT department.</p>
         </div>
       </div>
       <div class="step">
         <div class="step-num">02</div>
         <div class="step-content">
-          <h3>They browse your catalog and tap what they need</h3>
-          <p>Organized by category → brand → product. They select items and quantities. Takes under two minutes, even for a full restock.</p>
+          <h3>Employee opens backstockapp.com and builds their order</h3>
+          <p>Browse categories → brands → products. Only in-stock items show. Tap quantities. Review everything on a confirmation screen before sending.</p>
         </div>
       </div>
       <div class="step">
         <div class="step-num">03</div>
         <div class="step-content">
-          <h3>Warehouse gets the order instantly</h3>
-          <p>No phone call. No text. The dashboard shows who ordered, from which store, and exactly what they need — down to the flavor and variant.</p>
+          <h3>Warehouse gets a full pick checklist — instantly</h3>
+          <p>Who ordered. Which store. Every item down to the flavor and variant. All 12 stores can submit at the same time. Zero phone tag.</p>
         </div>
       </div>
       <div class="step">
         <div class="step-num">04</div>
         <div class="step-content">
-          <h3>Pick, adjust, complete — stock updates automatically</h3>
-          <p>Warehouse checks off items as they pull. Short on something? Adjust the quantity right there. Hit complete — inventory deducts, invoice generates. Done.</p>
+          <h3>Pick, check off, adjust quantities on the fly</h3>
+          <p>Progress bar tracks completion in real time. Short on something? Adjust the quantity right there. No guessing, no follow-up calls.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">05</div>
+        <div class="step-content">
+          <h3>Hit Complete — stock deducts, invoice generates, order archives</h3>
+          <p>Atomic stock operations mean no double-ordering, no race conditions. What you gave is deducted. What you didn't stays in inventory. Everyone moves on.</p>
         </div>
       </div>
     </div>
@@ -604,13 +766,13 @@
     <div class="feature-row reveal">
       <div class="feature-text">
         <span class="badge">Restock Orders</span>
-        <h3>Every order. Every item. Zero confusion.</h3>
-        <p>Your employees see your live product catalog — organized, current, and impossible to mess up. They tap what they need, hit submit, and the warehouse has a perfect pick list instantly. No interpretation required.</p>
+        <h3>Your employees can't mess this up. That's the point.</h3>
+        <p>They see your live catalog — only products that are actually in stock. Organized by category and brand. They tap quantities, review on a confirmation screen, and submit. Under two minutes. No training needed.</p>
         <ul class="feature-checklist">
-          <li>Live catalog organized by category &amp; brand</li>
-          <li>Quantities down to the flavor and variant</li>
-          <li>Instant delivery to warehouse dashboard</li>
-          <li>Full order history with timestamps</li>
+          <li>Only in-stock products shown — no ordering ghosts</li>
+          <li>Confirmation screen before submit — catches mistakes</li>
+          <li>Session persistence — close the browser, order is still there</li>
+          <li>Guided onboarding for new employees</li>
         </ul>
       </div>
       <div class="feature-visual">
@@ -631,91 +793,138 @@
             <div class="order-item-left">📦 <strong>Elf Bar BC5000 — Mango</strong></div>
             <div class="order-item-qty">×6</div>
           </div>
-          <div class="order-meta">
-            <span>Marcus • Store #3 El Cajon • 4 items</span>
-            <span class="pill pending">Submitted</span>
+          <div class="order-confirm">
+            <div class="order-confirm-left"><strong>4 items</strong> · Store #3 Eastside · Marcus</div>
+            <div class="order-confirm-btn">Submit Order</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Feature 2: Multi-Location -->
+    <!-- Feature 2: Warehouse Pick Tracker -->
     <div class="feature-row reverse reveal">
       <div class="feature-text">
-        <span class="badge">Multi-Location</span>
-        <h3>3 stores or 30. One clear picture.</h3>
-        <p>See every location's stock health, order volume, and restock activity at a glance. Drill into any store. Know exactly what's moving and where the gaps are — without calling anyone.</p>
+        <span class="badge">Warehouse Dashboard</span>
+        <h3>Pick it. Check it off. Adjust on the fly.</h3>
+        <p>Every order lands on your warehouse dashboard as a full pick checklist. Check off items as you pull them. See your progress in real time. Short on something? Adjust the quantity right there — the system handles the rest.</p>
         <ul class="feature-checklist">
-          <li>Per-location stock levels and order history</li>
-          <li>Role-based access for managers &amp; warehouse</li>
-          <li>Warehouse-to-store transfer tracking</li>
+          <li>Real-time pick tracker with progress bar</li>
+          <li>Quantity adjustment during fulfillment</li>
+          <li>Atomic stock deduction — no race conditions</li>
+          <li>Auto-generated PDF invoices per order</li>
         </ul>
       </div>
       <div class="feature-visual">
-        <div class="loc-grid">
-          <div class="loc-card">
-            <div class="loc-name">📍 Store #1 — Pacific Beach</div>
-            <div class="loc-detail">Last order: 2 hours ago · 94% stocked</div>
-            <div class="loc-bar"><div class="loc-bar-fill high"></div></div>
+        <div class="pick-flow">
+          <div class="pick-item">
+            <div class="pick-check done">✓</div>
+            <div class="pick-item-name checked"><strong>RAZ CA6000 — Watermelon Ice</strong></div>
+            <div class="pick-qty">×12</div>
           </div>
-          <div class="loc-card">
-            <div class="loc-name">📍 Store #2 — Hillcrest</div>
-            <div class="loc-detail">Last order: 6 hours ago · 58% stocked</div>
-            <div class="loc-bar"><div class="loc-bar-fill mid"></div></div>
+          <div class="pick-item">
+            <div class="pick-check done">✓</div>
+            <div class="pick-item-name checked"><strong>Lost Mary OS5000 — Blue Razz</strong></div>
+            <div class="pick-qty">×8</div>
           </div>
-          <div class="loc-card">
-            <div class="loc-name">📍 Store #3 — El Cajon</div>
-            <div class="loc-detail">Last order: 18 hours ago · 24% stocked</div>
-            <div class="loc-bar"><div class="loc-bar-fill low"></div></div>
+          <div class="pick-item">
+            <div class="pick-check open"></div>
+            <div class="pick-item-name"><strong>Zyn Cool Mint 6mg</strong></div>
+            <div class="pick-qty">×20</div>
           </div>
-          <div class="loc-card">
-            <div class="loc-name">📍 Store #4 — La Mesa</div>
-            <div class="loc-detail">Last order: 4 hours ago · 81% stocked</div>
-            <div class="loc-bar"><div class="loc-bar-fill good"></div></div>
+          <div class="pick-item">
+            <div class="pick-check open"></div>
+            <div class="pick-item-name"><strong>Elf Bar BC5000 — Mango</strong></div>
+            <div class="pick-qty">×6</div>
+          </div>
+          <div class="pick-progress">
+            <div class="pick-progress-bar"><div class="pick-progress-fill"></div></div>
+            <div class="pick-progress-label"><span>2 of 4 items picked</span><span>50%</span></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Feature 3: Analytics & Invoices -->
+    <!-- Feature 3: Multi-Location + Stock -->
     <div class="feature-row reveal">
       <div class="feature-text">
+        <span class="badge">Multi-Location</span>
+        <h3>Every warehouse. Every store. Completely isolated.</h3>
+        <p>Each warehouse operates independently — its own catalog visibility, stock levels, and banner messages. Add a product to one warehouse without affecting the others. Remove it from one location, it stays visible everywhere else.</p>
+        <ul class="feature-checklist">
+          <li>Independent catalogs per warehouse</li>
+          <li>Three-tier access: employee, owner, manager</li>
+          <li>Manager-level catalog, stock, and store configuration</li>
+          <li>Multi-tenant architecture — your data never crosses</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="font-size:12px;color:var(--text-secondary);font-family:'Space Mono',monospace;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px;">Your Organization — 4 Warehouses</div>
+          <div class="loc-grid">
+            <div class="loc-card">
+              <div class="loc-name">📍 Store #1 — Downtown</div>
+              <div class="loc-detail">218 SKUs active · 94% stocked</div>
+              <div class="loc-bar"><div class="loc-bar-fill high"></div></div>
+            </div>
+            <div class="loc-card">
+              <div class="loc-name">📍 Store #2 — Midtown</div>
+              <div class="loc-detail">195 SKUs active · 58% stocked</div>
+              <div class="loc-bar"><div class="loc-bar-fill mid"></div></div>
+            </div>
+            <div class="loc-card">
+              <div class="loc-name">📍 Store #3 — Eastside</div>
+              <div class="loc-detail">203 SKUs active · 24% stocked</div>
+              <div class="loc-bar"><div class="loc-bar-fill low"></div></div>
+            </div>
+            <div class="loc-card">
+              <div class="loc-name">📍 Store #4 — Westfield</div>
+              <div class="loc-detail">210 SKUs active · 81% stocked</div>
+              <div class="loc-bar"><div class="loc-bar-fill good"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature 4: Analytics -->
+    <div class="feature-row reverse reveal">
+      <div class="feature-text">
         <span class="badge">Analytics & Invoices</span>
-        <h3>Finally know what's actually moving.</h3>
-        <p>See your top products, busiest stores, and restock patterns — all updating in real time. Every completed order auto-generates an invoice. No more manual tracking. No more guessing what you sold.</p>
+        <h3>Stop guessing what's moving. Start knowing.</h3>
+        <p>7, 14, or 30-day views show your top products, busiest stores, and restock patterns — all updating in real time. Every completed order auto-generates a PDF invoice. Stock levels stay accurate without anyone counting shelves.</p>
         <ul class="feature-checklist">
           <li>Top products and demand trends by location</li>
-          <li>Auto-generated invoices per order</li>
-          <li>Automatic stock deductions on completion</li>
+          <li>PDF invoice generation for every completed order</li>
+          <li>Automatic stock deduction on order completion</li>
           <li>Cancellation auto-restores inventory</li>
         </ul>
       </div>
       <div class="feature-visual">
         <div class="analytics-vis">
           <div class="bar-chart">
-            <div class="bar-chart-col"><div class="bar-chart-bar a" style="height:55%"></div></div>
-            <div class="bar-chart-col"><div class="bar-chart-bar a" style="height:80%"></div></div>
-            <div class="bar-chart-col"><div class="bar-chart-bar a" style="height:40%"></div></div>
-            <div class="bar-chart-col"><div class="bar-chart-bar a" style="height:92%"></div></div>
-            <div class="bar-chart-col"><div class="bar-chart-bar b" style="height:65%"></div></div>
-            <div class="bar-chart-col"><div class="bar-chart-bar a" style="height:74%"></div></div>
-            <div class="bar-chart-col"><div class="bar-chart-bar b" style="height:50%"></div></div>
+            <div class="bar-chart-col"><div class="bar-chart-bar a" style="height:50%"></div></div>
+            <div class="bar-chart-col"><div class="bar-chart-bar a" style="height:78%"></div></div>
+            <div class="bar-chart-col"><div class="bar-chart-bar a" style="height:42%"></div></div>
+            <div class="bar-chart-col"><div class="bar-chart-bar a" style="height:90%"></div></div>
+            <div class="bar-chart-col"><div class="bar-chart-bar b" style="height:62%"></div></div>
+            <div class="bar-chart-col"><div class="bar-chart-bar a" style="height:71%"></div></div>
+            <div class="bar-chart-col"><div class="bar-chart-bar b" style="height:48%"></div></div>
           </div>
           <div class="bar-chart-labels">
             <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
           </div>
           <div class="analytics-row">
             <div class="analytics-stat">
-              <div class="analytics-stat-label">Orders This Week</div>
-              <div class="analytics-stat-val">142</div>
+              <div class="analytics-stat-label">Orders (14d)</div>
+              <div class="analytics-stat-val">284</div>
             </div>
             <div class="analytics-stat">
               <div class="analytics-stat-label">Items Moved</div>
-              <div class="analytics-stat-val">3,847</div>
+              <div class="analytics-stat-val">7,412</div>
             </div>
             <div class="analytics-stat">
-              <div class="analytics-stat-label">Top Product</div>
-              <div class="analytics-stat-val" style="font-size:12px;margin-top:2px;">RAZ CA6K</div>
+              <div class="analytics-stat-label">#1 Product</div>
+              <div class="analytics-stat-val" style="font-size:11px;margin-top:2px;">RAZ CA6K</div>
             </div>
           </div>
         </div>
@@ -741,80 +950,191 @@
         <p>This was built inside a real multi-location retail operation. Every feature exists because someone needed it on the floor — not because a product manager thought it sounded good.</p>
       </div>
       <div class="diff-card">
-        <h3>📱 Works on any phone, right now</h3>
-        <p>No app store. No installation. No training sessions. Open the link in any browser and your team is live in minutes. If they can text, they can use Backstock.</p>
+        <h3>📱 Any browser. Any phone. Now.</h3>
+        <p>No app store. No installation. No training sessions. Open the link and your team is live in minutes. If they can send a text, they can use Backstock.</p>
       </div>
       <div class="diff-card">
-        <h3>🔄 Stock tracking is automatic</h3>
-        <p>Set your counts once. Every completed order deducts automatically. Every cancellation restores automatically. Your numbers stay accurate without manual recounts.</p>
+        <h3>⚛️ Atomic stock operations</h3>
+        <p>Two stores request the same product at the same time? Handled. Stock deducts in a single database transaction. No race conditions. No double-ordering. No surprises.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ══════════════════════════════ WHO IT'S FOR ══════════════════════════════ -->
-<section class="audience-section">
+<!-- ══════════════════════════════ FIT QUIZ ══════════════════════════════ -->
+<section class="quiz-section" id="quiz">
   <div class="container">
-    <div class="section-header reveal">
-      <span class="badge">Built For</span>
-      <h2>Multi-location retailers with 3–50 stores who restock from a warehouse.</h2>
+    <div class="quiz-box reveal" id="quizBox">
+
+      <!-- Step 1 -->
+      <div class="quiz-step active" data-step="1">
+        <div class="quiz-progress">
+          <div class="quiz-dot current"></div>
+          <div class="quiz-dot"></div>
+          <div class="quiz-dot"></div>
+        </div>
+        <div class="quiz-question">How many retail locations do you operate?</div>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="quizAnswer(1,'1-2')">
+            <span class="quiz-option-icon">🏪</span> 1–2 locations
+          </div>
+          <div class="quiz-option" onclick="quizAnswer(1,'3-10')">
+            <span class="quiz-option-icon">🏬</span> 3–10 locations
+          </div>
+          <div class="quiz-option" onclick="quizAnswer(1,'11-50')">
+            <span class="quiz-option-icon">🏗️</span> 11–50 locations
+          </div>
+          <div class="quiz-option" onclick="quizAnswer(1,'50+')">
+            <span class="quiz-option-icon">🌐</span> 50+ locations
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="quiz-step" data-step="2">
+        <div class="quiz-progress">
+          <div class="quiz-dot filled"></div>
+          <div class="quiz-dot current"></div>
+          <div class="quiz-dot"></div>
+        </div>
+        <div class="quiz-question">How does product get to your stores?</div>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="quizAnswer(2,'warehouse')">
+            <span class="quiz-option-icon">📦</span> We warehouse it and distribute to our stores ourselves
+          </div>
+          <div class="quiz-option" onclick="quizAnswer(2,'vendor')">
+            <span class="quiz-option-icon">🚚</span> Vendors/distributors deliver directly to each store
+          </div>
+          <div class="quiz-option" onclick="quizAnswer(2,'mix')">
+            <span class="quiz-option-icon">🔀</span> Mix of both — some we warehouse, some vendor-direct
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="quiz-step" data-step="3">
+        <div class="quiz-progress">
+          <div class="quiz-dot filled"></div>
+          <div class="quiz-dot filled"></div>
+          <div class="quiz-dot current"></div>
+        </div>
+        <div class="quiz-question">How does your team currently request restocks?</div>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="quizAnswer(3,'phone')">
+            <span class="quiz-option-icon">📞</span> Phone calls
+          </div>
+          <div class="quiz-option" onclick="quizAnswer(3,'text')">
+            <span class="quiz-option-icon">💬</span> Group texts / WhatsApp / iMessage
+          </div>
+          <div class="quiz-option" onclick="quizAnswer(3,'sheets')">
+            <span class="quiz-option-icon">📋</span> Spreadsheets / Notes app / Paper lists
+          </div>
+          <div class="quiz-option" onclick="quizAnswer(3,'software')">
+            <span class="quiz-option-icon">💻</span> We already use software for this
+          </div>
+        </div>
+      </div>
+
+      <!-- Result: Perfect Fit -->
+      <div class="quiz-step" data-step="result-yes" style="display:none;">
+        <div class="quiz-result">
+          <span class="quiz-result-icon">🎯</span>
+          <h3>Backstock was built for exactly your operation.</h3>
+          <div class="quiz-result-tags" id="resultTags"></div>
+          <p>You're warehousing your own product and distributing to multiple stores — that's the exact workflow Backstock replaces. Let's show you how it works on a live operation.</p>
+          <a href="#cta" class="btn btn-primary">Book Your Live Demo <span>→</span></a>
+          <br><button class="quiz-restart" onclick="quizRestart()">Retake quiz</button>
+        </div>
+      </div>
+
+      <!-- Result: Partial Fit -->
+      <div class="quiz-step" data-step="result-partial" style="display:none;">
+        <div class="quiz-result">
+          <span class="quiz-result-icon">🔀</span>
+          <h3>Backstock can handle the warehouse side of your operation.</h3>
+          <p>For the products you warehouse and distribute yourself, Backstock replaces the entire restock workflow. The vendor-direct stuff stays as-is. Let's talk about how it'd fit.</p>
+          <a href="#cta" class="btn btn-primary">Book Your Live Demo <span>→</span></a>
+          <br><button class="quiz-restart" onclick="quizRestart()">Retake quiz</button>
+        </div>
+      </div>
+
+      <!-- Result: Not a Fit -->
+      <div class="quiz-step" data-step="result-no" style="display:none;">
+        <div class="quiz-result">
+          <span class="quiz-result-icon">🤝</span>
+          <h3>Backstock probably isn't the right fit — and that's okay.</h3>
+          <p>Backstock is built for retailers who warehouse their own product and distribute it to their stores. If your vendors deliver direct, your restock workflow is already handled. If that ever changes, we'll be here.</p>
+          <button class="quiz-restart" onclick="quizRestart()">Retake quiz</button>
+        </div>
+      </div>
+
+      <!-- Result: Too Small -->
+      <div class="quiz-step" data-step="result-small" style="display:none;">
+        <div class="quiz-result">
+          <span class="quiz-result-icon">🌱</span>
+          <h3>You're not quite there yet — but you're close.</h3>
+          <p>Backstock is built for operators running 3+ locations from a warehouse. When you're ready to scale past 2 stores, we'd love to help you set up the right restock system from day one.</p>
+          <a href="#cta" class="btn btn-ghost">Get on the Waitlist</a>
+          <br><button class="quiz-restart" onclick="quizRestart()">Retake quiz</button>
+        </div>
+      </div>
+
     </div>
-    <div class="audience-grid reveal">
-      <div class="audience-item">
-        <span class="audience-icon">🚬</span>
-        <div class="audience-label">Smoke &amp; Vape Shops</div>
-      </div>
-      <div class="audience-item">
-        <span class="audience-icon">🏪</span>
-        <div class="audience-label">Convenience Stores</div>
-      </div>
-      <div class="audience-item">
-        <span class="audience-icon">🍺</span>
-        <div class="audience-label">Liquor Stores</div>
-      </div>
-      <div class="audience-item">
-        <span class="audience-icon">💊</span>
-        <div class="audience-label">Supplement &amp; Wellness</div>
-      </div>
-      <div class="audience-item">
-        <span class="audience-icon">🏬</span>
-        <div class="audience-label">High-Turnover Retail</div>
-      </div>
-    </div>
-    <p style="text-align:center; color:var(--text-secondary); font-size:14px; margin-top:24px; max-width:500px; margin-left:auto; margin-right:auto;" class="reveal">If your current restocking process involves group texts, phone calls, or someone driving around guessing what each store needs — Backstock replaces all of that.</p>
   </div>
 </section>
 
-<!-- ══════════════════════════════ SOCIAL PROOF ══════════════════════════════ -->
-<section class="proof-section" id="proof">
+<!-- ══════════════════════════════ ROI MATH ══════════════════════════════ -->
+<section class="roi-section">
   <div class="container">
-    <div class="section-header reveal">
-      <span class="badge">From Operators Like You</span>
-      <h2>They were skeptical too. Then they tried it.</h2>
+    <div class="roi-box reveal">
+      <span class="badge" style="margin-bottom:16px;">The Math</span>
+      <h2>This isn't an expense. It's a 21x return.</h2>
+      <div class="roi-grid">
+        <div class="roi-stat">
+          <div class="roi-stat-value red">$2,100</div>
+          <div class="roi-stat-label">Lost revenue per store/mo<br>from a 2% stockout rate</div>
+        </div>
+        <div class="roi-stat">
+          <div class="roi-stat-value orange">$99</div>
+          <div class="roi-stat-label">Backstock cost<br>per store/mo</div>
+        </div>
+        <div class="roi-stat">
+          <div class="roi-stat-value green">21x</div>
+          <div class="roi-stat-label">Return on investment<br>on the Starter plan</div>
+        </div>
+      </div>
+      <div class="roi-bottom">
+        <p>Your stores average <strong>$3,500/day</strong>. That's <strong>$105,000/month</strong> per location. If even 2% of customers walk out because you're out of what they came for, that's <strong>$21,000/month across 10 stores</strong> disappearing because the restock process couldn't keep up.</p>
+        <div class="roi-highlight">Backstock pays for itself before lunch on day one.</div>
+      </div>
     </div>
-    <div class="proof-grid reveal">
-      <div class="proof-card">
-        <div class="proof-stars">★★★★★</div>
-        <p class="proof-quote">"My warehouse team used to spend half the morning on the phone figuring out what to send where. Now the orders are just there when they clock in. It's a different operation."</p>
-        <div class="proof-author">
-          <div class="proof-avatar" style="background: #7C3AED;">MR</div>
-          <div><div class="proof-name">Mike R.</div><div class="proof-role">Owner, 6 Locations — TX</div></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ SOCIAL PROOF BAR ══════════════════════════════ -->
+<section style="padding:44px 0;">
+  <div class="container">
+    <div class="reveal" style="text-align:center;">
+      <p style="font-size:15px; color:var(--text-secondary); margin-bottom:20px;">Currently powering restocks for multi-location retailers.</p>
+      <div style="display:flex; align-items:center; justify-content:center; gap:40px; flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-family:'Space Mono',monospace; font-size:32px; font-weight:700; color:var(--accent);">50+</div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Store locations</div>
         </div>
-      </div>
-      <div class="proof-card">
-        <div class="proof-stars">★★★★★</div>
-        <p class="proof-quote">"I've tried three inventory systems. They were all built for someone else. Backstock is the first one that matches how we actually work — catalog, order, ship. That's it. My team had it figured out in a day."</p>
-        <div class="proof-author">
-          <div class="proof-avatar" style="background: #2563EB;">DK</div>
-          <div><div class="proof-name">Diana K.</div><div class="proof-role">Regional Manager, 12 Locations — CA</div></div>
+        <div style="width:1px; height:40px; background:var(--border);"></div>
+        <div style="text-align:center;">
+          <div style="font-family:'Space Mono',monospace; font-size:32px; font-weight:700; color:var(--text);">1,000s</div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Orders processed</div>
         </div>
-      </div>
-      <div class="proof-card">
-        <div class="proof-stars">★★★★★</div>
-        <p class="proof-quote">"I stopped getting 'hey we're out of…' texts from my managers. That alone is worth the price. The invoicing and stock tracking is bonus — but it saves me 5+ hours a week."</p>
-        <div class="proof-author">
-          <div class="proof-avatar" style="background: #DB2777;">JT</div>
-          <div><div class="proof-name">Jason T.</div><div class="proof-role">Owner, 4 Locations — FL</div></div>
+        <div style="width:1px; height:40px; background:var(--border);"></div>
+        <div style="text-align:center;">
+          <div style="font-family:'Space Mono',monospace; font-size:32px; font-weight:700; color:var(--success);">0</div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Lost orders</div>
+        </div>
+        <div style="width:1px; height:40px; background:var(--border);"></div>
+        <div style="text-align:center;">
+          <div style="font-family:'Space Mono',monospace; font-size:32px; font-weight:700; color:var(--text);">&lt;2 min</div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Avg. order time</div>
         </div>
       </div>
     </div>
@@ -824,39 +1144,135 @@
 <!-- ══════════════════════════════ PRICING ══════════════════════════════ -->
 <section class="pricing-section" id="pricing">
   <div class="container">
-    <div class="pricing-box reveal">
-      <h2 style="font-family:'Outfit',sans-serif; font-size:28px; font-weight:800; letter-spacing:-1px; margin-bottom:4px;">One plan. Everything included.</h2>
-      <div class="pricing-range">$99 <span style="font-size:32px;">–</span> $149 <span class="per">/store/mo</span></div>
-      <p class="pricing-desc">Scales with your operation. No per-user fees. No contracts.</p>
-      <ul class="pricing-includes">
-        <li>Unlimited employees</li>
-        <li>Unlimited orders</li>
-        <li>Full product catalog</li>
-        <li>Warehouse dashboard</li>
-        <li>Analytics &amp; reporting</li>
-        <li>Auto-generated invoices</li>
-        <li>Automatic stock tracking</li>
-        <li>All locations included</li>
-      </ul>
-      <a href="#cta" class="btn btn-primary" style="width:100%; justify-content:center;">Book a Demo — Get Live in 24 Hours</a>
-      <p class="pricing-fine">No setup fees. No credit card required. Cancel anytime.</p>
+    <div class="section-header reveal">
+      <span class="badge">Pricing</span>
+      <h2>Two plans. No surprises. No contracts.</h2>
+    </div>
+    <div class="pricing-grid reveal">
+      <div class="pricing-card">
+        <div class="pricing-tier">Starter</div>
+        <div class="pricing-desc">Everything you need to replace phone-based restocking across all your locations.</div>
+        <div class="pricing-price">
+          <span class="pricing-amount">$99</span>
+          <span class="pricing-period">/store/mo</span>
+        </div>
+        <div class="pricing-sub">Unlimited employees &amp; orders</div>
+        <ul class="pricing-features">
+          <li>Real-time stock tracking with automatic deduction</li>
+          <li>Multi-warehouse support with independent catalogs</li>
+          <li>Pick tracking with progress bars &amp; qty adjustment</li>
+          <li>Analytics dashboard — 7/14/30-day views</li>
+          <li>PDF invoice generation per order</li>
+          <li>Three-tier access control</li>
+          <li>Guided employee onboarding</li>
+        </ul>
+        <a href="#cta" class="btn btn-ghost" style="justify-content:center;">Get Started</a>
+      </div>
+      <div class="pricing-card featured">
+        <div class="pricing-tier">Pro</div>
+        <div class="pricing-desc">Full visibility into where every dollar goes — from warehouse to shelf to margin report.</div>
+        <div class="pricing-price">
+          <span class="pricing-amount">$199</span>
+          <span class="pricing-period">/store/mo</span>
+        </div>
+        <div class="pricing-sub">Everything in Starter, plus:</div>
+        <ul class="pricing-features">
+          <li>Cost and margin tracking per product</li>
+          <li>Profit analytics by store, category, and brand</li>
+          <li>See which products actually make you money</li>
+          <li>Auto-reorder alerts at your stock threshold</li>
+          <li>Priority support</li>
+        </ul>
+        <a href="#cta" class="btn btn-primary" style="justify-content:center;">Book a Demo</a>
+      </div>
+    </div>
+    <p class="pricing-fine reveal">No contracts. No setup fees. No per-user charges. Cancel anytime.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ COMING SOON ══════════════════════════════ -->
+<section class="roadmap-section">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="badge">On the Roadmap</span>
+      <h2>What's coming next.</h2>
+    </div>
+    <div class="roadmap-grid reveal" style="grid-template-columns: repeat(2, 1fr); max-width: 560px;">
+      <div class="roadmap-card">
+        <span class="roadmap-icon">🔔</span>
+        <h3>Push Notifications</h3>
+        <p>Low stock alerts, order status updates, and restock reminders sent straight to your phone.</p>
+        <span class="coming-badge">Coming Soon</span>
+      </div>
+      <div class="roadmap-card">
+        <span class="roadmap-icon">📲</span>
+        <h3>Native App</h3>
+        <p>Same Backstock, wrapped for iOS and Android. App Store presence, offline support, and background sync.</p>
+        <span class="coming-badge">Coming Soon</span>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ══════════════════════════════ FINAL CTA ══════════════════════════════ -->
+<!-- ══════════════════════════════ FINAL CTA + FORM ══════════════════════════════ -->
 <section class="cta-section" id="cta">
   <div class="container reveal">
     <span class="badge">Talk to the Founder</span>
-    <h2 style="margin-top:20px;">Stop managing restocks.<br>Start running your business.</h2>
-    <p>We set up your account personally. You'll talk to the founder, walk through a live demo on a real operation, and be live within 24 hours.</p>
-    <div class="hero-ctas">
-      <a href="#" class="btn btn-primary">Book Your Live Demo <span>→</span></a>
+    <h2 style="margin-top:18px;">Ready to fix your restock process?</h2>
+    <p style="margin-bottom:36px;">Drop your info below. We'll text or call you within a few hours to walk through a live demo and get you set up.</p>
+
+    <div class="cta-form" id="ctaForm">
+      <div class="form-row-half">
+        <div>
+          <label class="form-label">First Name</label>
+          <input type="text" class="form-input" id="formName" placeholder="Chadd" required>
+        </div>
+        <div>
+          <label class="form-label">Phone</label>
+          <input type="tel" class="form-input" id="formPhone" placeholder="(619) 555-0123" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="formEmail" placeholder="you@yourbusiness.com" required>
+      </div>
+      <div class="form-row-half">
+        <div>
+          <label class="form-label">How Many Locations?</label>
+          <select class="form-select" id="formLocations">
+            <option value="" disabled selected>Select</option>
+            <option value="3-5">3–5 stores</option>
+            <option value="6-10">6–10 stores</option>
+            <option value="11-25">11–25 stores</option>
+            <option value="25-50">25–50 stores</option>
+            <option value="50+">50+</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Best Time to Reach You</label>
+          <select class="form-select" id="formTime">
+            <option value="" disabled selected>Select</option>
+            <option value="morning">Morning (8am–12pm)</option>
+            <option value="afternoon">Afternoon (12–5pm)</option>
+            <option value="evening">Evening (5–8pm)</option>
+            <option value="anytime">Anytime</option>
+          </select>
+        </div>
+      </div>
+      <button class="form-submit" onclick="submitForm()">Get My Demo Scheduled →</button>
+      <p class="form-fine">No commitment. No credit card. Just a conversation.</p>
     </div>
-    <div class="cta-steps">
-      <div class="cta-step"><div class="cta-step-num">1</div> Book a 15-min call</div>
-      <div class="cta-step"><div class="cta-step-num">2</div> See a live operation</div>
-      <div class="cta-step"><div class="cta-step-num">3</div> Go live in 24 hours</div>
+
+    <div class="form-success" id="formSuccess">
+      <span class="form-success-icon">🎯</span>
+      <h3>You're in. We'll reach out shortly.</h3>
+      <p>Check your phone — we typically respond within a few hours. Talk soon.</p>
+    </div>
+
+    <div class="cta-steps" id="ctaSteps" style="margin-top:28px;">
+      <div class="cta-step"><div class="cta-step-num">1</div> Submit your info</div>
+      <div class="cta-step"><div class="cta-step-num">2</div> We text or call you</div>
+      <div class="cta-step"><div class="cta-step-num">3</div> Live demo → go live in 24hrs</div>
     </div>
   </div>
 </section>
@@ -875,11 +1291,153 @@
 </footer>
 
 <script>
+// Scroll reveal
 const reveals = document.querySelectorAll('.reveal');
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
-}, { threshold: 0.12, rootMargin: '0px 0px -30px 0px' });
+}, { threshold: 0.1, rootMargin: '0px 0px -20px 0px' });
 reveals.forEach(el => observer.observe(el));
+
+// Quiz logic
+const quizData = {};
+
+function quizAnswer(step, value) {
+  quizData[step] = value;
+
+  // Hide current step
+  document.querySelector(`.quiz-step[data-step="${step}"]`).classList.remove('active');
+
+  if (step < 3) {
+    // Check for early exits
+    if (step === 1 && value === '1-2') {
+      showResult('result-small');
+      return;
+    }
+    if (step === 2 && value === 'vendor') {
+      showResult('result-no');
+      return;
+    }
+    // Show next step
+    const next = document.querySelector(`.quiz-step[data-step="${step + 1}"]`);
+    next.style.display = 'block';
+    next.classList.add('active');
+  } else {
+    // Step 3 complete — determine result
+    if (quizData[2] === 'mix') {
+      showResult('result-partial');
+    } else {
+      showResult('result-yes');
+    }
+  }
+}
+
+function showResult(resultId) {
+  const result = document.querySelector(`.quiz-step[data-step="${resultId}"]`);
+
+  // Build tags for the "yes" result
+  if (resultId === 'result-yes' || resultId === 'result-partial') {
+    const tags = document.getElementById('resultTags');
+    if (tags) {
+      tags.innerHTML = '';
+      const locationLabels = { '3-10': '3–10 stores', '11-50': '11–50 stores', '50+': '50+ stores' };
+      const methodLabels = { 'phone': 'Phone calls', 'text': 'Group texts', 'sheets': 'Spreadsheets & lists', 'software': 'Existing software' };
+      if (quizData[1] && locationLabels[quizData[1]]) tags.innerHTML += `<span class="quiz-result-tag">${locationLabels[quizData[1]]}</span>`;
+      if (quizData[2]) tags.innerHTML += `<span class="quiz-result-tag">Self-warehousing</span>`;
+      if (quizData[3] && methodLabels[quizData[3]]) tags.innerHTML += `<span class="quiz-result-tag">Currently: ${methodLabels[quizData[3]]}</span>`;
+    }
+  }
+
+  result.style.display = 'block';
+  result.classList.add('active');
+}
+
+function quizRestart() {
+  // Reset all steps
+  document.querySelectorAll('.quiz-step').forEach(s => {
+    s.classList.remove('active');
+    if (s.dataset.step.startsWith('result')) s.style.display = 'none';
+  });
+  // Show step 1
+  document.querySelector('.quiz-step[data-step="1"]').classList.add('active');
+  // Clear data
+  Object.keys(quizData).forEach(k => delete quizData[k]);
+}// Form submission via Formspree
+// ⚠️ REPLACE THIS with your real Formspree form ID from https://formspree.io
+const FORMSPREE_ID = 'mykdavdv';
+
+function submitForm() {
+  const name = document.getElementById('formName').value.trim();
+  const phone = document.getElementById('formPhone').value.trim();
+  const email = document.getElementById('formEmail').value.trim();
+  const locations = document.getElementById('formLocations').value;
+  const time = document.getElementById('formTime').value;
+
+  if (!name || !phone || !email) {
+    [['formName', name], ['formPhone', phone], ['formEmail', email]].forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (!val) {
+        el.style.borderColor = 'rgba(246,86,59,0.6)';
+        setTimeout(() => el.style.borderColor = '', 2000);
+      }
+    });
+    return;
+  }
+
+  // Disable button while submitting
+  const btn = document.querySelector('.form-submit');
+  const originalText = btn.textContent;
+  btn.textContent = 'Sending...';
+  btn.style.opacity = '0.6';
+  btn.style.pointerEvents = 'none';
+
+  // Build quiz context string
+  let quizContext = 'Quiz not taken';
+  if (Object.keys(quizData).length) {
+    const labels = {
+      1: { '1-2': '1-2 locations', '3-10': '3-10 locations', '11-50': '11-50 locations', '50+': '50+ locations' },
+      2: { 'warehouse': 'Self-warehousing', 'vendor': 'Vendor-direct', 'mix': 'Mix of both' },
+      3: { 'phone': 'Phone calls', 'text': 'Group texts', 'sheets': 'Spreadsheets/lists', 'software': 'Existing software' }
+    };
+    quizContext = [
+      quizData[1] ? `Locations: ${labels[1][quizData[1]]}` : '',
+      quizData[2] ? `Supply: ${labels[2][quizData[2]]}` : '',
+      quizData[3] ? `Current process: ${labels[3][quizData[3]]}` : ''
+    ].filter(Boolean).join(' | ');
+  }
+
+  // Submit to Formspree
+  fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
+    method: 'POST',
+    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: name,
+      phone: phone,
+      email: email,
+      locations: locations || 'Not specified',
+      best_time: time || 'Not specified',
+      quiz_answers: quizContext,
+      _subject: `🟠 Backstock Demo Request — ${name}`
+    })
+  })
+  .then(response => {
+    if (response.ok) {
+      // Show success
+      document.getElementById('ctaForm').style.display = 'none';
+      document.getElementById('ctaSteps').style.display = 'none';
+      document.getElementById('formSuccess').style.display = 'block';
+    } else {
+      throw new Error('Form submission failed');
+    }
+  })
+  .catch(error => {
+    // Reset button and show error
+    btn.textContent = originalText;
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+    alert('Something went wrong — try again or text us directly.');
+    console.error('Formspree error:', error);
+  });
+}
 </script>
 
 </body>
