@@ -597,7 +597,7 @@
       <a href="#how">How It Works</a>
       <a href="#features">Features</a>
       <a href="#pricing">Pricing</a>
-      <a href="#cta" class="btn btn-primary btn-sm">Book a Demo</a>
+      <a href="#quiz" class="btn btn-primary btn-sm">Book a Demo</a>
     </div>
   </div>
 </nav>
@@ -610,7 +610,7 @@
     <p class="hero-sub">Phone calls that get misheard. Group texts that get buried. Notes app lists that never sync. Somehow, the simplest part of your business — getting product from the warehouse to the shelf — is the thing that breaks every day.</p>
     <p class="hero-sub-bold"><strong>Backstock fixes the process.</strong> Your employees tap what they need. Your warehouse gets a perfect pick list instantly. Stock updates automatically. Under 2 minutes, from any phone.</p>
     <div class="hero-ctas">
-      <a href="#cta" class="btn btn-primary">Book a Live Demo <span>→</span></a>
+      <a href="#quiz" class="btn btn-primary">Book a Live Demo <span>→</span></a>
       <a href="#how" class="btn btn-ghost">See How It Works</a>
     </div>
     <p class="hero-micro"><strong>No app download.</strong> Works in any browser. Live in 24 hours.</p>
@@ -1035,26 +1035,92 @@
         </div>
       </div>
 
-      <!-- Result: Perfect Fit -->
+      <!-- Result: Perfect Fit — SHOWS FORM -->
       <div class="quiz-step" data-step="result-yes" style="display:none;">
         <div class="quiz-result">
           <span class="quiz-result-icon">🎯</span>
           <h3>Backstock was built for exactly your operation.</h3>
           <div class="quiz-result-tags" id="resultTags"></div>
-          <p>You're warehousing your own product and distributing to multiple stores — that's the exact workflow Backstock replaces. Let's show you how it works on a live operation.</p>
-          <a href="#cta" class="btn btn-primary">Book Your Live Demo <span>→</span></a>
-          <br><button class="quiz-restart" onclick="quizRestart()">Retake quiz</button>
+          <p>You're warehousing your own product and distributing to multiple stores — that's the exact workflow Backstock replaces.</p>
+        </div>
+        <div class="quiz-form-reveal" id="quizFormYes">
+          <div style="border-top:1px solid var(--border); margin:24px 0; padding-top:24px;">
+            <h3 style="font-family:'Outfit',sans-serif; font-size:20px; font-weight:700; text-align:center; margin-bottom:6px;">Let's get you set up.</h3>
+            <p style="color:var(--text-secondary); font-size:14px; text-align:center; margin-bottom:20px;">Drop your info — we'll text or call you within a few hours.</p>
+            <div class="cta-form" id="ctaFormQuizYes">
+              <div class="form-row-half">
+                <div>
+                  <label class="form-label">First Name</label>
+                  <input type="text" class="form-input quiz-form-input" data-field="name" placeholder="John" required>
+                </div>
+                <div>
+                  <label class="form-label">Phone</label>
+                  <input type="tel" class="form-input quiz-form-input" data-field="phone" placeholder="(619) 555-0123" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input quiz-form-input" data-field="email" placeholder="you@yourbusiness.com" required>
+              </div>
+              <div class="form-row">
+                <label class="form-label">Best Time to Reach You</label>
+                <select class="form-select quiz-form-input" data-field="time">
+                  <option value="" disabled selected>Select</option>
+                  <option value="morning">Morning (8am–12pm)</option>
+                  <option value="afternoon">Afternoon (12–5pm)</option>
+                  <option value="evening">Evening (5–8pm)</option>
+                  <option value="anytime">Anytime</option>
+                </select>
+              </div>
+              <button class="form-submit" onclick="submitQuizForm(this)">Get My Demo Scheduled →</button>
+              <p class="form-fine">No commitment. No credit card. Just a conversation.</p>
+            </div>
+          </div>
+          <button class="quiz-restart" onclick="quizRestart()">Retake quiz</button>
         </div>
       </div>
 
-      <!-- Result: Partial Fit -->
+      <!-- Result: Partial Fit — SHOWS FORM -->
       <div class="quiz-step" data-step="result-partial" style="display:none;">
         <div class="quiz-result">
           <span class="quiz-result-icon">🔀</span>
           <h3>Backstock can handle the warehouse side of your operation.</h3>
-          <p>For the products you warehouse and distribute yourself, Backstock replaces the entire restock workflow. The vendor-direct stuff stays as-is. Let's talk about how it'd fit.</p>
-          <a href="#cta" class="btn btn-primary">Book Your Live Demo <span>→</span></a>
-          <br><button class="quiz-restart" onclick="quizRestart()">Retake quiz</button>
+          <p>For the products you warehouse and distribute yourself, Backstock replaces the entire restock workflow. The vendor-direct stuff stays as-is.</p>
+        </div>
+        <div class="quiz-form-reveal" id="quizFormPartial">
+          <div style="border-top:1px solid var(--border); margin:24px 0; padding-top:24px;">
+            <h3 style="font-family:'Outfit',sans-serif; font-size:20px; font-weight:700; text-align:center; margin-bottom:6px;">Let's talk about how it'd fit.</h3>
+            <p style="color:var(--text-secondary); font-size:14px; text-align:center; margin-bottom:20px;">Drop your info — we'll reach out to walk through your setup.</p>
+            <div class="cta-form" id="ctaFormQuizPartial">
+              <div class="form-row-half">
+                <div>
+                  <label class="form-label">First Name</label>
+                  <input type="text" class="form-input quiz-form-input" data-field="name" placeholder="John" required>
+                </div>
+                <div>
+                  <label class="form-label">Phone</label>
+                  <input type="tel" class="form-input quiz-form-input" data-field="phone" placeholder="(619) 555-0123" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input quiz-form-input" data-field="email" placeholder="you@yourbusiness.com" required>
+              </div>
+              <div class="form-row">
+                <label class="form-label">Best Time to Reach You</label>
+                <select class="form-select quiz-form-input" data-field="time">
+                  <option value="" disabled selected>Select</option>
+                  <option value="morning">Morning (8am–12pm)</option>
+                  <option value="afternoon">Afternoon (12–5pm)</option>
+                  <option value="evening">Evening (5–8pm)</option>
+                  <option value="anytime">Anytime</option>
+                </select>
+              </div>
+              <button class="form-submit" onclick="submitQuizForm(this)">Get My Demo Scheduled →</button>
+              <p class="form-fine">No commitment. No credit card. Just a conversation.</p>
+            </div>
+          </div>
+          <button class="quiz-restart" onclick="quizRestart()">Retake quiz</button>
         </div>
       </div>
 
@@ -1074,8 +1140,23 @@
           <span class="quiz-result-icon">🌱</span>
           <h3>You're not quite there yet — but you're close.</h3>
           <p>Backstock is built for operators running 3+ locations from a warehouse. When you're ready to scale past 2 stores, we'd love to help you set up the right restock system from day one.</p>
-          <a href="#cta" class="btn btn-ghost">Get on the Waitlist</a>
-          <br><button class="quiz-restart" onclick="quizRestart()">Retake quiz</button>
+          <button class="quiz-restart" onclick="quizRestart()">Retake quiz</button>
+        </div>
+      </div>
+
+      <!-- Success State (shown after form submit) -->
+      <div class="quiz-step" data-step="result-success" style="display:none;">
+        <div class="quiz-result">
+          <span class="quiz-result-icon">🎯</span>
+          <h3>You're in. We'll reach out shortly.</h3>
+          <p>Check your phone — we typically respond within a few hours. Talk soon.</p>
+          <div style="margin-top:20px;">
+            <div class="cta-steps" style="justify-content:center;">
+              <div class="cta-step"><div class="cta-step-num">✓</div> Info submitted</div>
+              <div class="cta-step"><div class="cta-step-num">2</div> We text or call you</div>
+              <div class="cta-step"><div class="cta-step-num">3</div> Live demo → go live</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1166,7 +1247,7 @@
           <li>Three-tier access control</li>
           <li>Guided employee onboarding</li>
         </ul>
-        <a href="#cta" class="btn btn-ghost" style="justify-content:center;">Get Started</a>
+        <a href="#quiz" class="btn btn-ghost" style="justify-content:center;">Get Started</a>
       </div>
       <div class="pricing-card featured">
         <div class="pricing-tier">Pro</div>
@@ -1183,7 +1264,7 @@
           <li>Auto-reorder alerts at your stock threshold</li>
           <li>Priority support</li>
         </ul>
-        <a href="#cta" class="btn btn-primary" style="justify-content:center;">Book a Demo</a>
+        <a href="#quiz" class="btn btn-primary" style="justify-content:center;">Book a Demo</a>
       </div>
     </div>
     <p class="pricing-fine reveal">No contracts. No setup fees. No per-user charges. Cancel anytime.</p>
@@ -1214,65 +1295,17 @@
   </div>
 </section>
 
-<!-- ══════════════════════════════ FINAL CTA + FORM ══════════════════════════════ -->
+<!-- ══════════════════════════════ FINAL CTA ══════════════════════════════ -->
 <section class="cta-section" id="cta">
   <div class="container reveal">
     <span class="badge">Talk to the Founder</span>
     <h2 style="margin-top:18px;">Ready to fix your restock process?</h2>
-    <p style="margin-bottom:36px;">Drop your info below. We'll text or call you within a few hours to walk through a live demo and get you set up.</p>
-
-    <div class="cta-form" id="ctaForm">
-      <div class="form-row-half">
-        <div>
-          <label class="form-label">First Name</label>
-          <input type="text" class="form-input" id="formName" placeholder="John" required>
-        </div>
-        <div>
-          <label class="form-label">Phone</label>
-          <input type="tel" class="form-input" id="formPhone" placeholder="(619) 555-0123" required>
-        </div>
-      </div>
-      <div class="form-row">
-        <label class="form-label">Email</label>
-        <input type="email" class="form-input" id="formEmail" placeholder="you@yourbusiness.com" required>
-      </div>
-      <div class="form-row-half">
-        <div>
-          <label class="form-label">How Many Locations?</label>
-          <select class="form-select" id="formLocations">
-            <option value="" disabled selected>Select</option>
-            <option value="3-5">3–5 stores</option>
-            <option value="6-10">6–10 stores</option>
-            <option value="11-25">11–25 stores</option>
-            <option value="25-50">25–50 stores</option>
-            <option value="50+">50+</option>
-          </select>
-        </div>
-        <div>
-          <label class="form-label">Best Time to Reach You</label>
-          <select class="form-select" id="formTime">
-            <option value="" disabled selected>Select</option>
-            <option value="morning">Morning (8am–12pm)</option>
-            <option value="afternoon">Afternoon (12–5pm)</option>
-            <option value="evening">Evening (5–8pm)</option>
-            <option value="anytime">Anytime</option>
-          </select>
-        </div>
-      </div>
-      <button class="form-submit" onclick="submitForm()">Get My Demo Scheduled →</button>
-      <p class="form-fine">No commitment. No credit card. Just a conversation.</p>
-    </div>
-
-    <div class="form-success" id="formSuccess">
-      <span class="form-success-icon">🎯</span>
-      <h3>You're in. We'll reach out shortly.</h3>
-      <p>Check your phone — we typically respond within a few hours. Talk soon.</p>
-    </div>
-
-    <div class="cta-steps" id="ctaSteps" style="margin-top:28px;">
-      <div class="cta-step"><div class="cta-step-num">1</div> Submit your info</div>
-      <div class="cta-step"><div class="cta-step-num">2</div> We text or call you</div>
-      <div class="cta-step"><div class="cta-step-num">3</div> Live demo → go live in 24hrs</div>
+    <p>Answer 3 quick questions to see if Backstock fits your operation — takes 10 seconds.</p>
+    <a href="#quiz" class="btn btn-primary">Check If Backstock Is Right For You <span>→</span></a>
+    <div class="cta-steps" style="margin-top:24px;">
+      <div class="cta-step"><div class="cta-step-num">1</div> 3 quick questions</div>
+      <div class="cta-step"><div class="cta-step-num">2</div> See if you qualify</div>
+      <div class="cta-step"><div class="cta-step-num">3</div> Book your live demo</div>
     </div>
   </div>
 </section>
@@ -1361,79 +1394,80 @@ function quizRestart() {
   document.querySelector('.quiz-step[data-step="1"]').classList.add('active');
   // Clear data
   Object.keys(quizData).forEach(k => delete quizData[k]);
-}// Form submission via Formspree
-// ⚠️ REPLACE THIS with your real Formspree form ID from https://formspree.io
+}// Form submission via Formspree (from quiz results)
 const FORMSPREE_ID = 'mykdavdv';
 
-function submitForm() {
-  const name = document.getElementById('formName').value.trim();
-  const phone = document.getElementById('formPhone').value.trim();
-  const email = document.getElementById('formEmail').value.trim();
-  const locations = document.getElementById('formLocations').value;
-  const time = document.getElementById('formTime').value;
+function submitQuizForm(btnEl) {
+  // Find the form container this button belongs to
+  const formContainer = btnEl.closest('.cta-form');
+  const inputs = formContainer.querySelectorAll('.quiz-form-input');
 
-  if (!name || !phone || !email) {
-    [['formName', name], ['formPhone', phone], ['formEmail', email]].forEach(([id, val]) => {
-      const el = document.getElementById(id);
-      if (!val) {
-        el.style.borderColor = 'rgba(246,86,59,0.6)';
-        setTimeout(() => el.style.borderColor = '', 2000);
+  // Gather values
+  const fields = {};
+  inputs.forEach(input => {
+    fields[input.dataset.field] = input.value.trim();
+  });
+
+  if (!fields.name || !fields.phone || !fields.email) {
+    inputs.forEach(input => {
+      if (!input.value.trim() && ['name','phone','email'].includes(input.dataset.field)) {
+        input.style.borderColor = 'rgba(246,86,59,0.6)';
+        setTimeout(() => input.style.borderColor = '', 2000);
       }
     });
     return;
   }
 
-  // Disable button while submitting
-  const btn = document.querySelector('.form-submit');
-  const originalText = btn.textContent;
-  btn.textContent = 'Sending...';
-  btn.style.opacity = '0.6';
-  btn.style.pointerEvents = 'none';
+  // Disable button
+  const originalText = btnEl.textContent;
+  btnEl.textContent = 'Sending...';
+  btnEl.style.opacity = '0.6';
+  btnEl.style.pointerEvents = 'none';
 
-  // Build quiz context string
-  let quizContext = 'Quiz not taken';
+  // Build quiz context
+  let quizContext = 'Quiz not completed';
+  const labels = {
+    1: { '1-2': '1-2 locations', '3-10': '3-10 locations', '11-50': '11-50 locations', '50+': '50+ locations' },
+    2: { 'warehouse': 'Self-warehousing', 'vendor': 'Vendor-direct', 'mix': 'Mix of both' },
+    3: { 'phone': 'Phone calls', 'text': 'Group texts', 'sheets': 'Spreadsheets/lists', 'software': 'Existing software' }
+  };
   if (Object.keys(quizData).length) {
-    const labels = {
-      1: { '1-2': '1-2 locations', '3-10': '3-10 locations', '11-50': '11-50 locations', '50+': '50+ locations' },
-      2: { 'warehouse': 'Self-warehousing', 'vendor': 'Vendor-direct', 'mix': 'Mix of both' },
-      3: { 'phone': 'Phone calls', 'text': 'Group texts', 'sheets': 'Spreadsheets/lists', 'software': 'Existing software' }
-    };
     quizContext = [
       quizData[1] ? `Locations: ${labels[1][quizData[1]]}` : '',
       quizData[2] ? `Supply: ${labels[2][quizData[2]]}` : '',
-      quizData[3] ? `Current process: ${labels[3][quizData[3]]}` : ''
+      quizData[3] ? `Process: ${labels[3][quizData[3]]}` : ''
     ].filter(Boolean).join(' | ');
   }
 
-  // Submit to Formspree
   fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
     method: 'POST',
     headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      name: name,
-      phone: phone,
-      email: email,
-      locations: locations || 'Not specified',
-      best_time: time || 'Not specified',
+      name: fields.name,
+      phone: fields.phone,
+      email: fields.email,
+      locations: quizData[1] || 'Not specified',
+      best_time: fields.time || 'Not specified',
       quiz_answers: quizContext,
-      _subject: `🟠 Backstock Demo Request — ${name}`
+      _subject: `🟠 Backstock Demo Request — ${fields.name}`
     })
   })
   .then(response => {
     if (response.ok) {
-      // Show success
-      document.getElementById('ctaForm').style.display = 'none';
-      document.getElementById('ctaSteps').style.display = 'none';
-      document.getElementById('formSuccess').style.display = 'block';
+      // Hide all quiz steps, show success
+      document.querySelectorAll('.quiz-step').forEach(s => {
+        s.classList.remove('active');
+        s.style.display = 'none';
+      });
+      showResult('result-success');
     } else {
-      throw new Error('Form submission failed');
+      throw new Error('Submit failed');
     }
   })
   .catch(error => {
-    // Reset button and show error
-    btn.textContent = originalText;
-    btn.style.opacity = '1';
-    btn.style.pointerEvents = 'auto';
+    btnEl.textContent = originalText;
+    btnEl.style.opacity = '1';
+    btnEl.style.pointerEvents = 'auto';
     alert('Something went wrong — try again or text us directly.');
     console.error('Formspree error:', error);
   });
