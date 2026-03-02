@@ -767,10 +767,10 @@ export default function RestockApp() {
     h1: { color: "#fff", fontSize: "28px", fontWeight: 800, margin: "0 0 4px 0", letterSpacing: "-0.8px" },
     h2: { color: "#fff", fontSize: "22px", fontWeight: 800, margin: "0 0 4px 0", letterSpacing: "-0.5px" },
     sub: { color: "#ffffff45", fontSize: "13px", margin: "0 0 24px 0" },
-    input: { width: "100%", padding: "16px 18px", borderRadius: "12px", border: "1px solid #ffffff12", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: "15px", fontWeight: 500, outline: "none", boxSizing: "border-box" },
+    input: { width: "100%", padding: "16px 18px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.04)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: "15px", fontWeight: 500, outline: "none", boxSizing: "border-box", WebkitAppearance: "none", appearance: "none" },
     label: { color: "#ffffff60", fontSize: "12px", fontWeight: 600, letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "8px", display: "block" },
-    btn: { width: "100%", padding: "18px", borderRadius: "14px", border: "none", background: "linear-gradient(135deg, #FF6B35, #FF8C42)", color: "#fff", fontSize: "15px", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 20px rgba(255,107,53,0.3)" },
-    btnOff: { width: "100%", padding: "18px", borderRadius: "14px", border: "none", background: "#ffffff10", color: "#ffffff25", fontSize: "15px", fontWeight: 700, cursor: "not-allowed" },
+    btn: { width: "100%", padding: "18px", borderRadius: "14px", border: "none", background: "linear-gradient(135deg, #FF6B35, #FF8C42)", color: "#fff", fontSize: "15px", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 20px rgba(255,107,53,0.3)", WebkitAppearance: "none", appearance: "none" },
+    btnOff: { width: "100%", padding: "18px", borderRadius: "14px", border: "none", background: "#ffffff10", color: "#ffffff25", fontSize: "15px", fontWeight: 700, cursor: "not-allowed", WebkitAppearance: "none", appearance: "none" },
   };
 
   const Banner = () => {
@@ -906,7 +906,7 @@ export default function RestockApp() {
         <button onClick={() => setView("employee-login")} style={{ ...st.btn, padding: "20px 24px" }}>
           🏪 Submit Restock Request
         </button>
-        <button onClick={() => { setAuthed(false); setPin(""); setMgrView("dashboard"); setMgrWarehouse(null); setMgrPin(null); setOwnerPin(null); setExecPin(null); setAccessLevel(null); loadPin(); setView("manager-login"); }} style={{ ...st.btn, background: "rgba(255,255,255,0.04)", border: "1px solid #ffffff12", boxShadow: "none", padding: "20px 24px" }}>
+        <button onClick={() => { setAuthed(false); setPin(""); setMgrView("dashboard"); setMgrWarehouse(null); setMgrPin(null); setOwnerPin(null); setExecPin(null); setAccessLevel(null); loadPin(); setView("manager-login"); }} style={{ ...st.btn, background: "rgba(255,255,255,0.04)", border: "none", boxShadow: "none", padding: "20px 24px" }}>
           📊 Manager Dashboard
         </button>
       </div>
@@ -991,7 +991,7 @@ export default function RestockApp() {
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div><label style={st.label}>Your Name</label><input type="text" placeholder="e.g. Marcus" value={empName} onChange={e => setEmpName(e.target.value)} style={st.input} /></div>
           <div><label style={st.label}>Store Code</label>
-            <input type="text" inputMode="numeric" placeholder="Enter your store code" value={empCode} onChange={e => { setEmpCode(e.target.value); setEmpCodeError(false); }} style={{ ...st.input, borderColor: empCodeError ? "#E63946" : "#ffffff12" }} />
+            <input type="text" inputMode="numeric" placeholder="Enter your store code" value={empCode} onChange={e => { setEmpCode(e.target.value); setEmpCodeError(false); }} style={{ ...st.input, borderColor: empCodeError ? "#E63946" : "rgba(255,255,255,0.04)" }} />
             {empCodeError && <p style={{ color: "#E63946", fontSize: "12px", marginTop: "6px" }}>Invalid store code</p>}
           </div>
           <div><label style={st.label}>Store Name</label><input type="text" placeholder="e.g. Downtown, Eastside Mall" value={storeLoc} onChange={e => setStoreLoc(e.target.value)} style={st.input} /></div>
@@ -1708,7 +1708,7 @@ export default function RestockApp() {
                       else { const a = document.createElement("a"); a.href = url; a.download = `invoice-${order.store_location}-${order.id}.html`; a.click(); }
                       setTimeout(() => URL.revokeObjectURL(url), 5000);
                     }}
-                      style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>📄 Invoice</button>
+                      style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.04)", background: "transparent", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>📄 Invoice</button>
                     <button onClick={async () => { if (window.confirm(`Delete ${order.employee_name}'s completed order?`)) { try { await orgSb.del("submissions", `id=eq.${order.id}`); sndRemove(); setAnalyticsData(p => p.filter(o => o.id !== order.id)); } catch (e) { console.error(e); } } }}
                       style={{ padding: "8px 8px", borderRadius: "8px", border: "1px solid #E6394625", background: "transparent", color: "#E6394680", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>✕</button>
                     </div>
@@ -2269,7 +2269,7 @@ export default function RestockApp() {
         <button onClick={() => { sndBack(); setView("manager-warehouse"); setMgrWarehouse(null); }} style={st.back}>← Switch Warehouse</button>
         <h1 style={st.h1}>📊 {mgrWarehouse?.name} Dashboard</h1><p style={st.sub}>{loading ? "Loading..." : `${reports.length} pending order${reports.length !== 1 ? "s" : ""}`}</p>
         <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
-          <button onClick={loadMgr} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff50", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🔄 Refresh</button>
+          <button onClick={loadMgr} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.04)", background: "transparent", color: "#ffffff50", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🔄 Refresh</button>
           {(isManagerOrExec || accessLevel === "owner") && <button onClick={() => setMgrView("catalog")} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #6C5CE730", background: "#6C5CE710", color: "#6C5CE7", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🗂️ Catalog</button>}
           {isManagerOrExec && <button onClick={() => { setMgrView("analytics"); loadAnalytics(analyticsRange); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #00B4D830", background: "#00B4D810", color: "#00B4D8", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>📈 Analytics</button>}
           {isManagerOrExec && <button onClick={() => { setReceiveModel(null); setReceiveQtys({}); setReceiveNotes(""); setMgrView("receive"); orgSb.get("shipments", { order: "created_at.desc", filter: `warehouse_id=eq.${mgrWarehouse.id}`, limit: 20 }).then(d => setRecentShipments(d || [])); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #1DB95430", background: "#1DB95410", color: "#1DB954", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>📥 Receive</button>}
@@ -2366,7 +2366,7 @@ export default function RestockApp() {
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}><span style={{ fontSize: "14px" }}>📢</span><span style={{ color: "#FF6B35", fontSize: "11px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Banner</span></div>
             <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
               <button onClick={toggleBanner} style={{ padding: "4px 10px", borderRadius: "20px", border: "none", fontSize: "10px", fontWeight: 700, cursor: "pointer", background: bannerOn ? "#1DB95425" : "#ffffff10", color: bannerOn ? "#1DB954" : "#ffffff30" }}>{bannerOn ? "ON" : "OFF"}</button>
-              <button onClick={() => { setEditBanner(!editBanner); setBannerInput(bannerText); }} style={{ padding: "4px 10px", borderRadius: "20px", border: "1px solid #ffffff12", background: "transparent", color: "#ffffff40", fontSize: "10px", fontWeight: 700, cursor: "pointer" }}>{editBanner ? "Cancel" : "Edit"}</button>
+              <button onClick={() => { setEditBanner(!editBanner); setBannerInput(bannerText); }} style={{ padding: "4px 10px", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.06)", background: "transparent", color: "#ffffff40", fontSize: "10px", fontWeight: 700, cursor: "pointer" }}>{editBanner ? "Cancel" : "Edit"}</button>
             </div>
           </div>
           {!editBanner && bannerText && <div style={{ color: "#ffffff50", fontSize: "12px", marginTop: "6px", fontStyle: "italic" }}>"{bannerText}"</div>}
