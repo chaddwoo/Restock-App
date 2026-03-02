@@ -2317,13 +2317,14 @@ export default function RestockApp() {
             // Count stock warnings in this order
             const wid = mgrWarehouse ? String(mgrWarehouse.id) : null;
             let warningCount = 0;
+            const warningFlavors = [];
             if (wid) {
               Object.entries(r.items || {}).forEach(([key]) => {
                 const [product, flavor] = key.split("|||");
                 const model = catalogObj[product];
                 if (model) {
                   const stock = parseInt(((model.stock_levels || {})[wid] || {})[flavor]);
-                  if (!isNaN(stock) && stock <= 0) warningCount++;
+                  if (!isNaN(stock) && stock <= 0) { warningCount++; warningFlavors.push({ flavor, stock }); }
                 }
               });
             }
@@ -2332,7 +2333,18 @@ export default function RestockApp() {
               <div style={{ cursor: "pointer", flex: 1 }} onClick={() => setSelReport(r)}>
                 <div style={{ fontSize: "15px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>{r.employee_name}</div>
                 <div style={{ fontSize: "12px", color: "#ffffff35" }}>{r.store_location} • {fmtTime(r.created_at)} • {timeAgo(r.created_at)}</div>
-                {warningCount > 0 && <div style={{ fontSize: "10px", color: "#E63946", fontWeight: 700, marginTop: "4px" }}>⚠ {warningCount} item{warningCount !== 1 ? "s" : ""} low/out of stock</div>}
+                {warningCount > 0 && (
+                  <div style={{ marginTop: "6px" }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                      {warningFlavors.slice(0, 5).map((w, i) => (
+                        <span key={i} style={{ padding: "2px 6px", borderRadius: "4px", background: "#E6394615", fontSize: "9px", fontWeight: 700, color: "#E63946" }}>
+                          {w.flavor} {w.stock < 0 ? w.stock : "OUT"}
+                        </span>
+                      ))}
+                      {warningFlavors.length > 5 && <span style={{ fontSize: "9px", color: "#E6394680", padding: "2px 4px" }}>+{warningFlavors.length - 5} more</span>}
+                    </div>
+                  </div>
+                )}
               </div>
               <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                 <span style={{ padding: "4px 10px", borderRadius: "6px", background: "#FF6B3518", color: "#FF6B35", fontSize: "11px", fontWeight: 700 }}>{r.total_flavors} • ~{r.total_units}u</span>
