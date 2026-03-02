@@ -2275,11 +2275,11 @@ export default function RestockApp() {
           {isManagerOrExec && <button onClick={() => { setReceiveModel(null); setReceiveQtys({}); setReceiveNotes(""); setMgrView("receive"); orgSb.get("shipments", { order: "created_at.desc", filter: `warehouse_id=eq.${mgrWarehouse.id}`, limit: 20 }).then(d => setRecentShipments(d || [])); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #1DB95430", background: "#1DB95410", color: "#1DB954", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>📥 Receive</button>}
         </div>
 
-        {/* LOW STOCK & NEGATIVE STOCK ALERTS */}
+        {/* NEGATIVE STOCK ALERTS */}
         {isManagerOrExec && (() => {
           const wid = mgrWarehouse ? String(mgrWarehouse.id) : null;
           if (!wid) return null;
-          const lowItems = []; const negItems = [];
+          const negItems = [];
           catalog.forEach(c => {
             const hidden = (c.warehouse_visibility || {})[wid] || [];
             if (hidden.includes("__ALL__")) return;
@@ -2287,46 +2287,24 @@ export default function RestockApp() {
             (c.flavors || []).forEach(f => {
               if (hidden.includes(f)) return;
               const stock = parseInt(ws[f]);
-              if (isNaN(stock)) return;
-              if (stock < 0) negItems.push({ model: c.model_name, brand: c.brand, flavor: f, stock });
-              else if (stock <= 3 && stock >= 0) lowItems.push({ model: c.model_name, brand: c.brand, flavor: f, stock });
+              if (!isNaN(stock) && stock < 0) negItems.push({ model: c.model_name, flavor: f, stock });
             });
           });
-          if (negItems.length === 0 && lowItems.length === 0) return null;
+          if (negItems.length === 0) return null;
           return (
-            <div style={{ marginBottom: "20px" }}>
-              {negItems.length > 0 && (
-                <div style={{ padding: "14px 16px", borderRadius: "12px", background: "rgba(230,57,70,0.08)", border: "1px solid #E6394625", marginBottom: "8px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-                    <span style={{ fontSize: "14px" }}>🚨</span>
-                    <span style={{ color: "#E63946", fontSize: "11px", fontWeight: 800, letterSpacing: "0.5px", textTransform: "uppercase" }}>Negative Stock ({negItems.length})</span>
-                  </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-                    {negItems.slice(0, 12).map((item, i) => (
-                      <span key={i} style={{ padding: "4px 8px", borderRadius: "6px", background: "#E6394615", border: "1px solid #E6394620", fontSize: "10px", fontWeight: 700, color: "#E63946" }}>
-                        {item.flavor} <span style={{ opacity: 0.7 }}>{item.stock}</span>
-                      </span>
-                    ))}
-                    {negItems.length > 12 && <span style={{ padding: "4px 8px", fontSize: "10px", color: "#E6394680" }}>+{negItems.length - 12} more</span>}
-                  </div>
-                </div>
-              )}
-              {lowItems.length > 0 && (
-                <div style={{ padding: "14px 16px", borderRadius: "12px", background: "rgba(245,158,11,0.06)", border: "1px solid #F59E0B20", marginBottom: "8px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-                    <span style={{ fontSize: "14px" }}>⚠️</span>
-                    <span style={{ color: "#F59E0B", fontSize: "11px", fontWeight: 800, letterSpacing: "0.5px", textTransform: "uppercase" }}>Low Stock ({lowItems.length})</span>
-                  </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-                    {lowItems.slice(0, 15).map((item, i) => (
-                      <span key={i} style={{ padding: "4px 8px", borderRadius: "6px", background: "#F59E0B10", border: "1px solid #F59E0B15", fontSize: "10px", fontWeight: 600, color: item.stock === 0 ? "#E63946" : "#F59E0B" }}>
-                        {item.flavor} <span style={{ opacity: 0.7 }}>{item.stock === 0 ? "OUT" : item.stock}</span>
-                      </span>
-                    ))}
-                    {lowItems.length > 15 && <span style={{ padding: "4px 8px", fontSize: "10px", color: "#F59E0B80" }}>+{lowItems.length - 15} more</span>}
-                  </div>
-                </div>
-              )}
+            <div style={{ padding: "14px 16px", borderRadius: "12px", background: "rgba(230,57,70,0.08)", border: "1px solid #E6394625", marginBottom: "20px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+                <span style={{ fontSize: "14px" }}>🚨</span>
+                <span style={{ color: "#E63946", fontSize: "11px", fontWeight: 800, letterSpacing: "0.5px", textTransform: "uppercase" }}>Oversold ({negItems.length})</span>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                {negItems.slice(0, 12).map((item, i) => (
+                  <span key={i} style={{ padding: "4px 8px", borderRadius: "6px", background: "#E6394615", border: "1px solid #E6394620", fontSize: "10px", fontWeight: 700, color: "#E63946" }}>
+                    {item.flavor} <span style={{ opacity: 0.7 }}>{item.stock}</span>
+                  </span>
+                ))}
+                {negItems.length > 12 && <span style={{ padding: "4px 8px", fontSize: "10px", color: "#E6394680" }}>+{negItems.length - 12} more</span>}
+              </div>
             </div>
           );
         })()}
