@@ -1144,6 +1144,17 @@
         </div>
       </div>
 
+      <!-- Result: Already Using Software -->
+      <div class="quiz-step" data-step="result-software" style="display:none;">
+        <div class="quiz-result">
+          <span class="quiz-result-icon">💻</span>
+          <h3>Sounds like you've already solved this one.</h3>
+          <p>If your current software handles the warehouse-to-store restock workflow and your team actually uses it — you're ahead of most operators. Backstock is built for the ones still running on phone calls and group texts. But if you're not happy with what you have, we'd still love to chat.</p>
+          <a href="mailto:chadd@backstockapp.com" class="btn btn-ghost" style="margin-top:8px;">Email Us →</a>
+          <br><button class="quiz-restart" onclick="quizRestart()">Retake quiz</button>
+        </div>
+      </div>
+
       <!-- Success State (shown after form submit) -->
       <div class="quiz-step" data-step="result-success" style="display:none;">
         <div class="quiz-result">
@@ -1356,7 +1367,9 @@ function quizAnswer(step, value) {
     next.classList.add('active');
   } else {
     // Step 3 complete — determine result
-    if (quizData[2] === 'mix') {
+    if (quizData[3] === 'software') {
+      showResult('result-software');
+    } else if (quizData[2] === 'mix') {
       showResult('result-partial');
     } else {
       showResult('result-yes');
@@ -1373,7 +1386,7 @@ function showResult(resultId) {
     if (tags) {
       tags.innerHTML = '';
       const locationLabels = { '3-10': '3–10 stores', '11-50': '11–50 stores', '50+': '50+ stores' };
-      const methodLabels = { 'phone': 'Phone calls', 'text': 'Group texts', 'sheets': 'Spreadsheets & lists', 'software': 'Existing software' };
+      const methodLabels = { 'phone': 'Phone calls', 'text': 'Group texts', 'sheets': 'Spreadsheets & lists' };
       if (quizData[1] && locationLabels[quizData[1]]) tags.innerHTML += `<span class="quiz-result-tag">${locationLabels[quizData[1]]}</span>`;
       if (quizData[2]) tags.innerHTML += `<span class="quiz-result-tag">Self-warehousing</span>`;
       if (quizData[3] && methodLabels[quizData[3]]) tags.innerHTML += `<span class="quiz-result-tag">Currently: ${methodLabels[quizData[3]]}</span>`;
