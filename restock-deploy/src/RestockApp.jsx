@@ -770,7 +770,7 @@ export default function RestockApp() {
     input: { width: "100%", padding: "16px 18px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.04)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: "15px", fontWeight: 500, outline: "none", boxSizing: "border-box", WebkitAppearance: "none", appearance: "none" },
     label: { color: "#ffffff60", fontSize: "12px", fontWeight: 600, letterSpacing: "0.8px", textTransform: "uppercase", marginBottom: "8px", display: "block" },
     btn: { width: "100%", padding: "18px", borderRadius: "14px", border: "none", background: "linear-gradient(135deg, #FF6B35, #FF8C42)", color: "#fff", fontSize: "15px", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 20px rgba(255,107,53,0.3)", WebkitAppearance: "none", appearance: "none" },
-    btnOff: { width: "100%", padding: "18px", borderRadius: "14px", border: "none", background: "#ffffff10", color: "#ffffff25", fontSize: "15px", fontWeight: 700, cursor: "not-allowed", WebkitAppearance: "none", appearance: "none" },
+    btnOff: { width: "100%", padding: "18px", borderRadius: "14px", border: "none", background: "rgba(255,255,255,0.03)", color: "#ffffff25", fontSize: "15px", fontWeight: 700, cursor: "not-allowed", WebkitAppearance: "none", appearance: "none" },
   };
 
   const Banner = () => {
@@ -819,7 +819,7 @@ export default function RestockApp() {
         {showOrderEdit && (
           <div ref={el => { if (el) { drawerScrollRef.current = el; requestAnimationFrame(() => { el.scrollTop = drawerScrollPos.current; }); } }}
             onScroll={e => { drawerScrollPos.current = e.target.scrollTop; }}
-            style={{ position: "fixed", bottom: "85px", left: "20px", right: "20px", maxHeight: "60vh", overflowY: "auto", borderRadius: "16px", background: "rgba(20,20,28,0.97)", backdropFilter: "blur(10px)", border: "1px solid #ffffff15", zIndex: 89, boxShadow: "0 -4px 30px rgba(0,0,0,0.6)", padding: "16px" }}>
+            style={{ position: "fixed", bottom: "85px", left: "20px", right: "20px", maxHeight: "60vh", overflowY: "auto", borderRadius: "16px", background: "rgba(20,20,28,0.97)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.04)", zIndex: 89, boxShadow: "0 -4px 30px rgba(0,0,0,0.6)", padding: "16px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
               <span style={{ color: "#FF6B35", fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Your Order</span>
               <button onClick={() => setShowOrderEdit(false)} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #ffffff20", background: "transparent", color: "#ffffff60", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>Done ✓</button>
@@ -833,7 +833,7 @@ export default function RestockApp() {
                   const decrement = () => { if (qNum <= 1) return; sndClick(); setOrderData(prev => ({ ...prev, [key]: String(qNum - 1) })); };
                   const increment = () => { if (qty === "5+") return; sndClick(); setOrderData(prev => ({ ...prev, [key]: qNum >= 4 ? "5+" : String(qNum + 1) })); };
                   return (
-                    <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #ffffff08" }}>
+                    <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.02)" }}>
                       <span style={{ color: "#fff", fontSize: "14px", flex: 1 }}>{flavor}</span>
                       <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                         <button onClick={decrement} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", background: qNum <= 1 ? "rgba(255,255,255,0.05)" : "rgba(230,57,70,0.2)", color: qNum <= 1 ? "#ffffff20" : "#E63946", fontSize: "18px", fontWeight: 700, cursor: qNum <= 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>−</button>
@@ -885,7 +885,7 @@ export default function RestockApp() {
             {orgLoading ? "Looking up..." : "Continue →"}
           </button>
         </div>
-        <p style={{ color: "#ffffff12", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v6.0</p>
+        <p style={{ color: "rgba(255,255,255,0.03)", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v6.0</p>
       </div>
     );
   }
@@ -911,7 +911,7 @@ export default function RestockApp() {
         </button>
       </div>
       <button onClick={() => { clearOrg(); setCurrentOrg(null); setWarehouses([]); setCatalog([]); setCatLoaded(false); setView("org-entry"); }}
-        style={{ background: "none", border: "none", color: "#ffffff12", fontSize: "11px", cursor: "pointer", marginTop: "60px", letterSpacing: "1px" }}>v6.0</button>
+        style={{ background: "none", border: "none", color: "rgba(255,255,255,0.03)", fontSize: "11px", cursor: "pointer", marginTop: "60px", letterSpacing: "1px" }}>v6.0</button>
       {/* Onboarding overlay */}
       {onboardStep !== null && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", zIndex: 999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 28px" }}>
@@ -925,7 +925,7 @@ export default function RestockApp() {
           </button>
           <div style={{ display: "flex", gap: "8px", marginTop: "28px" }}>
             {onboardSteps.map((_, i) => (
-              <div key={i} style={{ width: i === onboardStep ? "24px" : "8px", height: "8px", borderRadius: "4px", background: i === onboardStep ? "#FF6B35" : i < onboardStep ? "#FF6B3560" : "#ffffff15", transition: "all 0.3s ease" }} />
+              <div key={i} style={{ width: i === onboardStep ? "24px" : "8px", height: "8px", borderRadius: "4px", background: i === onboardStep ? "#FF6B35" : i < onboardStep ? "#FF6B3560" : "rgba(255,255,255,0.04)", transition: "all 0.3s ease" }} />
             ))}
           </div>
         </div>
@@ -1052,8 +1052,8 @@ export default function RestockApp() {
           <p style={{ color: "#ffffff50", fontSize: "13px", margin: "0 0 16px 0" }}>{empName} • {storeLoc}</p>
           <div style={{ marginBottom: "20px", position: "sticky", top: 0, zIndex: 80, paddingTop: "8px", paddingBottom: "12px", background: "linear-gradient(180deg, #0B0B0F 85%, transparent)", marginLeft: "-20px", marginRight: "-20px", paddingLeft: "20px", paddingRight: "20px" }}>
             <input type="text" placeholder="🔍  Search products, brands, flavors..." value={empSearch} onChange={e => setEmpSearch(e.target.value)}
-              style={{ ...st.input, fontSize: "15px", padding: "16px 20px", background: "rgba(255,255,255,0.07)", border: `1px solid ${empSearch ? "#FF6B3540" : "#ffffff18"}`, borderRadius: "14px", boxShadow: empSearch ? "0 0 20px rgba(255,107,53,0.1)" : "none", transition: "all 0.2s ease" }} />
-            {empSearchTerm ? <div style={{ color: "#ffffff30", fontSize: "11px", marginTop: "6px", textAlign: "center" }}>{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</div> : <div style={{ color: "#ffffff15", fontSize: "11px", marginTop: "6px", textAlign: "center" }}>or browse categories below</div>}
+              style={{ ...st.input, fontSize: "15px", padding: "16px 20px", background: "rgba(255,255,255,0.07)", border: `1px solid ${empSearch ? "#FF6B3540" : "rgba(255,255,255,0.04)"}`, borderRadius: "14px", boxShadow: empSearch ? "0 0 20px rgba(255,107,53,0.1)" : "none", transition: "all 0.2s ease" }} />
+            {empSearchTerm ? <div style={{ color: "#ffffff30", fontSize: "11px", marginTop: "6px", textAlign: "center" }}>{searchResults.length} result{searchResults.length !== 1 ? "s" : ""}</div> : <div style={{ color: "rgba(255,255,255,0.04)", fontSize: "11px", marginTop: "6px", textAlign: "center" }}>or browse categories below</div>}
           </div>
           {empSearchTerm ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -1063,7 +1063,7 @@ export default function RestockApp() {
                 const o = getProductOrderCount(model);
                 return (
                   <button key={model} onClick={() => { setSelProduct(model); setView("employee-flavors"); }}
-                    style={{ padding: "16px", borderRadius: "12px", border: `1px solid ${o > 0 ? bc + "25" : "#ffffff0a"}`, background: o > 0 ? bc + "08" : "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    style={{ padding: "16px", borderRadius: "12px", border: `1px solid ${o > 0 ? bc + "25" : "rgba(255,255,255,0.02)"}`, background: o > 0 ? bc + "08" : "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div>
                       <div style={{ marginBottom: "3px" }}>{model}</div>
                       <div style={{ fontSize: "11px", color: "#ffffff30", fontWeight: 500 }}>{p.brand} • {p.activeFlavors.length} items</div>
@@ -1098,12 +1098,12 @@ export default function RestockApp() {
             })}
           </div>
           )}
-          <div style={{ marginTop: "20px", padding: "16px", borderRadius: "12px", border: "1px dashed #ffffff15", background: "rgba(255,255,255,0.015)" }}>
+          <div style={{ marginTop: "20px", padding: "16px", borderRadius: "12px", border: "1px dashed rgba(255,255,255,0.04)", background: "rgba(255,255,255,0.015)" }}>
             <label style={{ ...st.label, marginBottom: "10px" }}>💡 Suggest a Product</label>
             <div style={{ display: "flex", gap: "8px" }}>
               <input type="text" placeholder="e.g. Funky Republic Ti7000" value={suggestion} onChange={e => setSuggestion(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
               <button onClick={() => { if (suggestion.trim()) { setSuggestions(p => [...p, { text: suggestion.trim(), from: empName, store: storeLoc }]); setSuggestion(""); } }}
-                style={{ padding: "12px 18px", borderRadius: "10px", border: "none", background: suggestion.trim() ? "#FF6B35" : "#ffffff10", color: suggestion.trim() ? "#fff" : "#ffffff25", fontSize: "13px", fontWeight: 700, cursor: suggestion.trim() ? "pointer" : "not-allowed", whiteSpace: "nowrap" }}>Send</button>
+                style={{ padding: "12px 18px", borderRadius: "10px", border: "none", background: suggestion.trim() ? "#FF6B35" : "rgba(255,255,255,0.03)", color: suggestion.trim() ? "#fff" : "#ffffff25", fontSize: "13px", fontWeight: 700, cursor: suggestion.trim() ? "pointer" : "not-allowed", whiteSpace: "nowrap" }}>Send</button>
             </div>
             {suggestions.map((sg, i) => (<div key={`${sg.text}-${i}`} style={{ padding: "8px 12px", borderRadius: "8px", background: "#1DB95410", border: "1px solid #1DB95420", color: "#1DB954", fontSize: "12px", fontWeight: 600, marginTop: "6px" }}>✓ Suggested: {sg.text}</div>))}
           </div>
@@ -1132,7 +1132,7 @@ export default function RestockApp() {
           return (
             <div key={brand} style={{ marginBottom: "6px" }}>
               <button onClick={() => { setEmpExpandedBrands(p => ({ ...p, [brandKey]: !isExpanded })); }}
-                style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: `1px solid ${isExpanded ? bc + "20" : brandOrdered > 0 ? bc + "15" : "#ffffff08"}`, background: isExpanded ? `${bc}08` : brandOrdered > 0 ? `${bc}05` : "rgba(255,255,255,0.02)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left", transition: "all 0.2s ease" }}>
+                style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: `1px solid ${isExpanded ? bc + "20" : brandOrdered > 0 ? bc + "15" : "rgba(255,255,255,0.02)"}`, background: isExpanded ? `${bc}08` : brandOrdered > 0 ? `${bc}05` : "rgba(255,255,255,0.02)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left", transition: "all 0.2s ease" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   <div style={{ width: "3px", height: "20px", borderRadius: "2px", background: bc }}></div>
                   <div>
@@ -1151,7 +1151,7 @@ export default function RestockApp() {
                   const p = catalogObj[model]; const o = getProductOrderCount(model);
                   return (
                     <button key={model} onClick={() => { setSelProduct(model); setView("employee-flavors"); }}
-                      style={{ padding: "14px 16px", borderRadius: "12px", border: `1px solid ${o > 0 ? bc + "25" : "#ffffff0a"}`, background: o > 0 ? bc + "08" : "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      style={{ padding: "14px 16px", borderRadius: "12px", border: `1px solid ${o > 0 ? bc + "25" : "rgba(255,255,255,0.02)"}`, background: o > 0 ? bc + "08" : "rgba(255,255,255,0.025)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div><div style={{ marginBottom: "3px" }}>{model}</div><div style={{ fontSize: "11px", color: "#ffffff30", fontWeight: 500 }}>{p.puffs !== "N/A" ? p.puffs + " puffs • " : ""}{p.activeFlavors.length} items</div></div>
                       <span style={{ fontSize: "12px", fontWeight: 700, color: o > 0 ? bc : "#ffffff25", whiteSpace: "nowrap" }}>{o > 0 ? `${o} requested` : ""}</span>
                     </button>
@@ -1185,13 +1185,13 @@ export default function RestockApp() {
         <p style={st.sub}>How many of each do you need?</p>
         <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
           <button onClick={() => p.activeFlavors.forEach(f => { const key = `${selProduct}|||${f}`; setOrderData(prev => { const next = { ...prev }; delete next[key]; return next; }); })}
-            style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff40", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>Skip All</button>
+            style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.04)", background: "transparent", color: "#ffffff40", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>Skip All</button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           {p.activeFlavors.map(flavor => {
-            const key = `${selProduct}|||${flavor}`; const cur = orderData[key]; const has = cur !== undefined; const col = has ? getQtyColor(cur) : "#ffffff10";
+            const key = `${selProduct}|||${flavor}`; const cur = orderData[key]; const has = cur !== undefined; const col = has ? getQtyColor(cur) : "rgba(255,255,255,0.03)";
             return (
-              <div key={flavor} style={{ padding: "14px 16px", borderRadius: "12px", border: `1px solid ${has ? col + "30" : "#ffffff08"}`, background: has ? col + "08" : "rgba(255,255,255,0.02)" }}>
+              <div key={flavor} style={{ padding: "14px 16px", borderRadius: "12px", border: `1px solid ${has ? col + "30" : "rgba(255,255,255,0.02)"}`, background: has ? col + "08" : "rgba(255,255,255,0.02)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
                   <span style={{ color: "#fff", fontSize: "14px", fontWeight: 600 }}>{flavor}</span>
                   {has && <span style={{ fontSize: "16px", fontWeight: 800, color: col, minWidth: "28px", textAlign: "right" }}>×{cur}</span>}
@@ -1199,7 +1199,7 @@ export default function RestockApp() {
                 <div style={{ display: "flex", gap: "6px" }}>
                   {QTY_OPTIONS.map(opt => {
                     const isSkip = opt === "skip"; const isSel = isSkip ? !has : cur === opt; const oc = isSkip ? "#ffffff30" : getQtyColor(opt);
-                    return (<button key={opt} onClick={() => setOrder(selProduct, flavor, opt)} style={{ flex: 1, padding: "10px 4px", borderRadius: "8px", border: isSel ? `2px solid ${oc}` : "1px solid #ffffff10", background: isSel ? oc + "20" : "transparent", color: isSel ? oc : "#ffffff25", fontSize: isSkip ? "10px" : "14px", fontWeight: 700, cursor: "pointer", textTransform: isSkip ? "uppercase" : "none", letterSpacing: isSkip ? "0.5px" : "0" }}>{isSkip ? "Skip" : opt}</button>);
+                    return (<button key={opt} onClick={() => setOrder(selProduct, flavor, opt)} style={{ flex: 1, padding: "10px 4px", borderRadius: "8px", border: isSel ? `2px solid ${oc}` : "1px solid rgba(255,255,255,0.03)", background: isSel ? oc + "20" : "transparent", color: isSel ? oc : "#ffffff25", fontSize: isSkip ? "10px" : "14px", fontWeight: 700, cursor: "pointer", textTransform: isSkip ? "uppercase" : "none", letterSpacing: isSkip ? "0.5px" : "0" }}>{isSkip ? "Skip" : opt}</button>);
                   })}
                 </div>
               </div>
@@ -1211,7 +1211,7 @@ export default function RestockApp() {
           <button onClick={() => { sndBack(); setView("employee-products"); }}
             style={{ width: "56px", height: "56px", borderRadius: "50%", border: "none", background: "linear-gradient(135deg, #FF6B35, #FF8C42)", color: "#000", fontSize: "22px", fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 4px 20px rgba(255,107,53,0.4)" }}>←</button>
           {ic > 0 && (
-            <div onClick={() => setShowOrderEdit(!showOrderEdit)} style={{ flex: 1, padding: "16px", borderRadius: "14px", background: "rgba(30,30,40,0.95)", border: "1px solid #ffffff15", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", backdropFilter: "blur(10px)" }}>
+            <div onClick={() => setShowOrderEdit(!showOrderEdit)} style={{ flex: 1, padding: "16px", borderRadius: "14px", background: "rgba(30,30,40,0.95)", border: "1px solid rgba(255,255,255,0.04)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", backdropFilter: "blur(10px)" }}>
               <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>📋 {ic} item{ic > 1 ? "s" : ""}</span>
               <span style={{ color: "#ffffff50", fontSize: "11px", fontWeight: 600 }}>{showOrderEdit ? "Close ▼" : "Edit ▲"}</span>
             </div>
@@ -1224,7 +1224,7 @@ export default function RestockApp() {
           const items = Object.entries(orderData);
           const grouped = {}; items.forEach(([k, q]) => { const [pr, fl] = k.split("|||"); if (!grouped[pr]) grouped[pr] = []; grouped[pr].push({ flavor: fl, qty: q, key: k }); });
           return (
-            <div style={{ position: "fixed", bottom: "95px", left: "20px", right: "20px", maxHeight: "55vh", overflowY: "auto", borderRadius: "16px", background: "rgba(20,20,28,0.97)", backdropFilter: "blur(10px)", border: "1px solid #ffffff15", zIndex: 89, boxShadow: "0 -4px 30px rgba(0,0,0,0.6)", padding: "16px" }}>
+            <div style={{ position: "fixed", bottom: "95px", left: "20px", right: "20px", maxHeight: "55vh", overflowY: "auto", borderRadius: "16px", background: "rgba(20,20,28,0.97)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.04)", zIndex: 89, boxShadow: "0 -4px 30px rgba(0,0,0,0.6)", padding: "16px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
                 <span style={{ color: "#FF6B35", fontSize: "13px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Your Order</span>
                 <button onClick={() => setShowOrderEdit(false)} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #ffffff20", background: "transparent", color: "#ffffff60", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>Done ✓</button>
@@ -1235,7 +1235,7 @@ export default function RestockApp() {
                   {flavors.map(({ flavor, qty, key }) => {
                     const col = getQtyColor(qty);
                     return (
-                      <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #ffffff08" }}>
+                      <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.02)" }}>
                         <span style={{ color: "#fff", fontSize: "13px" }}>{flavor}</span>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                           <span style={{ color: col, fontSize: "14px", fontWeight: 800 }}>×{qty}</span>
@@ -1266,12 +1266,12 @@ export default function RestockApp() {
         <button onClick={() => { sndBack(); setView("employee-products"); }} style={st.back}>← Back to Order</button>
         <h2 style={{ ...st.h2, marginBottom: "4px" }}>Review Your Order</h2>
         <p style={st.sub}>{empName} • {storeLoc}</p>
-        <div style={{ padding: "16px", borderRadius: "12px", background: "rgba(255,255,255,0.03)", border: "1px solid #ffffff10", marginBottom: "16px" }}>
+        <div style={{ padding: "16px", borderRadius: "12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.03)", marginBottom: "16px" }}>
           <div style={{ display: "flex", justifyContent: "space-around", textAlign: "center" }}>
             <div><div style={{ fontSize: "24px", fontWeight: 900, color: "#fff" }}>{ic}</div><div style={{ fontSize: "10px", color: "#ffffff35", fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: "2px" }}>Items</div></div>
-            <div style={{ width: "1px", background: "#ffffff10" }}></div>
+            <div style={{ width: "1px", background: "rgba(255,255,255,0.03)" }}></div>
             <div><div style={{ fontSize: "24px", fontWeight: 900, color: "#fff" }}>~{tu}</div><div style={{ fontSize: "10px", color: "#ffffff35", fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: "2px" }}>Units</div></div>
-            <div style={{ width: "1px", background: "#ffffff10" }}></div>
+            <div style={{ width: "1px", background: "rgba(255,255,255,0.03)" }}></div>
             <div><div style={{ fontSize: "24px", fontWeight: 900, color: "#fff" }}>{sortedProducts.length}</div><div style={{ fontSize: "10px", color: "#ffffff35", fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", marginTop: "2px" }}>Products</div></div>
           </div>
         </div>
@@ -1279,7 +1279,7 @@ export default function RestockApp() {
           const flavors = grouped[pr].sort((a, b) => a.flavor.localeCompare(b.flavor));
           const bc = getBrandColor(catalogObj[pr]?.brand || "");
           return (
-            <div key={pr} style={{ marginBottom: "12px", padding: "12px 14px", borderRadius: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid #ffffff08" }}>
+            <div key={pr} style={{ marginBottom: "12px", padding: "12px 14px", borderRadius: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.02)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
                 <div style={{ width: "3px", height: "14px", borderRadius: "2px", background: bc }}></div>
                 <span style={{ color: "#ffffff60", fontSize: "12px", fontWeight: 700 }}>{pr}</span>
@@ -1291,7 +1291,7 @@ export default function RestockApp() {
                 const decrement = () => { if (qNum <= 1) return; sndClick(); setOrderData(prev => ({ ...prev, [key]: String(qNum - 1) })); };
                 const increment = () => { if (qty === "5+") return; sndClick(); setOrderData(prev => ({ ...prev, [key]: qNum >= 4 ? "5+" : String(qNum + 1) })); };
                 return (
-                  <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #ffffff06" }}>
+                  <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.01)" }}>
                     <span style={{ color: "#ffffffcc", fontSize: "14px", flex: 1 }}>{flavor}</span>
                     <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                       <button onClick={decrement} style={{ width: "32px", height: "32px", borderRadius: "8px", border: "none", background: qNum <= 1 ? "rgba(255,255,255,0.05)" : "rgba(230,57,70,0.2)", color: qNum <= 1 ? "#ffffff20" : "#E63946", fontSize: "18px", fontWeight: 700, cursor: qNum <= 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>−</button>
@@ -1310,7 +1310,7 @@ export default function RestockApp() {
         <div style={{ position: "fixed", bottom: "24px", left: "20px", right: "20px", display: "flex", gap: "10px", alignItems: "center", zIndex: 90 }}>
           <button onClick={() => { sndBack(); setView("employee-products"); }}
             style={{ width: "56px", height: "56px", borderRadius: "50%", border: "none", background: "linear-gradient(135deg, #FF6B35, #FF8C42)", color: "#000", fontSize: "22px", fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 4px 20px rgba(255,107,53,0.4)" }}>←</button>
-          <button onClick={submitOrder} disabled={submitting} style={{ flex: 1, padding: "16px", borderRadius: "14px", border: "none", background: submitting ? "#ffffff10" : "linear-gradient(135deg, #1DB954, #10B981)", color: submitting ? "#ffffff25" : "#fff", fontSize: "15px", fontWeight: 700, cursor: submitting ? "not-allowed" : "pointer", boxShadow: submitting ? "none" : "0 4px 20px rgba(29,185,84,0.3)" }}>
+          <button onClick={submitOrder} disabled={submitting} style={{ flex: 1, padding: "16px", borderRadius: "14px", border: "none", background: submitting ? "rgba(255,255,255,0.03)" : "linear-gradient(135deg, #1DB954, #10B981)", color: submitting ? "#ffffff25" : "#fff", fontSize: "15px", fontWeight: 700, cursor: submitting ? "not-allowed" : "pointer", boxShadow: submitting ? "none" : "0 4px 20px rgba(29,185,84,0.3)" }}>
             {submitting ? "Submitting..." : "✅ Confirm & Submit"}
           </button>
         </div>
@@ -1327,7 +1327,7 @@ export default function RestockApp() {
         <div style={{ fontSize: "64px", marginBottom: "12px" }}>✅</div>
         <h2 style={{ ...st.h1, fontSize: "26px" }}>Request Submitted!</h2>
         <p style={{ color: "#ffffff50", fontSize: "14px", margin: "8px 0" }}><strong>{empName}</strong> • {storeLoc}</p>
-        <div style={{ marginTop: "16px", padding: "16px", borderRadius: "12px", background: "rgba(255,255,255,0.03)", border: "1px solid #ffffff10", textAlign: "left", width: "100%", maxWidth: "360px" }}>
+        <div style={{ marginTop: "16px", padding: "16px", borderRadius: "12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.03)", textAlign: "left", width: "100%", maxWidth: "360px" }}>
           <div style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: "12px" }}>Order Summary — {items.length} items • ~{tu} units</div>
           {Object.entries(grouped).map(([pr, flavors]) => (
             <div key={pr} style={{ marginBottom: "12px" }}>
@@ -1337,7 +1337,7 @@ export default function RestockApp() {
           ))}
         </div>
         {suggestions.length > 0 && (<div style={{ marginTop: "12px", padding: "12px 16px", borderRadius: "10px", background: "#6C5CE710", border: "1px solid #6C5CE720", width: "100%", maxWidth: "360px", textAlign: "left" }}><span style={{ color: "#6C5CE7", fontSize: "12px", fontWeight: 700 }}>💡 {suggestions.length} suggestion{suggestions.length > 1 ? "s" : ""} sent</span></div>)}
-        <button onClick={() => { clearSession(); setView("splash"); setOrderData({}); setEmpName(""); setStoreLoc(""); setEmpCode(""); setEmpWarehouse(null); setSuggestions([]); setSelCategory(null); }} style={{ ...st.btn, marginTop: "32px", background: "rgba(255,255,255,0.05)", border: "1px solid #ffffff15", boxShadow: "none", maxWidth: "360px" }}>Done</button>
+        <button onClick={() => { clearSession(); setView("splash"); setOrderData({}); setEmpName(""); setStoreLoc(""); setEmpCode(""); setEmpWarehouse(null); setSuggestions([]); setSelCategory(null); }} style={{ ...st.btn, marginTop: "32px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.04)", boxShadow: "none", maxWidth: "360px" }}>Done</button>
       </div>
     );
   }
@@ -1411,7 +1411,7 @@ export default function RestockApp() {
         <div style={{ display: "flex", gap: "6px", marginBottom: "20px" }}>
           {["7d", "14d", "30d"].map(r => (
             <button key={r} onClick={() => { setAnalyticsRange(r); loadAnalytics(r); }}
-              style={{ padding: "6px 14px", borderRadius: "8px", border: `1px solid ${analyticsRange === r ? "#00B4D850" : "#ffffff15"}`, background: analyticsRange === r ? "#00B4D820" : "transparent", color: analyticsRange === r ? "#00B4D8" : "#ffffff40", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>{r === "7d" ? "7 Days" : r === "14d" ? "14 Days" : "30 Days"}</button>
+              style={{ padding: "6px 14px", borderRadius: "8px", border: `1px solid ${analyticsRange === r ? "#00B4D850" : "rgba(255,255,255,0.04)"}`, background: analyticsRange === r ? "#00B4D820" : "transparent", color: analyticsRange === r ? "#00B4D8" : "#ffffff40", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>{r === "7d" ? "7 Days" : r === "14d" ? "14 Days" : "30 Days"}</button>
           ))}
         </div>
 
@@ -1546,7 +1546,7 @@ export default function RestockApp() {
                       <span style={{ color: "#fff", fontSize: "12px", fontWeight: 600 }}>{name}</span>
                       <span style={{ color: "#FF6B35", fontSize: "12px", fontWeight: 800 }}>{count}u</span>
                     </div>
-                    <div style={{ height: "4px", borderRadius: "2px", background: "#ffffff08", overflow: "hidden" }}>
+                    <div style={{ height: "4px", borderRadius: "2px", background: "rgba(255,255,255,0.02)", overflow: "hidden" }}>
                       <div style={{ height: "100%", borderRadius: "2px", background: "#FF6B35", width: `${(count / maxProd) * 100}%`, transition: "width 0.3s ease" }} />
                     </div>
                   </div>
@@ -1569,7 +1569,7 @@ export default function RestockApp() {
                       <span style={{ color: "#fff", fontSize: "12px", fontWeight: 600 }}>{name}</span>
                       <span style={{ color: "#1DB954", fontSize: "12px", fontWeight: 800 }}>{count}u</span>
                     </div>
-                    <div style={{ height: "4px", borderRadius: "2px", background: "#ffffff08", overflow: "hidden" }}>
+                    <div style={{ height: "4px", borderRadius: "2px", background: "rgba(255,255,255,0.02)", overflow: "hidden" }}>
                       <div style={{ height: "100%", borderRadius: "2px", background: "#1DB954", width: `${(count / maxBar) * 100}%`, transition: "width 0.3s ease" }} />
                     </div>
                   </div>
@@ -1586,7 +1586,7 @@ export default function RestockApp() {
             {dailyValues.map((v, i) => (
               <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", height: "100%" }}>
                 <div style={{ flex: 1, display: "flex", alignItems: "flex-end", width: "100%" }}>
-                  <div style={{ width: "100%", height: `${Math.max((v / maxDaily) * 100, v > 0 ? 8 : 2)}%`, background: v > 0 ? "linear-gradient(180deg, #00B4D8, #00B4D860)" : "#ffffff08", borderRadius: "3px 3px 0 0", transition: "height 0.3s ease" }} />
+                  <div style={{ width: "100%", height: `${Math.max((v / maxDaily) * 100, v > 0 ? 8 : 2)}%`, background: v > 0 ? "linear-gradient(180deg, #00B4D8, #00B4D860)" : "rgba(255,255,255,0.02)", borderRadius: "3px 3px 0 0", transition: "height 0.3s ease" }} />
                 </div>
                 {v > 0 && <span style={{ fontSize: "9px", color: "#00B4D8", fontWeight: 700, marginTop: "2px" }}>{v}</span>}
                 <span style={{ fontSize: "8px", color: "#ffffff25", marginTop: "2px" }}>{dailyLabels[i]}</span>
@@ -1613,7 +1613,7 @@ export default function RestockApp() {
           </div>
         )}
 
-        {totalOrders === 0 && <div style={{ padding: "40px 20px", textAlign: "center", borderRadius: "12px", border: "1px dashed #ffffff12" }}><p style={{ color: "#ffffff30", fontSize: "14px", margin: 0 }}>No completed orders yet for this period</p><p style={{ color: "#ffffff20", fontSize: "12px", marginTop: "8px" }}>Complete orders from your dashboard to see analytics here</p></div>}
+        {totalOrders === 0 && <div style={{ padding: "40px 20px", textAlign: "center", borderRadius: "12px", border: "1px dashed rgba(255,255,255,0.03)" }}><p style={{ color: "#ffffff30", fontSize: "14px", margin: 0 }}>No completed orders yet for this period</p><p style={{ color: "#ffffff20", fontSize: "12px", marginTop: "8px" }}>Complete orders from your dashboard to see analytics here</p></div>}
 
         {/* Order History */}
         {data.length > 0 && (
@@ -1624,7 +1624,7 @@ export default function RestockApp() {
                 const entries = Object.entries(order.items || {});
                 const dateStr = new Date(order.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
                 return (
-                  <div key={order.id} style={{ padding: "14px 16px", borderRadius: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid #ffffff08", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div key={order.id} style={{ padding: "14px 16px", borderRadius: "10px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.02)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div>
                       <div style={{ color: "#fff", fontSize: "14px", fontWeight: 700 }}>{order.employee_name}</div>
                       <div style={{ color: "#ffffff35", fontSize: "11px", marginTop: "2px" }}>{order.store_location} • {dateStr}</div>
@@ -1761,8 +1761,8 @@ export default function RestockApp() {
               <input type="text" placeholder="Puff count (leave blank if not a vape)" value={newModelPuffs} onChange={e => setNewModelPuffs(e.target.value)} style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
               <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                 <button onClick={addModel} disabled={!newModelName.trim() || !newModelBrand.trim()}
-                  style={{ padding: "10px 18px", borderRadius: "8px", background: newModelName.trim() && newModelBrand.trim() ? "#1DB954" : "#ffffff10", color: newModelName.trim() && newModelBrand.trim() ? "#fff" : "#ffffff25", border: "none", fontSize: "13px", fontWeight: 700, cursor: newModelName.trim() && newModelBrand.trim() ? "pointer" : "not-allowed" }}>Save</button>
-                <button onClick={() => { setShowAddModel(false); setNewModelName(""); setNewModelBrand(""); setNewModelPuffs(""); setNewModelCategory("Vapes"); }} style={{ padding: "10px 18px", borderRadius: "8px", background: "transparent", color: "#ffffff40", border: "1px solid #ffffff15", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
+                  style={{ padding: "10px 18px", borderRadius: "8px", background: newModelName.trim() && newModelBrand.trim() ? "#1DB954" : "rgba(255,255,255,0.03)", color: newModelName.trim() && newModelBrand.trim() ? "#fff" : "#ffffff25", border: "none", fontSize: "13px", fontWeight: 700, cursor: newModelName.trim() && newModelBrand.trim() ? "pointer" : "not-allowed" }}>Save</button>
+                <button onClick={() => { setShowAddModel(false); setNewModelName(""); setNewModelBrand(""); setNewModelPuffs(""); setNewModelCategory("Vapes"); }} style={{ padding: "10px 18px", borderRadius: "8px", background: "transparent", color: "#ffffff40", border: "1px solid rgba(255,255,255,0.04)", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
                 {(!newModelName.trim() || !newModelBrand.trim()) && (newModelName || newModelBrand) && <span style={{ color: "#F59E0B", fontSize: "11px", fontWeight: 600 }}>Name & brand required</span>}
               </div>
             </div>
@@ -1770,7 +1770,7 @@ export default function RestockApp() {
         ))}
         <div style={{ marginBottom: "20px", position: "sticky", top: 0, zIndex: 80, paddingTop: "8px", paddingBottom: "12px", background: "linear-gradient(180deg, #0B0B0F 85%, transparent)", marginLeft: "-20px", marginRight: "-20px", paddingLeft: "20px", paddingRight: "20px" }}>
           <input type="text" placeholder="🔍  Search models, brands, flavors..." value={catalogSearch} onChange={e => setCatalogSearch(e.target.value)}
-            style={{ ...st.input, fontSize: "14px", padding: "14px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid #ffffff15", borderRadius: "12px" }} />
+            style={{ ...st.input, fontSize: "14px", padding: "14px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px" }} />
           {searchTerm && <div style={{ color: "#ffffff30", fontSize: "11px", marginTop: "6px", textAlign: "center" }}>{filteredCatalog.length} result{filteredCatalog.length !== 1 ? "s" : ""}</div>}
         </div>
         {Object.keys(catBrands).length === 0 && searchTerm && <div style={{ padding: "40px 20px", textAlign: "center" }}><p style={{ color: "#ffffff30", fontSize: "14px" }}>No results for "{catalogSearch}"</p></div>}
@@ -1785,7 +1785,7 @@ export default function RestockApp() {
           return (
           <div key={cat} style={{ marginBottom: "8px" }}>
             <button onClick={() => { setExpandedCats(p => ({ ...p, [cat]: !catExpanded })); }}
-              style={{ width: "100%", padding: "16px 18px", borderRadius: "12px", background: catExpanded ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.02)", border: "1px solid #ffffff08", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left" }}>
+              style={{ width: "100%", padding: "16px 18px", borderRadius: "12px", background: catExpanded ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.02)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left" }}>
               <div>
                 <span style={{ color: "#fff", fontSize: "16px", fontWeight: 800 }}>{cat}</span>
                 <div style={{ color: "#ffffff30", fontSize: "11px", marginTop: "3px" }}>{catBrandCount} brand{catBrandCount !== 1 ? "s" : ""} • {catModelCount} model{catModelCount !== 1 ? "s" : ""}</div>
@@ -1808,7 +1808,7 @@ export default function RestockApp() {
               return (
                 <div key={brand} style={{ marginBottom: "4px" }}>
                   <button onClick={() => { setExpandedBrands(p => ({ ...p, [brandKey]: !isExpanded })); }}
-                    style={{ width: "100%", padding: "12px 14px", borderRadius: "10px", border: `1px solid ${isExpanded ? bc + "20" : "#ffffff06"}`, background: isExpanded ? `${bc}08` : "transparent", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left", transition: "all 0.2s ease" }}>
+                    style={{ width: "100%", padding: "12px 14px", borderRadius: "10px", border: `1px solid ${isExpanded ? bc + "20" : "rgba(255,255,255,0.01)"}`, background: isExpanded ? `${bc}08` : "transparent", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left", transition: "all 0.2s ease" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                       <div style={{ width: "3px", height: "18px", borderRadius: "2px", background: bc }}></div>
                       <div>
@@ -1831,7 +1831,7 @@ export default function RestockApp() {
                     const mTotal = (m.flavors || []).length;
                     return (
                     <button key={m.id} onClick={() => { if (!isOwnerView) { setEditModel(m); setMgrView("editModel"); setNewFlavor(""); setEditingModelInfo(false); } }}
-                      style={{ width: "100%", padding: "12px 14px", borderRadius: "10px", border: "1px solid #ffffff06", background: "rgba(255,255,255,0.02)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: isOwnerView ? "default" : "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px", transition: "background 0.15s ease" }}>
+                      style={{ width: "100%", padding: "12px 14px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.01)", background: "rgba(255,255,255,0.02)", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: isOwnerView ? "default" : "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px", transition: "background 0.15s ease" }}>
                       <div><div style={{ fontSize: "13px" }}>{m.model_name}</div><div style={{ fontSize: "10px", color: "#ffffff25", marginTop: "2px" }}>{m.puffs !== "N/A" ? m.puffs + " puffs" : m.brand}</div></div>
                       {isOwnerView
                         ? <span style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff40" }}>{mTotal} flavor{mTotal !== 1 ? "s" : ""}</span>
@@ -1883,9 +1883,9 @@ export default function RestockApp() {
             <p style={{ ...st.sub, margin: "0 0 14px 0" }}>{(m.flavors || []).length} items • {totalStock} total in stock for {mgrWarehouse?.name}</p>
             <div style={{ display: "flex", gap: "6px" }}>
               <button onClick={() => { setEditingModelInfo(true); setEditModelName(m.model_name); setEditModelBrand(m.brand); setEditModelPuffs(m.puffs || ""); setEditModelCategory(m.category || "Vapes"); }}
-                style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.03)", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>✏️ Edit Info</button>
+                style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.04)", background: "rgba(255,255,255,0.03)", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>✏️ Edit Info</button>
               <button onClick={async () => { await loadCatalog(); const updated = catalog.find(c => c.id === m.id); if (updated) setEditModel(updated); }}
-                style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.03)", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>🔄 Refresh</button>
+                style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.04)", background: "rgba(255,255,255,0.03)", color: "#ffffff50", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>🔄 Refresh</button>
             </div>
           </div>
         ) : (
@@ -1897,7 +1897,7 @@ export default function RestockApp() {
               <div><label style={st.label}>Puff Count</label><input type="text" value={editModelPuffs} onChange={e => setEditModelPuffs(e.target.value)} placeholder="Leave blank if not a vape" style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} /></div>
               <div style={{ display: "flex", gap: "8px" }}>
                 <button onClick={() => updateModelInfo(m.id)} style={{ padding: "10px 18px", borderRadius: "8px", background: "#00B4D8", color: "#fff", border: "none", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Save Changes</button>
-                <button onClick={() => setEditingModelInfo(false)} style={{ padding: "10px 18px", borderRadius: "8px", background: "transparent", color: "#ffffff40", border: "1px solid #ffffff15", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
+                <button onClick={() => setEditingModelInfo(false)} style={{ padding: "10px 18px", borderRadius: "8px", background: "transparent", color: "#ffffff40", border: "1px solid rgba(255,255,255,0.04)", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
               </div>
             </div>
           </div>
@@ -1921,7 +1921,7 @@ export default function RestockApp() {
                 <div style={{ fontSize: "13px", fontWeight: 700, color: isModelHidden ? "#E63946" : "#1DB954" }}>{isModelHidden ? "Hidden from " : "Visible at "}{mgrWarehouse?.name}</div>
                 <div style={{ fontSize: "10px", color: "#ffffff30", marginTop: "2px" }}>{isModelHidden ? "Employees can't see this product" : "All tracked flavors shown to employees"}</div>
               </div>
-              <button onClick={toggleModel} style={{ width: "52px", height: "28px", borderRadius: "14px", border: "none", background: isModelHidden ? "#ffffff15" : "#1DB954", cursor: "pointer", position: "relative", transition: "background 0.2s ease", padding: 0 }}>
+              <button onClick={toggleModel} style={{ width: "52px", height: "28px", borderRadius: "14px", border: "none", background: isModelHidden ? "rgba(255,255,255,0.04)" : "#1DB954", cursor: "pointer", position: "relative", transition: "background 0.2s ease", padding: 0 }}>
                 <div style={{ width: "22px", height: "22px", borderRadius: "11px", background: "#fff", position: "absolute", top: "3px", left: isModelHidden ? "3px" : "27px", transition: "left 0.2s ease", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
               </button>
             </div>
@@ -1932,7 +1932,7 @@ export default function RestockApp() {
             onKeyDown={e => { if (e.key === "Enter" && newFlavor.trim()) { addFlavorToModel(m.id, newFlavor); setNewFlavor(""); } }}
             style={{ ...st.input, fontSize: "13px", padding: "12px 14px" }} />
           <button onClick={() => { if (newFlavor.trim()) { addFlavorToModel(m.id, newFlavor); setNewFlavor(""); } }}
-            style={{ padding: "12px 18px", borderRadius: "10px", border: "none", background: newFlavor.trim() ? "#1DB954" : "#ffffff10", color: newFlavor.trim() ? "#fff" : "#ffffff25", fontSize: "13px", fontWeight: 700, cursor: newFlavor.trim() ? "pointer" : "not-allowed", whiteSpace: "nowrap" }}>+ Add</button>
+            style={{ padding: "12px 18px", borderRadius: "10px", border: "none", background: newFlavor.trim() ? "#1DB954" : "rgba(255,255,255,0.03)", color: newFlavor.trim() ? "#fff" : "#ffffff25", fontSize: "13px", fontWeight: 700, cursor: newFlavor.trim() ? "pointer" : "not-allowed", whiteSpace: "nowrap" }}>+ Add</button>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
           <span style={{ color: "#ffffff30", fontSize: "12px", fontWeight: 600 }}>{trackedCount}/{(m.flavors || []).length} tracked • {totalStock} total</span>
@@ -1955,7 +1955,7 @@ export default function RestockApp() {
                   clearTimeout(window._costTimer); window._costTimer = setTimeout(() => { orgSb.patch("catalog", { cost_price: val }, `id=eq.${m.id}`); }, 800);
                 }}
                 onFocus={e => e.target.select()}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.04)", color: "#FF6B35", fontSize: "16px", fontWeight: 800, outline: "none" }} />
+                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.04)", background: "rgba(255,255,255,0.04)", color: "#FF6B35", fontSize: "16px", fontWeight: 800, outline: "none" }} />
             </div>
           </div>
           <div style={{ flex: 1 }}>
@@ -1969,7 +1969,7 @@ export default function RestockApp() {
                   clearTimeout(window._retailTimer); window._retailTimer = setTimeout(() => { orgSb.patch("catalog", { retail_price: val }, `id=eq.${m.id}`); }, 800);
                 }}
                 onFocus={e => e.target.select()}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.04)", color: "#1DB954", fontSize: "16px", fontWeight: 800, outline: "none" }} />
+                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.04)", background: "rgba(255,255,255,0.04)", color: "#1DB954", fontSize: "16px", fontWeight: 800, outline: "none" }} />
             </div>
           </div>
           {m.cost_price > 0 && m.retail_price > 0 && (
@@ -1990,17 +1990,17 @@ export default function RestockApp() {
             const stockVal = hasStock ? parseInt(stock) : null;
             const isOut = hasStock && stockVal <= 0;
             return (
-              <div key={f} style={{ padding: "10px 14px", borderRadius: "8px", background: isHidden ? "rgba(255,255,255,0.01)" : isOut ? "rgba(230,57,70,0.05)" : "rgba(255,255,255,0.025)", border: `1px solid ${isHidden ? "#ffffff05" : isOut ? "#E6394615" : "#ffffff08"}`, display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all 0.2s ease" }}>
+              <div key={f} style={{ padding: "10px 14px", borderRadius: "8px", background: isHidden ? "rgba(255,255,255,0.01)" : isOut ? "rgba(230,57,70,0.05)" : "rgba(255,255,255,0.025)", border: `1px solid ${isHidden ? "#ffffff05" : isOut ? "#E6394615" : "rgba(255,255,255,0.02)"}`, display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all 0.2s ease" }}>
                 <span style={{ color: isHidden ? "#ffffff20" : isOut ? "#E63946" : "#fff", fontSize: "13px", fontWeight: 600, textDecoration: isHidden ? "line-through" : "none", flex: 1 }}>{f}</span>
                 <div style={{ display: "flex", gap: "6px", alignItems: "center", flexShrink: 0 }}>
                   {!isHidden && (
                     <input type="number" inputMode="numeric" value={hasStock ? stockVal : ""} placeholder="—"
                       onChange={e => updateFlavorStock(m.id, f, e.target.value)}
                       onFocus={e => e.target.select()}
-                      style={{ width: "56px", padding: "6px 8px", borderRadius: "6px", border: `1px solid ${isOut ? "#E6394640" : hasStock ? "#1DB95430" : "#ffffff15"}`, background: isOut ? "#E6394610" : hasStock ? "#1DB95408" : "transparent", color: isOut ? "#E63946" : hasStock ? "#1DB954" : "#ffffff30", fontSize: "14px", fontWeight: 800, textAlign: "center", outline: "none" }} />
+                      style={{ width: "56px", padding: "6px 8px", borderRadius: "6px", border: `1px solid ${isOut ? "#E6394640" : hasStock ? "#1DB95430" : "rgba(255,255,255,0.04)"}`, background: isOut ? "#E6394610" : hasStock ? "#1DB95408" : "transparent", color: isOut ? "#E63946" : hasStock ? "#1DB954" : "#ffffff30", fontSize: "14px", fontWeight: 800, textAlign: "center", outline: "none" }} />
                   )}
                   <button onClick={() => toggleFlavorVisibility(m.id, f)}
-                    style={{ width: "44px", height: "24px", borderRadius: "12px", border: "none", background: isHidden ? "#ffffff15" : "#1DB954", cursor: "pointer", position: "relative", transition: "background 0.2s ease", padding: 0 }}>
+                    style={{ width: "44px", height: "24px", borderRadius: "12px", border: "none", background: isHidden ? "rgba(255,255,255,0.04)" : "#1DB954", cursor: "pointer", position: "relative", transition: "background 0.2s ease", padding: 0 }}>
                     <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: "#fff", position: "absolute", top: "3px", left: isHidden ? "3px" : "23px", transition: "left 0.2s ease", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
                   </button>
                   <button onClick={() => removeFlavorFromModel(m.id, f)} style={{ background: "none", border: "1px solid #E6394630", borderRadius: "6px", color: "#E63946", fontSize: "11px", fontWeight: 700, cursor: "pointer", padding: "4px 10px" }}>✕</button>
@@ -2117,7 +2117,7 @@ export default function RestockApp() {
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                           <span style={{ color: "#ffffff20", fontSize: "10px", fontWeight: 600 }}>{catModels.length} products</span>
-                          <span style={{ color: catStock > 0 ? "#1DB95460" : "#ffffff15", fontSize: "10px", fontWeight: 700 }}>{catStock}u</span>
+                          <span style={{ color: catStock > 0 ? "#1DB95460" : "rgba(255,255,255,0.04)", fontSize: "10px", fontWeight: 700 }}>{catStock}u</span>
                         </div>
                       </button>
                       {catOpen && Object.keys(catBrands[cat]).sort().map(brand => {
@@ -2136,7 +2136,7 @@ export default function RestockApp() {
                             </div>
                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                               <span style={{ color: "#ffffff20", fontSize: "10px" }}>{brandModels.length}</span>
-                              <span style={{ color: brandStock > 0 ? "#1DB95460" : "#ffffff15", fontSize: "10px", fontWeight: 700 }}>{brandStock}u</span>
+                              <span style={{ color: brandStock > 0 ? "#1DB95460" : "rgba(255,255,255,0.04)", fontSize: "10px", fontWeight: 700 }}>{brandStock}u</span>
                             </div>
                           </button>
                           {brandOpen && brandModels.map(m => {
@@ -2167,7 +2167,7 @@ export default function RestockApp() {
 
           {/* Recent shipments */}
           {recentShipments.length > 0 && (
-            <div style={{ marginTop: "24px", borderTop: "1px solid #ffffff08", paddingTop: "16px" }}>
+            <div style={{ marginTop: "24px", borderTop: "1px solid rgba(255,255,255,0.02)", paddingTop: "16px" }}>
               <span style={{ color: "#ffffff40", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>📋 Recent Receives</span>
               <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "12px" }}>
                 {recentShipments.map(s => (
@@ -2198,7 +2198,7 @@ export default function RestockApp() {
               <div style={{ fontSize: "15px", fontWeight: 800, color: "#fff" }}>{receiveModel.model_name}</div>
               <div style={{ fontSize: "11px", color: "#ffffff30", marginTop: "2px" }}>{receiveModel.brand} • {(receiveModel.flavors || []).length} flavors</div>
             </div>
-            <button onClick={() => { setReceiveModel(null); setReceiveQtys({}); }} style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid #ffffff15", background: "transparent", color: "#ffffff40", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>Change</button>
+            <button onClick={() => { setReceiveModel(null); setReceiveQtys({}); }} style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.04)", background: "transparent", color: "#ffffff40", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>Change</button>
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
@@ -2219,7 +2219,7 @@ export default function RestockApp() {
               const currentStock = wid ? (parseInt(((receiveModel.stock_levels || {})[wid] || {})[f]) || 0) : 0;
               const addQty = parseInt(receiveQtys[f]) || 0;
               return (
-                <div key={f} style={{ padding: "10px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.025)", border: "1px solid #ffffff08", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div key={f} style={{ padding: "10px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.02)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ flex: 1 }}>
                     <span style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>{f}</span>
                     <span style={{ color: "#ffffff20", fontSize: "11px", marginLeft: "8px" }}>{currentStock} now{addQty > 0 ? ` → ${currentStock + addQty}` : ""}</span>
@@ -2249,7 +2249,7 @@ export default function RestockApp() {
           )}
 
           <button onClick={handleReceive} disabled={receiveTotal === 0}
-            style={{ width: "100%", padding: "18px 24px", borderRadius: "14px", border: "none", fontSize: "16px", fontWeight: 800, cursor: receiveTotal > 0 ? "pointer" : "not-allowed", textAlign: "center", background: receiveTotal > 0 ? "#1DB954" : "#ffffff10", color: receiveTotal > 0 ? "#fff" : "#ffffff25", boxShadow: receiveTotal > 0 ? "0 4px 20px rgba(29,185,84,0.3)" : "none" }}>
+            style={{ width: "100%", padding: "18px 24px", borderRadius: "14px", border: "none", fontSize: "16px", fontWeight: 800, cursor: receiveTotal > 0 ? "pointer" : "not-allowed", textAlign: "center", background: receiveTotal > 0 ? "#1DB954" : "rgba(255,255,255,0.03)", color: receiveTotal > 0 ? "#fff" : "#ffffff25", boxShadow: receiveTotal > 0 ? "0 4px 20px rgba(29,185,84,0.3)" : "none" }}>
             Receive Shipment →
           </button>
           </>
@@ -2311,7 +2311,7 @@ export default function RestockApp() {
 
         {/* PENDING ORDERS — hero section */}
         <div style={{ marginBottom: "8px" }}><span style={{ color: "#ffffff60", fontSize: "12px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Pending Restock Requests</span></div>
-        {reports.length === 0 && !loading && <div style={{ padding: "24px", textAlign: "center", borderRadius: "12px", border: "1px dashed #ffffff12", marginBottom: "20px" }}><p style={{ color: "#ffffff30", fontSize: "14px", margin: 0 }}>No pending orders</p></div>}
+        {reports.length === 0 && !loading && <div style={{ padding: "24px", textAlign: "center", borderRadius: "12px", border: "1px dashed rgba(255,255,255,0.03)", marginBottom: "20px" }}><p style={{ color: "#ffffff30", fontSize: "14px", margin: 0 }}>No pending orders</p></div>}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "24px" }}>
           {reports.map(r => {
             // Count stock warnings in this order
@@ -2329,7 +2329,7 @@ export default function RestockApp() {
               });
             }
             return (
-            <div key={r.id} style={{ padding: "16px", borderRadius: "12px", border: warningCount > 0 ? "1px solid #E6394625" : "1px solid #ffffff0a", background: warningCount > 0 ? "rgba(230,57,70,0.04)" : "rgba(255,255,255,0.025)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div key={r.id} style={{ padding: "16px", borderRadius: "12px", border: warningCount > 0 ? "1px solid #E6394625" : "1px solid rgba(255,255,255,0.02)", background: warningCount > 0 ? "rgba(230,57,70,0.04)" : "rgba(255,255,255,0.025)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ cursor: "pointer", flex: 1 }} onClick={() => setSelReport(r)}>
                 <div style={{ fontSize: "15px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>{r.employee_name}</div>
                 <div style={{ fontSize: "12px", color: "#ffffff35" }}>{r.store_location} • {fmtTime(r.created_at)} • {timeAgo(r.created_at)}</div>
@@ -2358,14 +2358,14 @@ export default function RestockApp() {
 
         {/* SETTINGS — visually separated */}
         {isManagerOrExec && <>
-        <div style={{ borderTop: "1px solid #ffffff08", paddingTop: "20px" }}>
+        <div style={{ borderTop: "1px solid rgba(255,255,255,0.02)", paddingTop: "20px" }}>
           {/* Banner */}
-          <div style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid #ffffff08", background: "rgba(255,255,255,0.015)", marginBottom: "12px" }}>
+          <div style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.02)", background: "rgba(255,255,255,0.015)", marginBottom: "12px" }}>
           {(() => { const wid = mgrWarehouse?.id || 1; const bd = bannerData[wid] || { message: "", active: false }; const bannerText = bd.message; const bannerOn = bd.active; return (<>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: editBanner ? "12px" : "0" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}><span style={{ fontSize: "14px" }}>📢</span><span style={{ color: "#FF6B35", fontSize: "11px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>Banner</span></div>
             <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-              <button onClick={toggleBanner} style={{ padding: "4px 10px", borderRadius: "20px", border: "none", fontSize: "10px", fontWeight: 700, cursor: "pointer", background: bannerOn ? "#1DB95425" : "#ffffff10", color: bannerOn ? "#1DB954" : "#ffffff30" }}>{bannerOn ? "ON" : "OFF"}</button>
+              <button onClick={toggleBanner} style={{ padding: "4px 10px", borderRadius: "20px", border: "none", fontSize: "10px", fontWeight: 700, cursor: "pointer", background: bannerOn ? "#1DB95425" : "rgba(255,255,255,0.03)", color: bannerOn ? "#1DB954" : "#ffffff30" }}>{bannerOn ? "ON" : "OFF"}</button>
               <button onClick={() => { setEditBanner(!editBanner); setBannerInput(bannerText); }} style={{ padding: "4px 10px", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.06)", background: "transparent", color: "#ffffff40", fontSize: "10px", fontWeight: 700, cursor: "pointer" }}>{editBanner ? "Cancel" : "Edit"}</button>
             </div>
           </div>
@@ -2373,14 +2373,14 @@ export default function RestockApp() {
           {editBanner && (
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <textarea value={bannerInput} onChange={e => setBannerInput(e.target.value)} placeholder="Type message..." rows={2} style={{ ...st.input, fontSize: "13px", padding: "12px 14px", resize: "vertical", minHeight: "60px", fontFamily: "inherit" }} />
-              <button onClick={saveBanner} style={{ padding: "10px 20px", borderRadius: "10px", border: "none", background: bannerInput.trim() ? "#FF6B35" : "#ffffff10", color: bannerInput.trim() ? "#fff" : "#ffffff25", fontSize: "13px", fontWeight: 700, cursor: bannerInput.trim() ? "pointer" : "not-allowed", alignSelf: "flex-end" }}>Save & Broadcast</button>
+              <button onClick={saveBanner} style={{ padding: "10px 20px", borderRadius: "10px", border: "none", background: bannerInput.trim() ? "#FF6B35" : "rgba(255,255,255,0.03)", color: bannerInput.trim() ? "#fff" : "#ffffff25", fontSize: "13px", fontWeight: 700, cursor: bannerInput.trim() ? "pointer" : "not-allowed", alignSelf: "flex-end" }}>Save & Broadcast</button>
             </div>
           )}
           </>); })()}
           </div>
 
           {/* Still Waiting */}
-          <div style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid #ffffff08", background: "rgba(255,255,255,0.015)", marginBottom: "12px" }}>
+          <div style={{ padding: "14px 16px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.02)", background: "rgba(255,255,255,0.015)", marginBottom: "12px" }}>
           <div style={{ marginBottom: "8px" }}><span style={{ color: "#E63946", fontSize: "11px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>⏳ Still Waiting ({pending.length})</span></div>
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: pending.length > 0 ? "10px" : "0" }}>
             {pending.map(s => (<span key={s.id} style={{ padding: "6px 10px", borderRadius: "8px", background: "rgba(230,57,70,0.07)", border: "1px solid #E6394620", fontSize: "11px", fontWeight: 600, color: "#E63946", display: "flex", alignItems: "center", gap: "6px" }}>{s.name}<button onClick={() => removeStore(s.id)} style={{ background: "none", border: "none", color: "#E6394680", cursor: "pointer", fontSize: "10px", padding: "0 2px" }}>✕</button></span>))}
@@ -2388,7 +2388,7 @@ export default function RestockApp() {
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
             <input type="text" placeholder="Add store..." value={newStore} onChange={e => setNewStore(e.target.value)} onKeyDown={e => { if (e.key === "Enter") addStore(); }} style={{ ...st.input, fontSize: "12px", padding: "10px 14px" }} />
-            <button onClick={addStore} style={{ padding: "10px 16px", borderRadius: "10px", border: "none", background: newStore.trim() ? "#E63946" : "#ffffff10", color: newStore.trim() ? "#fff" : "#ffffff25", fontSize: "12px", fontWeight: 700, cursor: newStore.trim() ? "pointer" : "not-allowed", whiteSpace: "nowrap" }}>+ Add</button>
+            <button onClick={addStore} style={{ padding: "10px 16px", borderRadius: "10px", border: "none", background: newStore.trim() ? "#E63946" : "rgba(255,255,255,0.03)", color: newStore.trim() ? "#fff" : "#ffffff25", fontSize: "12px", fontWeight: 700, cursor: newStore.trim() ? "pointer" : "not-allowed", whiteSpace: "nowrap" }}>+ Add</button>
           </div>
           </div>
         </div>
@@ -2401,7 +2401,7 @@ export default function RestockApp() {
                 <div><div style={{ color: "#fff", fontSize: "14px", fontWeight: 600 }}>{sg.suggestion_text}</div><div style={{ color: "#ffffff35", fontSize: "11px", marginTop: "2px" }}>from {sg.employee_name} @ {sg.store_location}</div></div>
                 <div style={{ display: "flex", gap: "6px" }}>
                   <button onClick={() => approveSug(sg.id)} style={{ padding: "6px 14px", borderRadius: "6px", border: "1px solid #1DB95430", background: "#1DB95410", color: "#1DB954", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>Add ✓</button>
-                  <button onClick={() => dismissSug(sg.id)} style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #ffffff10", background: "transparent", color: "#ffffff30", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>✕</button>
+                  <button onClick={() => dismissSug(sg.id)} style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.03)", background: "transparent", color: "#ffffff30", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>✕</button>
                 </div>
               </div>
             ))}
@@ -2445,16 +2445,16 @@ export default function RestockApp() {
         <p style={{ color: "#ffffff45", fontSize: "13px", margin: "4px 0 20px 0" }}>{r.store_location} • {fmtTime(r.created_at)}</p>
         <div style={{ padding: "20px", borderRadius: "14px", marginBottom: "12px", background: "linear-gradient(135deg, rgba(255,107,53,0.08), rgba(230,57,70,0.08))", border: "1px solid #FF6B3520", display: "flex", justifyContent: "space-around", textAlign: "center" }}>
           <div><div style={{ fontSize: "28px", fontWeight: 900, color: "#FF6B35", lineHeight: 1 }}>{r.total_flavors}</div><div style={{ fontSize: "11px", fontWeight: 700, color: "#FF6B35", marginTop: "4px", opacity: 0.7 }}>ITEMS</div></div>
-          <div style={{ width: "1px", background: "#ffffff10" }}></div>
+          <div style={{ width: "1px", background: "rgba(255,255,255,0.03)" }}></div>
           <div><div style={{ fontSize: "28px", fontWeight: 900, color: hasAdjustments ? "#F59E0B" : "#E63946", lineHeight: 1 }}>{hasAdjustments ? adjTotalUnits : `~${r.total_units}`}</div><div style={{ fontSize: "11px", fontWeight: 700, color: hasAdjustments ? "#F59E0B" : "#E63946", marginTop: "4px", opacity: 0.7 }}>{hasAdjustments ? "ADJUSTED" : "TOTAL UNITS"}</div></div>
         </div>
         {/* Floating progress bar */}
-        <div style={{ position: "sticky", top: 0, zIndex: 80, padding: "12px 16px", borderRadius: "12px", background: allDone ? "rgba(29,185,84,0.15)" : "rgba(11,11,15,0.95)", backdropFilter: "blur(12px)", border: `1px solid ${allDone ? "#1DB95430" : "#ffffff10"}`, marginBottom: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.4)" }}>
+        <div style={{ position: "sticky", top: 0, zIndex: 80, padding: "12px 16px", borderRadius: "12px", background: allDone ? "rgba(29,185,84,0.15)" : "rgba(11,11,15,0.95)", backdropFilter: "blur(12px)", border: `1px solid ${allDone ? "#1DB95430" : "rgba(255,255,255,0.03)"}`, marginBottom: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.4)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
             <span style={{ color: allDone ? "#1DB954" : "#ffffff50", fontSize: "12px", fontWeight: 700 }}>{allDone ? "✅ ALL PICKED!" : `Picked ${totalPicked} of ${totalItems}`}</span>
             <span style={{ color: allDone ? "#1DB954" : "#ffffff30", fontSize: "12px", fontWeight: 700 }}>{totalItems > 0 ? Math.round((totalPicked / totalItems) * 100) : 0}%</span>
           </div>
-          <div style={{ height: "6px", borderRadius: "3px", background: "#ffffff10", overflow: "hidden" }}>
+          <div style={{ height: "6px", borderRadius: "3px", background: "rgba(255,255,255,0.03)", overflow: "hidden" }}>
             <div style={{ height: "100%", borderRadius: "3px", background: allDone ? "#1DB954" : "linear-gradient(90deg, #FF6B35, #FF8C42)", width: `${totalItems > 0 ? (totalPicked / totalItems) * 100 : 0}%`, transition: "width 0.3s ease" }} />
           </div>
         </div>
@@ -2497,10 +2497,10 @@ export default function RestockApp() {
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
                         <button onClick={(e) => { e.stopPropagation(); adjustQty(itemKey, (isAdjusted ? parseInt(adjVal) : origNum) - 1); }}
-                          style={{ width: "28px", height: "28px", borderRadius: "6px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.05)", color: "#ffffff60", fontSize: "16px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>−</button>
+                          style={{ width: "28px", height: "28px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.04)", background: "rgba(255,255,255,0.05)", color: "#ffffff60", fontSize: "16px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>−</button>
                         <span style={{ fontSize: "18px", fontWeight: 800, color: col, minWidth: "32px", textAlign: "center", opacity: picked ? 0.4 : 1, transition: "opacity 0.2s ease" }}>{displayQty}</span>
                         <button onClick={(e) => { e.stopPropagation(); adjustQty(itemKey, (isAdjusted ? parseInt(adjVal) : origNum) + 1); }}
-                          style={{ width: "28px", height: "28px", borderRadius: "6px", border: "1px solid #ffffff15", background: "rgba(255,255,255,0.05)", color: "#ffffff60", fontSize: "16px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>+</button>
+                          style={{ width: "28px", height: "28px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.04)", background: "rgba(255,255,255,0.05)", color: "#ffffff60", fontSize: "16px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>+</button>
                       </div>
                     </div>
                   );
