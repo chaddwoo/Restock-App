@@ -2324,7 +2324,7 @@ export default function RestockApp() {
                 const model = catalogObj[product];
                 if (model) {
                   const stock = parseInt(((model.stock_levels || {})[wid] || {})[flavor]);
-                  if (!isNaN(stock) && stock <= 0) { warningCount++; warningFlavors.push({ flavor, stock }); }
+                  if (!isNaN(stock) && stock <= 0) { warningCount++; warningFlavors.push({ product, flavor, stock }); }
                 }
               });
             }
@@ -2338,7 +2338,7 @@ export default function RestockApp() {
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
                       {warningFlavors.slice(0, 5).map((w, i) => (
                         <span key={i} style={{ padding: "2px 6px", borderRadius: "4px", background: "#E6394615", fontSize: "9px", fontWeight: 700, color: "#E63946" }}>
-                          {w.flavor} {w.stock < 0 ? w.stock : "OUT"}
+                          {w.product} — {w.flavor} {w.stock < 0 ? w.stock : "OUT"}
                         </span>
                       ))}
                       {warningFlavors.length > 5 && <span style={{ fontSize: "9px", color: "#E6394680", padding: "2px 4px" }}>+{warningFlavors.length - 5} more</span>}
