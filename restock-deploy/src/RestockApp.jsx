@@ -360,14 +360,69 @@ export default function RestockApp() {
     if (!empWarehouse) return;
     setSubmitting(true);
     try {
-      const items = Object.entries(orderData);
+      const wid = String(empWarehouse.id);
+      
+      // Pre-submit: fetch fresh catalog to check current stock levels
+      const freshCatalog = await orgSb.get("catalog");
+      if (freshCatalog && Array.isArray(freshCatalog)) {
+        setCatalog(freshCatalog); // Update local catalog with fresh data
+      }
+      const freshLookup = {};
+      (freshCatalog || catalog).forEach(c => { freshLookup[c.model_name] = c; });
+      
+      // Validate every item in the order against fresh stock
+      let removedItems = [];
+      let validOrder = { ...orderData };
+      Object.entries(validOrder).forEach(([key, val]) => {
+        const [product, flavor] = key.split("|||");
+        const model = freshLookup[product];
+        if (!model) return;
+        const ws = (model.stock_levels || {})[wid] || {};
+        const currentStock = parseInt(ws[flavor]);
+        const requested = val === "5+" ? 5 : parseInt(val) || 0;
+        
+        // No stock data or zero/negative stock — remove from order
+        if (isNaN(currentStock) || currentStock <= 0) {
+          removedItems.push(`${product} — ${flavor} (out of stock)`);
+          delete validOrder[key];
+        } else if (currentStock < requested) {
+          // Not enough stock — cap to what's available
+          removedItems.push(`${product} — ${flavor} (only ${currentStock} available, reduced from ${requested})`);
+          validOrder[key] = String(currentStock);
+        }
+      });
+      
+      // If items were removed, tell the employee and let them decide
+      if (removedItems.length > 0) {
+        const remaining = Object.keys(validOrder).length;
+        if (remaining === 0) {
+          alert("None of the items in your order are currently in stock. Your order cannot be submitted.\n\nRemoved:\n" + removedItems.join("\n"));
+          setSubmitting(false);
+          return;
+        }
+        const proceed = window.confirm(
+          "Some items are no longer available and were adjusted:\n\n" + 
+          removedItems.join("\n") + 
+          `\n\n${remaining} item${remaining !== 1 ? "s" : ""} remaining. Submit anyway?`
+        );
+        if (!proceed) {
+          // Update orderData to reflect removals so they can see what's left
+          setOrderData(validOrder);
+          setSubmitting(false);
+          return;
+        }
+      }
+      
+      // Use the validated order from here on
+      const items = Object.entries(validOrder);
+      if (items.length === 0) { setSubmitting(false); return; }
       let tu = 0; items.forEach(([, v]) => { tu += v === "5+" ? 5 : parseInt(v) || 0; });
       
       // Build stock deduction map: "modelId:::flavor" -> qty
       const deductMap = {};
       items.forEach(([key, val]) => {
         const [product, flavor] = key.split("|||");
-        const model = catalog.find(c => c.model_name === product);
+        const model = (freshCatalog || catalog).find(c => c.model_name === product);
         if (model) {
           const qty = val === "5+" ? 5 : parseInt(val) || 0;
           deductMap[`${model.id}:::${flavor}`] = qty;
@@ -378,12 +433,12 @@ export default function RestockApp() {
       const adjustments = await sb.rpc("deduct_stock", { p_warehouse_id: empWarehouse.id, p_items: deductMap });
       
       // Check for partial fills
-      let adjustedOrder = { ...orderData };
+      let adjustedOrder = { ...validOrder };
       let adjustMsgs = [];
       if (adjustments && typeof adjustments === "object" && Object.keys(adjustments).length > 0) {
         Object.entries(adjustments).forEach(([dKey, actualQty]) => {
           const [modelId, flavor] = dKey.split(":::");
-          const model = catalog.find(c => c.id === parseInt(modelId));
+          const model = (freshCatalog || catalog).find(c => c.id === parseInt(modelId));
           const orderKey = model ? `${model.model_name}|||${flavor}` : null;
           if (orderKey && adjustedOrder[orderKey]) {
             if (actualQty === 0) {
