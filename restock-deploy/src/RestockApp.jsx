@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 
+// App version — bump this every deploy
+const APP_VERSION = "6.1.0";
+
 const SUPABASE_URL = "https://unnonzpasuacdgiioqiu.supabase.co";
 const SUPABASE_KEY = "sb_publishable_XJO2XX_U8CYxvPemov9YUg_nMh4dc6Y";
 
@@ -95,6 +98,47 @@ const _saved = (() => { const s = loadSession(); if (!s) return null; const empV
 const _savedOrg = loadSavedOrg();
 
 export default function RestockApp() {
+  // Update check — polls every 15 min to detect new deployments
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  useEffect(() => {
+    const checkForUpdate = async () => {
+      try {
+        const resp = await fetch(window.location.origin + "/?_v=" + Date.now(), { cache: "no-store", headers: { "Accept": "text/html" } });
+        const html = await resp.text();
+        // Look for the APP_VERSION string in the fresh HTML/JS
+        const match = html.match(/APP_VERSION\s*=\s*"([^"]+)"/);
+        if (match && match[1] && match[1] !== APP_VERSION) {
+          setUpdateAvailable(true);
+        }
+      } catch (e) { /* silent fail */ }
+    };
+    // Check every 15 minutes
+    const interval = setInterval(checkForUpdate, 15 * 60 * 1000);
+    // Also check once after 60 seconds (catches fresh deploys quickly)
+    const initial = setTimeout(checkForUpdate, 60 * 1000);
+    return () => { clearInterval(interval); clearTimeout(initial); };
+  }, []);
+
+  // Update banner — inject into DOM when update available
+  useEffect(() => {
+    const existing = document.getElementById("update-banner");
+    if (updateAvailable && !existing) {
+      const banner = document.createElement("div");
+      banner.id = "update-banner";
+      banner.onclick = () => window.location.reload();
+      Object.assign(banner.style, { position: "fixed", top: "0", left: "0", right: "0", zIndex: "9999", padding: "10px 20px", background: "linear-gradient(135deg, #FF6B35, #FF8C42)", color: "#fff", fontSize: "13px", fontWeight: "700", textAlign: "center", cursor: "pointer", boxShadow: "0 4px 20px rgba(255,107,53,0.4)" });
+      banner.textContent = "🔄 Update available — tap to refresh";
+      document.body.prepend(banner);
+    }
+  }, [updateAvailable]);
+
+  // Auto-reload after successful order submit if update is pending
+  const postSubmitReload = () => {
+    if (updateAvailable) {
+      setTimeout(() => window.location.reload(), 1500);
+    }
+  };
+
   // Org state
   const [currentOrg, setCurrentOrg] = useState(_savedOrg);
   const [orgCode, setOrgCode] = useState("");
@@ -491,7 +535,7 @@ export default function RestockApp() {
         alert("Order submitted with adjustments:\n\n" + adjustMsgs.join("\n"));
       }
       
-      sndSubmit(); clearSession(); setView("employee-done");
+      sndSubmit(); clearSession(); setView("employee-done"); postSubmitReload();
     } catch (e) { console.error(e); alert("Error submitting — check connection."); }
     setSubmitting(false);
   };
@@ -946,7 +990,7 @@ export default function RestockApp() {
             {orgLoading ? "Looking up..." : "Continue →"}
           </button>
         </div>
-        <p style={{ color: "rgba(255,255,255,0.03)", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v6.0</p>
+        <p style={{ color: "rgba(255,255,255,0.03)", fontSize: "11px", marginTop: "60px", letterSpacing: "1px" }}>v6.1</p>
       </div>
     );
   }
@@ -972,7 +1016,7 @@ export default function RestockApp() {
         </button>
       </div>
       <button onClick={() => { clearOrg(); setCurrentOrg(null); setWarehouses([]); setCatalog([]); setCatLoaded(false); setView("org-entry"); }}
-        style={{ background: "none", border: "none", color: "rgba(255,255,255,0.03)", fontSize: "11px", cursor: "pointer", marginTop: "60px", letterSpacing: "1px" }}>v6.0</button>
+        style={{ background: "none", border: "none", color: "rgba(255,255,255,0.03)", fontSize: "11px", cursor: "pointer", marginTop: "60px", letterSpacing: "1px" }}>v6.1</button>
       {/* Onboarding overlay */}
       {onboardStep !== null && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", zIndex: 999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 28px" }}>
@@ -2238,37 +2282,41 @@ export default function RestockApp() {
       } catch (e) { console.error(e); alert("Error saving barcode. It may already be assigned."); }
     };
 
+    const [receiving, setReceiving] = useState(false);
     const handleReceive = async () => {
-      if (!receiveModel || receiveTotal === 0) return;
-      const m = catalog.find(c => c.id === receiveModel.id) || receiveModel;
-      const sl = { ...(m.stock_levels || {}) };
-      const ws = { ...(sl[wid] || {}) };
-      const items = {};
-      Object.entries(receiveQtys).forEach(([flavor, qty]) => {
-        const q = parseInt(qty) || 0;
-        if (q > 0) {
-          ws[flavor] = (parseInt(ws[flavor]) || 0) + q;
-          items[flavor] = q;
-        }
-      });
-      sl[wid] = ws;
+      if (!receiveModel || receiveTotal === 0 || receiving) return;
+      setReceiving(true);
       try {
-        await orgSb.patch("catalog", { stock_levels: sl }, `id=eq.${m.id}`);
+        // Fetch fresh catalog data to avoid stale stock_levels overwrite
+        const freshData = await orgSb.get("catalog", { filter: `id=eq.${receiveModel.id}` });
+        const freshModel = (freshData && freshData[0]) ? freshData[0] : receiveModel;
+        const sl = { ...(freshModel.stock_levels || {}) };
+        const ws = { ...(sl[wid] || {}) };
+        const items = {};
+        Object.entries(receiveQtys).forEach(([flavor, qty]) => {
+          const q = parseInt(qty) || 0;
+          if (q > 0) {
+            ws[flavor] = (parseInt(ws[flavor]) || 0) + q;
+            items[flavor] = q;
+          }
+        });
+        sl[wid] = ws;
+        await orgSb.patch("catalog", { stock_levels: sl }, `id=eq.${receiveModel.id}`);
         await orgSb.post("shipments", {
           warehouse_id: mgrWarehouse.id,
-          model_id: m.id,
-          model_name: m.model_name,
+          model_id: receiveModel.id,
+          model_name: receiveModel.model_name,
           items,
           total_units: receiveTotal,
           received_by: accessLevel,
           notes: receiveNotes.trim() || null,
         });
-        setCatalog(p => p.map(c => c.id === m.id ? { ...c, stock_levels: sl } : c));
+        setCatalog(p => p.map(c => c.id === receiveModel.id ? { ...c, stock_levels: sl } : c));
         sndAdd();
         setReceiveModel(null); setReceiveQtys({}); setReceiveNotes("");
-        // Refresh shipment history
         orgSb.get("shipments", { order: "created_at.desc", filter: `warehouse_id=eq.${mgrWarehouse.id}`, limit: 20 }).then(d => setRecentShipments(d || []));
       } catch (e) { console.error(e); alert("Error receiving stock. Check connection."); }
+      setReceiving(false);
     };
 
     return (
@@ -2528,9 +2576,9 @@ export default function RestockApp() {
             </div>
           )}
 
-          <button onClick={handleReceive} disabled={receiveTotal === 0}
-            style={{ width: "100%", padding: "18px 24px", borderRadius: "14px", border: "none", fontSize: "16px", fontWeight: 800, cursor: receiveTotal > 0 ? "pointer" : "not-allowed", textAlign: "center", background: receiveTotal > 0 ? "#1DB954" : "rgba(255,255,255,0.03)", color: receiveTotal > 0 ? "#fff" : "#ffffff25", boxShadow: receiveTotal > 0 ? "0 4px 20px rgba(29,185,84,0.3)" : "none" }}>
-            Receive Shipment →
+          <button onClick={handleReceive} disabled={receiveTotal === 0 || receiving}
+            style={{ width: "100%", padding: "18px 24px", borderRadius: "14px", border: "none", fontSize: "16px", fontWeight: 800, cursor: (receiveTotal > 0 && !receiving) ? "pointer" : "not-allowed", textAlign: "center", background: (receiveTotal > 0 && !receiving) ? "#1DB954" : "rgba(255,255,255,0.03)", color: (receiveTotal > 0 && !receiving) ? "#fff" : "#ffffff25", boxShadow: (receiveTotal > 0 && !receiving) ? "0 4px 20px rgba(29,185,84,0.3)" : "none", opacity: receiving ? 0.5 : 1 }}>
+            {receiving ? "Saving..." : "Receive Shipment →"}
           </button>
           </>
         )}
