@@ -232,6 +232,7 @@ export default function RestockApp() {
   const [receiveExpCats, setReceiveExpCats] = useState({});
   const [receiveExpBrands, setReceiveExpBrands] = useState({});
   const [recentShipments, setRecentShipments] = useState([]);
+  const [receiving, setReceiving] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanAssign, setScanAssign] = useState(null);
   const [scanHighlight, setScanHighlight] = useState(null);
@@ -2282,7 +2283,6 @@ export default function RestockApp() {
       } catch (e) { console.error(e); alert("Error saving barcode. It may already be assigned."); }
     };
 
-    const [receiving, setReceiving] = useState(false);
     const handleReceive = async () => {
       if (!receiveModel || receiveTotal === 0 || receiving) return;
       setReceiving(true);
