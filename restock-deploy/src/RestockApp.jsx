@@ -165,6 +165,7 @@ export default function RestockApp() {
   const [showAddModel, setShowAddModel] = useState(false);
   const [expandedBrands, setExpandedBrands] = useState({});
   const [expandedCats, setExpandedCats] = useState({});
+  const [oversoldExpanded, setOversoldExpanded] = useState(false);
   const [catalogSearch, setCatalogSearch] = useState("");
   const [editingModelInfo, setEditingModelInfo] = useState(false);
   const [editModelName, setEditModelName] = useState("");
@@ -187,6 +188,11 @@ export default function RestockApp() {
   const [receiveExpCats, setReceiveExpCats] = useState({});
   const [receiveExpBrands, setReceiveExpBrands] = useState({});
   const [recentShipments, setRecentShipments] = useState([]);
+  const [scanning, setScanning] = useState(false);
+  const [scanAssign, setScanAssign] = useState(null);
+  const [scanHighlight, setScanHighlight] = useState(null);
+  const [lastScan, setLastScan] = useState(null); // { barcode, model, flavor, barcodeId } for "wrong product?" flow
+  const scannerRef = useRef(null);
 
   const [mgrPin, setMgrPin] = useState(null);
   const [ownerPin, setOwnerPin] = useState(null);
@@ -1828,7 +1834,7 @@ export default function RestockApp() {
             style={{ ...st.input, fontSize: "14px", padding: "14px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.04)", borderRadius: "12px" }} />
           {searchTerm && <div style={{ color: "#ffffff30", fontSize: "11px", marginTop: "6px", textAlign: "center" }}>{filteredCatalog.length} result{filteredCatalog.length !== 1 ? "s" : ""}</div>}
         </div>
-        {/* Oversold items */}
+        {/* Oversold items - collapsible */}
         {!isOwnerView && (() => {
           const negItems = [];
           catalog.forEach(c => {
@@ -1845,18 +1851,23 @@ export default function RestockApp() {
           if (negItems.length === 0) return null;
           return (
             <div style={{ padding: "14px 16px", borderRadius: "12px", background: "rgba(230,57,70,0.08)", border: "1px solid #E6394625", marginBottom: "16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-                <span style={{ fontSize: "14px" }}>🚨</span>
-                <span style={{ color: "#E63946", fontSize: "11px", fontWeight: 800, letterSpacing: "0.5px", textTransform: "uppercase" }}>Oversold ({negItems.length}) — tap to fix</span>
+              <div onClick={() => setOversoldExpanded(p => !p)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "14px" }}>🚨</span>
+                  <span style={{ color: "#E63946", fontSize: "11px", fontWeight: 800, letterSpacing: "0.5px", textTransform: "uppercase" }}>Oversold ({negItems.length})</span>
+                </div>
+                <span style={{ color: "#E6394680", fontSize: "16px", transition: "transform 0.2s ease", transform: oversoldExpanded ? "rotate(90deg)" : "rotate(0deg)" }}>›</span>
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-                {negItems.map((item, i) => (
-                  <span key={i} onClick={() => { setEditModel(item.catalogItem); setMgrView("editModel"); setNewFlavor(""); setEditingModelInfo(false); }}
-                    style={{ padding: "4px 8px", borderRadius: "6px", background: "#E6394615", border: "1px solid #E6394620", fontSize: "10px", fontWeight: 700, color: "#E63946", cursor: "pointer" }}>
-                    {item.model} — {item.flavor} <span style={{ opacity: 0.7 }}>{item.stock}</span>
-                  </span>
-                ))}
-              </div>
+              {oversoldExpanded && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "10px" }}>
+                  {negItems.map((item, i) => (
+                    <span key={i} onClick={() => { setEditModel(item.catalogItem); setMgrView("editModel"); setNewFlavor(""); setEditingModelInfo(false); }}
+                      style={{ padding: "4px 8px", borderRadius: "6px", background: "#E6394615", border: "1px solid #E6394620", fontSize: "10px", fontWeight: 700, color: "#E63946", cursor: "pointer" }}>
+                      {item.model} — {item.flavor} <span style={{ opacity: 0.7 }}>{item.stock}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })()}
@@ -2118,6 +2129,115 @@ export default function RestockApp() {
 
     const receiveTotal = Object.values(receiveQtys).reduce((s, v) => s + (parseInt(v) || 0), 0);
 
+    const startScanner = async () => {
+      setScanning(true);
+      // Dynamically load html5-qrcode if not loaded
+      if (!window.Html5Qrcode) {
+        const script = document.createElement("script");
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js";
+        script.onload = () => initScanner();
+        document.head.appendChild(script);
+      } else {
+        initScanner();
+      }
+    };
+
+    const initScanner = () => {
+      setTimeout(() => {
+        if (!document.getElementById("scanner-region")) return;
+        const scanner = new window.Html5Qrcode("scanner-region");
+        scannerRef.current = scanner;
+        scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 280, height: 150 } },
+          (decodedText) => {
+            // Barcode scanned — stop scanner and process
+            scanner.stop().then(() => {
+              scannerRef.current = null;
+              handleBarcodeScan(decodedText);
+            }).catch(() => {});
+          },
+          () => {} // ignore scan failures
+        ).catch(err => {
+          console.error("Scanner error:", err);
+          setScanning(false);
+          alert("Could not access camera. Make sure you've granted camera permission.");
+        });
+      }, 100);
+    };
+
+    const stopScanner = () => {
+      if (scannerRef.current) {
+        scannerRef.current.stop().then(() => { scannerRef.current = null; }).catch(() => {});
+      }
+      setScanning(false);
+      setScanAssign(null);
+    };
+
+    const handleBarcodeScan = async (barcode) => {
+      setScanning(false);
+      // Look up barcode in database
+      try {
+        const results = await orgSb.get("barcodes", { filter: `barcode=eq.${barcode}` });
+        if (results && results.length > 0) {
+          const match = results[0];
+          const model = catalog.find(c => c.id === match.model_id);
+          if (model) {
+            setLastScan({ barcode, model: model.model_name, flavor: match.flavor, barcodeId: match.id });
+            if (!receiveModel) {
+              setReceiveModel(model);
+              setReceiveQtys({});
+              setReceiveSearch("");
+              setScanHighlight(match.flavor);
+              sndAdd();
+            } else if (receiveModel.id === model.id) {
+              setScanHighlight(match.flavor);
+              sndAdd();
+            } else {
+              if (window.confirm(`Scanned ${model.model_name} — ${match.flavor}.\n\nSwitch from ${receiveModel.model_name}?`)) {
+                setReceiveModel(model);
+                setReceiveQtys({});
+                setScanHighlight(match.flavor);
+                sndAdd();
+              }
+            }
+          }
+        } else {
+          setLastScan(null);
+          setScanAssign({ barcode });
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Error looking up barcode. Check connection.");
+      }
+    };
+
+    const reassignBarcode = async (barcodeId, barcode) => {
+      // Delete old assignment and start fresh assignment flow
+      try {
+        await orgSb.del("barcodes", `id=eq.${barcodeId}`);
+        setLastScan(null);
+        setScanAssign({ barcode });
+      } catch (e) { console.error(e); alert("Error removing barcode assignment."); }
+    };
+
+    const assignBarcode = async (barcode, model, flavor) => {
+      try {
+        await orgSb.post("barcodes", { barcode, model_id: model.id, flavor });
+        setScanAssign(null);
+        // Now auto-select it
+        if (!receiveModel) {
+          setReceiveModel(model);
+          setReceiveQtys({});
+          setScanHighlight(flavor);
+          sndAdd();
+        } else if (receiveModel.id === model.id) {
+          setScanHighlight(flavor);
+          sndAdd();
+        }
+      } catch (e) { console.error(e); alert("Error saving barcode. It may already be assigned."); }
+    };
+
     const handleReceive = async () => {
       if (!receiveModel || receiveTotal === 0) return;
       const m = catalog.find(c => c.id === receiveModel.id) || receiveModel;
@@ -2153,17 +2273,52 @@ export default function RestockApp() {
 
     return (
       <div style={st.page}>
-        <button onClick={() => { sndBack(); setMgrView("dashboard"); setReceiveModel(null); setReceiveQtys({}); }} style={st.back}>← Back to Dashboard</button>
+        <button onClick={() => { sndBack(); stopScanner(); setLastScan(null); setMgrView("dashboard"); setReceiveModel(null); setReceiveQtys({}); }} style={st.back}>← Back to Dashboard</button>
         <h1 style={st.h1}>📥 Receive Stock</h1>
         <p style={st.sub}>Log incoming inventory for {mgrWarehouse?.name}</p>
 
         {!receiveModel ? (
           <>
+          {/* Scanner UI */}
+          {scanning && (
+            <div style={{ marginBottom: "16px" }}>
+              <div id="scanner-region" style={{ width: "100%", borderRadius: "12px", overflow: "hidden", marginBottom: "8px" }}></div>
+              <button onClick={stopScanner} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #E6394630", background: "#E6394610", color: "#E63946", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>✕ Cancel Scan</button>
+            </div>
+          )}
+          {/* Assign unknown barcode flow */}
+          {scanAssign && (
+            <div style={{ padding: "16px", borderRadius: "12px", background: "rgba(245,158,11,0.08)", border: "1px solid #F59E0B30", marginBottom: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+                <span style={{ fontSize: "14px" }}>📦</span>
+                <span style={{ color: "#F59E0B", fontSize: "11px", fontWeight: 800, textTransform: "uppercase" }}>New Barcode — Assign Product</span>
+              </div>
+              <div style={{ color: "#ffffff50", fontSize: "11px", marginBottom: "12px", fontFamily: "monospace" }}>{scanAssign.barcode}</div>
+              <p style={{ color: "#ffffff40", fontSize: "12px", marginBottom: "12px" }}>Select the product below, then pick the flavor to assign this barcode.</p>
+              <button onClick={() => setScanAssign(null)} style={{ padding: "6px 14px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.04)", background: "transparent", color: "#ffffff40", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
+              {scanAssign.model && (
+                <div style={{ marginTop: "12px", borderTop: "1px solid #F59E0B20", paddingTop: "12px" }}>
+                  <div style={{ color: "#F59E0B", fontSize: "11px", fontWeight: 700, marginBottom: "8px" }}>{scanAssign.model.model_name} — pick flavor:</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                    {(scanAssign.model.flavors || []).map(f => (
+                      <button key={f} onClick={() => assignBarcode(scanAssign.barcode, scanAssign.model, f)}
+                        style={{ padding: "6px 12px", borderRadius: "6px", background: "#F59E0B15", border: "1px solid #F59E0B25", color: "#F59E0B", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           <div style={{ marginBottom: "16px" }}>
-            {/* Search bar */}
+            {/* Scan + Search bar */}
             <div style={{ position: "sticky", top: 0, zIndex: 10, background: "#0B0B0F", paddingBottom: "12px" }}>
-              <input type="text" placeholder="🔍 Search products..." value={receiveSearch} onChange={e => setReceiveSearch(e.target.value)}
-                style={{ ...st.input, fontSize: "14px", padding: "14px 16px", background: "rgba(29,185,84,0.06)", border: "1px solid #1DB95425", color: "#fff" }} />
+              <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+                <input type="text" placeholder="🔍 Search products..." value={receiveSearch} onChange={e => setReceiveSearch(e.target.value)}
+                  style={{ ...st.input, flex: 1, fontSize: "14px", padding: "14px 16px", background: "rgba(29,185,84,0.06)", border: "1px solid #1DB95425", color: "#fff" }} />
+                {!scanning && <button onClick={startScanner} style={{ padding: "14px 18px", borderRadius: "12px", border: "1px solid #1DB95430", background: "#1DB95410", color: "#1DB954", fontSize: "16px", cursor: "pointer", flexShrink: 0 }}>📷</button>}
+              </div>
               {receiveSearch && (
                 <div style={{ fontSize: "11px", color: "#1DB95480", marginTop: "6px", fontWeight: 600 }}>
                   {availableModels.filter(m => m.model_name.toLowerCase().includes(receiveSearch.toLowerCase()) || (m.brand || "").toLowerCase().includes(receiveSearch.toLowerCase()) || (m.category || "").toLowerCase().includes(receiveSearch.toLowerCase())).length} results
@@ -2230,7 +2385,21 @@ export default function RestockApp() {
                             const mws = wid ? ((m.stock_levels || {})[wid] || {}) : {};
                             const mStock = Object.values(mws).reduce((s, v) => s + (parseInt(v) || 0), 0);
                             return (
-                              <button key={m.id} onClick={() => { setReceiveModel(m); setReceiveQtys({}); setReceiveNotes(""); setReceiveSearch(""); setReceiveExpCats({}); setReceiveExpBrands({}); }}
+                              <button key={m.id} onClick={() => {
+                                if (scanAssign) {
+                                  // Barcode assignment mode — show flavor picker
+                                  const flavors = m.flavors || [];
+                                  if (flavors.length === 1) {
+                                    // Only one flavor — assign directly
+                                    assignBarcode(scanAssign.barcode, m, flavors[0]);
+                                  } else {
+                                    // Multiple flavors — let user pick
+                                    setScanAssign(prev => ({ ...prev, model: m }));
+                                  }
+                                } else {
+                                  setReceiveModel(m); setReceiveQtys({}); setReceiveNotes(""); setReceiveSearch(""); setReceiveExpCats({}); setReceiveExpBrands({});
+                                }
+                              }}
                                 style={{ width: "100%", padding: "11px 14px", borderRadius: "8px", border: `1px solid ${bColor}10`, background: `${bColor}05`, color: "#fff", fontSize: "13px", fontWeight: 600, cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px", marginLeft: "12px", maxWidth: "calc(100% - 12px)" }}>
                                 <div>
                                   <span>{m.model_name}</span>
@@ -2285,8 +2454,30 @@ export default function RestockApp() {
               <div style={{ fontSize: "15px", fontWeight: 800, color: "#fff" }}>{receiveModel.model_name}</div>
               <div style={{ fontSize: "11px", color: "#ffffff30", marginTop: "2px" }}>{receiveModel.brand} • {(receiveModel.flavors || []).length} flavors</div>
             </div>
-            <button onClick={() => { setReceiveModel(null); setReceiveQtys({}); }} style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.04)", background: "transparent", color: "#ffffff40", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>Change</button>
+            <div style={{ display: "flex", gap: "6px" }}>
+              <button onClick={() => { setReceiveModel(null); setReceiveQtys({}); }} style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.04)", background: "transparent", color: "#ffffff40", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>Change</button>
+              <button onClick={startScanner} style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid #1DB95430", background: "#1DB95410", color: "#1DB954", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>📷 Scan</button>
+            </div>
           </div>
+
+          {/* Scanner in quantity mode */}
+          {scanning && (
+            <div style={{ marginBottom: "16px" }}>
+              <div id="scanner-region" style={{ width: "100%", borderRadius: "12px", overflow: "hidden", marginBottom: "8px" }}></div>
+              <button onClick={stopScanner} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #E6394630", background: "#E6394610", color: "#E63946", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>✕ Cancel Scan</button>
+            </div>
+          )}
+
+          {/* Last scan info with reassign option */}
+          {lastScan && (
+            <div style={{ padding: "10px 14px", borderRadius: "8px", background: "rgba(29,185,84,0.06)", border: "1px solid #1DB95420", marginBottom: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontSize: "11px", color: "#1DB95490" }}>
+                <span style={{ fontWeight: 700 }}>Scanned:</span> {lastScan.model} — {lastScan.flavor}
+              </div>
+              <button onClick={() => reassignBarcode(lastScan.barcodeId, lastScan.barcode)}
+                style={{ padding: "4px 10px", borderRadius: "6px", border: "1px solid #F59E0B30", background: "#F59E0B10", color: "#F59E0B", fontSize: "10px", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>Wrong?</button>
+            </div>
+          )}
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
             <span style={{ color: "#ffffff30", fontSize: "12px", fontWeight: 600 }}>Enter quantities received</span>
@@ -2305,18 +2496,20 @@ export default function RestockApp() {
             {(receiveModel.flavors || []).map(f => {
               const currentStock = wid ? (parseInt(((receiveModel.stock_levels || {})[wid] || {})[f]) || 0) : 0;
               const addQty = parseInt(receiveQtys[f]) || 0;
+              const isHighlighted = scanHighlight === f;
               return (
-                <div key={f} style={{ padding: "10px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.02)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div key={f} id={`receive-flavor-${f}`} style={{ padding: "10px 14px", borderRadius: "8px", background: isHighlighted ? "rgba(29,185,84,0.12)" : "rgba(255,255,255,0.025)", border: isHighlighted ? "1px solid #1DB95440" : "1px solid rgba(255,255,255,0.02)", display: "flex", justifyContent: "space-between", alignItems: "center", transition: "all 0.3s ease" }}>
                   <div style={{ flex: 1 }}>
-                    <span style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>{f}</span>
+                    <span style={{ color: isHighlighted ? "#1DB954" : "#fff", fontSize: "13px", fontWeight: isHighlighted ? 800 : 600 }}>{isHighlighted ? "📷 " : ""}{f}</span>
                     <span style={{ color: "#ffffff20", fontSize: "11px", marginLeft: "8px" }}>{currentStock} now{addQty > 0 ? ` → ${currentStock + addQty}` : ""}</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                     <span style={{ color: "#1DB954", fontSize: "13px", fontWeight: 700 }}>+</span>
                     <input type="number" inputMode="numeric" value={receiveQtys[f] || ""} placeholder="0"
+                      ref={el => { if (isHighlighted && el) { el.focus(); el.select(); setScanHighlight(null); } }}
                       onChange={e => setReceiveQtys(p => ({ ...p, [f]: e.target.value }))}
                       onFocus={e => e.target.select()}
-                      style={{ width: "56px", padding: "6px 8px", borderRadius: "6px", border: "1px solid #1DB95430", background: "#1DB95408", color: "#1DB954", fontSize: "14px", fontWeight: 800, textAlign: "center", outline: "none" }} />
+                      style={{ width: "56px", padding: "6px 8px", borderRadius: "6px", border: `1px solid ${isHighlighted ? "#1DB95460" : "#1DB95430"}`, background: isHighlighted ? "#1DB95418" : "#1DB95408", color: "#1DB954", fontSize: "14px", fontWeight: 800, textAlign: "center", outline: "none" }} />
                   </div>
                 </div>
               );
