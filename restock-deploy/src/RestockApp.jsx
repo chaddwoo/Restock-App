@@ -2632,7 +2632,7 @@ export default function RestockApp() {
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
                       {warningFlavors.slice(0, 5).map((w, i) => (
                         <span key={i} style={{ padding: "2px 6px", borderRadius: "4px", background: "#E6394615", fontSize: "9px", fontWeight: 700, color: "#E63946" }}>
-                          {w.product} — {w.flavor} {w.stock < 0 ? w.stock : "OUT"}
+                          {w.product} — {w.flavor} {w.stock < 0 ? `${w.stock} OVERSOLD` : "0 AFTER"}
                         </span>
                       ))}
                       {warningFlavors.length > 5 && <span style={{ fontSize: "9px", color: "#E6394680", padding: "2px 4px" }}>+{warningFlavors.length - 5} more</span>}
@@ -2786,7 +2786,7 @@ export default function RestockApp() {
                         <div style={{ display: "flex", flexDirection: "column" }}>
                           <span style={{ color: picked ? "#ffffff40" : "#fff", fontSize: "13px", fontWeight: 600, textDecoration: picked ? "line-through" : "none", transition: "all 0.2s ease" }}>{flavor}</span>
                           {!picked && isNeg && <span style={{ color: "#E63946", fontSize: "9px", fontWeight: 800, marginTop: "1px" }}>⚠ STOCK {currentStock} — OVERSOLD</span>}
-                          {!picked && isOut && <span style={{ color: "#F59E0B", fontSize: "9px", fontWeight: 800, marginTop: "1px" }}>⚠ OUT OF STOCK</span>}
+                          {!picked && isOut && <span style={{ color: "#F59E0B", fontSize: "9px", fontWeight: 800, marginTop: "1px" }}>⚠ 0 AFTER THIS ORDER</span>}
                         </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
