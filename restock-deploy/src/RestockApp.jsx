@@ -233,6 +233,7 @@ export default function RestockApp() {
   const [receiveExpBrands, setReceiveExpBrands] = useState({});
   const [recentShipments, setRecentShipments] = useState([]);
   const [receiving, setReceiving] = useState(false);
+  const [auditLog, setAuditLog] = useState([]);
   const [scanning, setScanning] = useState(false);
   const [scanAssign, setScanAssign] = useState(null);
   const [scanHighlight, setScanHighlight] = useState(null);
@@ -740,11 +741,29 @@ export default function RestockApp() {
   // Stock update — instant local state, save after short delay, auto-flush on navigation
   const stockTimers = useRef({});
   const catalogRef = useRef(catalog);
+  const pendingAudits = useRef({}); // { modelId: [{ flavor, oldVal, newVal }] }
   useEffect(() => { catalogRef.current = catalog; }, [catalog]);
   const saveStockNow = (modelId) => {
     const model = catalogRef.current.find(c => c.id === modelId);
     if (model) {
       orgSb.patch("catalog", { stock_levels: model.stock_levels || {} }, `id=eq.${modelId}`).catch(e => console.error(e));
+      // Log pending audits for this model
+      const audits = pendingAudits.current[modelId];
+      if (audits && audits.length > 0 && mgrWarehouse) {
+        audits.forEach(a => {
+          orgSb.post("stock_audit", {
+            warehouse_id: mgrWarehouse.id,
+            model_id: modelId,
+            model_name: model.model_name,
+            flavor: a.flavor,
+            old_value: a.oldVal,
+            new_value: a.newVal,
+            change_type: "manual_edit",
+            changed_by: accessLevel || "manager"
+          }).catch(e => console.error(e));
+        });
+        delete pendingAudits.current[modelId];
+      }
     }
   };
   const flushStock = () => {
@@ -771,6 +790,16 @@ export default function RestockApp() {
     if (!mgrWarehouse) return;
     const wid = String(mgrWarehouse.id);
     const val = count === "" ? 0 : Math.max(0, parseInt(count) || 0);
+    // Get old value before update
+    const currentModel = catalogRef.current.find(c => c.id === modelId);
+    const oldVal = currentModel ? (parseInt(((currentModel.stock_levels || {})[wid] || {})[flavor]) || 0) : 0;
+    // Track audit entry (only if value actually changed)
+    if (val !== oldVal) {
+      if (!pendingAudits.current[modelId]) pendingAudits.current[modelId] = [];
+      // Replace existing entry for same flavor (user typing multiple digits)
+      pendingAudits.current[modelId] = pendingAudits.current[modelId].filter(a => a.flavor !== flavor);
+      pendingAudits.current[modelId].push({ flavor, oldVal, newVal: val });
+    }
     // Instant local update
     setCatalog(p => p.map(c => {
       if (c.id !== modelId) return c;
@@ -791,10 +820,26 @@ export default function RestockApp() {
     const model = catalog.find(c => c.id === modelId); if (!model) return;
     const sl = { ...(model.stock_levels || {}) };
     const wid = String(mgrWarehouse.id);
+    const oldWs = (sl[wid] || {});
     const ws = {};
-    (model.flavors || []).forEach(f => { ws[f] = Math.max(0, parseInt(count) || 0); });
+    const newVal = Math.max(0, parseInt(count) || 0);
+    (model.flavors || []).forEach(f => { ws[f] = newVal; });
     sl[wid] = ws;
-    try { await orgSb.patch("catalog", { stock_levels: sl }, `id=eq.${modelId}`); setCatalog(p => p.map(c => c.id === modelId ? { ...c, stock_levels: sl } : c)); } catch (e) { console.error(e); }
+    try {
+      await orgSb.patch("catalog", { stock_levels: sl }, `id=eq.${modelId}`);
+      setCatalog(p => p.map(c => c.id === modelId ? { ...c, stock_levels: sl } : c));
+      // Log audit for each flavor that changed
+      (model.flavors || []).forEach(f => {
+        const oldVal = parseInt(oldWs[f]) || 0;
+        if (oldVal !== newVal) {
+          orgSb.post("stock_audit", {
+            warehouse_id: mgrWarehouse.id, model_id: modelId, model_name: model.model_name,
+            flavor: f, old_value: oldVal, new_value: newVal,
+            change_type: "bulk_set", changed_by: accessLevel || "manager"
+          }).catch(e => console.error(e));
+        }
+      });
+    } catch (e) { console.error(e); }
   };
   const toggleFlavorVisibility = async (modelId, flavor) => {
     if (!mgrWarehouse) return;
@@ -2313,6 +2358,15 @@ export default function RestockApp() {
         });
         setCatalog(p => p.map(c => c.id === receiveModel.id ? { ...c, stock_levels: sl } : c));
         sndAdd();
+        // Log audit for each received flavor
+        Object.entries(items).forEach(([flavor, qty]) => {
+          const oldVal = parseInt(((freshModel.stock_levels || {})[wid] || {})[flavor]) || 0;
+          orgSb.post("stock_audit", {
+            warehouse_id: mgrWarehouse.id, model_id: receiveModel.id, model_name: receiveModel.model_name,
+            flavor, old_value: oldVal, new_value: oldVal + qty,
+            change_type: "receive", changed_by: accessLevel || "manager"
+          }).catch(e => console.error(e));
+        });
         setReceiveModel(null); setReceiveQtys({}); setReceiveNotes("");
         orgSb.get("shipments", { order: "created_at.desc", filter: `warehouse_id=eq.${mgrWarehouse.id}`, limit: 20 }).then(d => setRecentShipments(d || []));
       } catch (e) { console.error(e); alert("Error receiving stock. Check connection."); }
@@ -2589,6 +2643,53 @@ export default function RestockApp() {
     );
   }
 
+  // AUDIT LOG — exec only
+  if (view === "manager" && authed && accessLevel === "exec" && mgrView === "audit") {
+    const timeAgoAudit = (d) => { const s = Math.floor((Date.now() - new Date(d)) / 1000); if (s < 60) return "just now"; if (s < 3600) return `${Math.floor(s/60)}m ago`; if (s < 86400) return `${Math.floor(s/3600)}h ago`; return `${Math.floor(s/86400)}d ago`; };
+    const fmtTimeAudit = (d) => new Date(d).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true });
+    const typeColors = { manual_edit: "#F59E0B", bulk_set: "#F59E0B", receive: "#1DB954", order_deduct: "#E63946", order_cancel: "#00B4D8" };
+    const typeLabels = { manual_edit: "Manual Edit", bulk_set: "Bulk Set", receive: "Receive", order_deduct: "Order Deduct", order_cancel: "Order Cancel" };
+    return (
+      <div style={st.page}>
+        <button onClick={() => { sndBack(); setMgrView("dashboard"); }} style={st.back}>← Back to Dashboard</button>
+        <h1 style={st.h1}>🔍 Stock Audit Log</h1>
+        <p style={st.sub}>{mgrWarehouse?.name} • {auditLog.length} entries</p>
+        <button onClick={() => { orgSb.get("stock_audit", { order: "created_at.desc", filter: `warehouse_id=eq.${mgrWarehouse.id}`, limit: 100 }).then(d => setAuditLog(d || [])); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.04)", background: "transparent", color: "#ffffff50", fontSize: "12px", fontWeight: 700, cursor: "pointer", marginBottom: "20px" }}>🔄 Refresh</button>
+        
+        {auditLog.length === 0 && <div style={{ padding: "40px 20px", textAlign: "center" }}><p style={{ color: "#ffffff30", fontSize: "14px" }}>No audit entries yet. Stock changes will appear here.</p></div>}
+        
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          {auditLog.map(entry => {
+            const diff = (entry.new_value || 0) - (entry.old_value || 0);
+            const suspicious = entry.change_type === "manual_edit" && diff < -5;
+            return (
+              <div key={entry.id} style={{ padding: "12px 14px", borderRadius: "10px", background: suspicious ? "rgba(230,57,70,0.08)" : "rgba(255,255,255,0.025)", border: suspicious ? "1px solid #E6394625" : "1px solid rgba(255,255,255,0.02)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "4px" }}>
+                  <div>
+                    <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{entry.model_name}</span>
+                    <span style={{ color: "#ffffff30", fontSize: "11px", marginLeft: "6px" }}>{entry.flavor}</span>
+                  </div>
+                  <span style={{ color: "#ffffff25", fontSize: "10px", whiteSpace: "nowrap" }}>{timeAgoAudit(entry.created_at)}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+                  <span style={{ padding: "2px 8px", borderRadius: "4px", background: (typeColors[entry.change_type] || "#ffffff") + "15", color: typeColors[entry.change_type] || "#ffffff50", fontSize: "10px", fontWeight: 700 }}>{typeLabels[entry.change_type] || entry.change_type}</span>
+                  <span style={{ color: "#ffffff40", fontSize: "12px", fontWeight: 600 }}>{entry.old_value ?? "?"}</span>
+                  <span style={{ color: "#ffffff20", fontSize: "10px" }}>→</span>
+                  <span style={{ color: diff > 0 ? "#1DB954" : diff < 0 ? "#E63946" : "#ffffff40", fontSize: "12px", fontWeight: 800 }}>{entry.new_value ?? "?"}</span>
+                  <span style={{ color: diff > 0 ? "#1DB95480" : diff < 0 ? "#E6394680" : "#ffffff20", fontSize: "10px", fontWeight: 700 }}>({diff > 0 ? "+" : ""}{diff})</span>
+                  {suspicious && <span style={{ color: "#E63946", fontSize: "9px", fontWeight: 800 }}>⚠ SUSPICIOUS</span>}
+                </div>
+                <div style={{ color: "#ffffff20", fontSize: "10px", marginTop: "4px" }}>{entry.changed_by} • {fmtTimeAudit(entry.created_at)}</div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ height: "70px" }} />
+        <FloatingBack onClick={() => setMgrView("dashboard")} />
+      </div>
+    );
+  }
+
   // MANAGER DASHBOARD
   if (view === "manager" && authed && mgrView === "dashboard" && !selReport) {
     const pending = getPending();
@@ -2601,6 +2702,7 @@ export default function RestockApp() {
           {(isManagerOrExec || accessLevel === "owner") && <button onClick={() => setMgrView("catalog")} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #6C5CE730", background: "#6C5CE710", color: "#6C5CE7", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🗂️ Catalog</button>}
           {isManagerOrExec && <button onClick={() => { setMgrView("analytics"); loadAnalytics(analyticsRange); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #00B4D830", background: "#00B4D810", color: "#00B4D8", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>📈 Analytics</button>}
           {isManagerOrExec && <button onClick={() => { setReceiveModel(null); setReceiveQtys({}); setReceiveNotes(""); setMgrView("receive"); orgSb.get("shipments", { order: "created_at.desc", filter: `warehouse_id=eq.${mgrWarehouse.id}`, limit: 20 }).then(d => setRecentShipments(d || [])); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #1DB95430", background: "#1DB95410", color: "#1DB954", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>📥 Receive</button>}
+          {accessLevel === "exec" && <button onClick={() => { setMgrView("audit"); orgSb.get("stock_audit", { order: "created_at.desc", filter: `warehouse_id=eq.${mgrWarehouse.id}`, limit: 100 }).then(d => setAuditLog(d || [])); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #E6394630", background: "#E6394610", color: "#E63946", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>🔍 Audit</button>}
         </div>
 
         {/* PENDING ORDERS — hero section */}
