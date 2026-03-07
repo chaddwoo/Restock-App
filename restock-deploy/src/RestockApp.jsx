@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 
 // App version — bump this every deploy
-const APP_VERSION = "6.1.0";
+const APP_VERSION = "6.1.1";
 
 const SUPABASE_URL = "https://unnonzpasuacdgiioqiu.supabase.co";
 const SUPABASE_KEY = "sb_publishable_XJO2XX_U8CYxvPemov9YUg_nMh4dc6Y";
